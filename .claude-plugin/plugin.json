@@ -25,5 +25,10 @@
     "agents/optimizer.md"
   ],
   "commands": [],
+  "rules": [
+    "rules/safety.md",
+    "rules/orientation.md",
+    "rules/graph-maintenance.md"
+  ],
   "hooks": "hooks/hooks.json"
 }

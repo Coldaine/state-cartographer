@@ -76,4 +76,4 @@
 | [README.md](README.md) | Project overview for GitHub |
 | [LICENSE](LICENSE) | MIT License |
 | [.github/workflows/ci.yml](.github/workflows/ci.yml) | CI pipeline: pytest on Python 3.11/3.12/3.13 |
-| [project-layout-and-bootstrap.md](project-layout-and-bootstrap.md) | Original bootstrap instructions (historical reference) |
+| [docs/bootstrap.md](docs/bootstrap.md) | Original bootstrap instructions (historical reference) |
