@@ -8,7 +8,7 @@ Determine the current state of the external system by evaluating observations ag
 2. Gather observations from the current screen/system state.
 3. Run the locator:
    ```
-   python scripts/locate.py --graph <path-to-graph.json> --observations <observations.json>
+   python scripts/locate.py --graph <path-to-graph.json> --observations <observations.json> --session <session.json>
    ```
 4. Interpret the result:
    - **definitive**: High confidence — proceed with this state.
