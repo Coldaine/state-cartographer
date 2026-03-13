@@ -1,0 +1,140 @@
+{
+  "initial_state": "landing_page",
+  "states": {
+    "landing_page": {
+      "anchors": [
+        {"type": "text_match", "pattern": "Welcome to Our App", "cost": 1},
+        {"type": "dom_element", "selector": "#hero-banner", "cost": 2}
+      ],
+      "confidence_threshold": 0.8
+    },
+    "login_form": {
+      "anchors": [
+        {"type": "text_match", "pattern": "Sign In", "cost": 1},
+        {"type": "dom_element", "selector": "input[name='email']", "cost": 1}
+      ],
+      "negative_anchors": [
+        {"type": "text_match", "pattern": "Dashboard"}
+      ],
+      "confidence_threshold": 0.8
+    },
+    "dashboard": {
+      "anchors": [
+        {"type": "text_match", "pattern": "Dashboard", "cost": 1},
+        {"type": "dom_element", "selector": "#dashboard-nav", "cost": 2}
+      ],
+      "confidence_threshold": 0.7
+    },
+    "settings": {
+      "anchors": [
+        {"type": "text_match", "pattern": "Account Settings", "cost": 1},
+        {"type": "dom_element", "selector": "#settings-form", "cost": 2}
+      ],
+      "confidence_threshold": 0.7
+    },
+    "profile_edit": {
+      "anchors": [
+        {"type": "text_match", "pattern": "Edit Profile", "cost": 1},
+        {"type": "dom_element", "selector": "#profile-avatar-upload", "cost": 3}
+      ],
+      "confidence_threshold": 0.7
+    },
+    "confirmation": {
+      "anchors": [
+        {"type": "text_match", "pattern": "Changes Saved", "cost": 1}
+      ],
+      "confidence_threshold": 0.9,
+      "wait_state": true,
+      "exit_signals": [
+        {"type": "timeout", "seconds": 3},
+        {"type": "element_disappear", "selector": ".toast-success"}
+      ]
+    },
+    "error_page": {
+      "anchors": [
+        {"type": "text_match", "pattern": "Something went wrong", "cost": 1},
+        {"type": "dom_element", "selector": ".error-container", "cost": 2}
+      ],
+      "confidence_threshold": 0.8
+    }
+  },
+  "transitions": {
+    "landing_to_login": {
+      "source": "landing_page",
+      "dest": "login_form",
+      "method": "deterministic",
+      "action": {"type": "click", "selector": "#login-button"},
+      "cost": 1
+    },
+    "login_to_dashboard": {
+      "source": "login_form",
+      "dest": "dashboard",
+      "method": "vision_required",
+      "action": {"type": "submit", "selector": "#login-form"},
+      "cost": 15
+    },
+    "login_to_error": {
+      "source": "login_form",
+      "dest": "error_page",
+      "method": "vision_required",
+      "action": {"type": "submit", "selector": "#login-form"},
+      "cost": 15
+    },
+    "dashboard_to_settings": {
+      "source": "dashboard",
+      "dest": "settings",
+      "method": "deterministic",
+      "action": {"type": "click", "selector": "#settings-link"},
+      "cost": 1
+    },
+    "dashboard_to_profile": {
+      "source": "dashboard",
+      "dest": "profile_edit",
+      "method": "deterministic",
+      "action": {"type": "click", "selector": "#profile-link"},
+      "cost": 1
+    },
+    "settings_to_dashboard": {
+      "source": "settings",
+      "dest": "dashboard",
+      "method": "deterministic",
+      "action": {"type": "click", "selector": "#back-to-dashboard"},
+      "cost": 1
+    },
+    "settings_to_confirmation": {
+      "source": "settings",
+      "dest": "confirmation",
+      "method": "vision_required",
+      "action": {"type": "click", "selector": "#save-settings"},
+      "cost": 10
+    },
+    "profile_to_dashboard": {
+      "source": "profile_edit",
+      "dest": "dashboard",
+      "method": "deterministic",
+      "action": {"type": "click", "selector": "#cancel-edit"},
+      "cost": 1
+    },
+    "profile_to_confirmation": {
+      "source": "profile_edit",
+      "dest": "confirmation",
+      "method": "vision_required",
+      "action": {"type": "click", "selector": "#save-profile"},
+      "cost": 10
+    },
+    "confirmation_to_dashboard": {
+      "source": "confirmation",
+      "dest": "dashboard",
+      "method": "deterministic",
+      "action": {"type": "wait", "seconds": 3},
+      "cost": 3
+    },
+    "error_to_landing": {
+      "source": "error_page",
+      "dest": "landing_page",
+      "method": "deterministic",
+      "action": {"type": "click", "selector": "#go-home"},
+      "cost": 1
+    }
+  }
+}

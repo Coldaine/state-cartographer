@@ -24,7 +24,12 @@
     "agents/consolidator.md",
     "agents/optimizer.md"
   ],
-  "commands": [],
+  "commands": [
+    "commands/locate.md",
+    "commands/validate.md",
+    "commands/graph-info.md",
+    "commands/pathfind.md"
+  ],
   "rules": [
     "rules/safety.md",
     "rules/orientation.md",
