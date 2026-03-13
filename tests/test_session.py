@@ -1,10 +1,11 @@
 """Tests for session.py — Session State Manager."""
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "plugin" / "scripts"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 from session import confirm_state, init_session, query_session, record_transition
 

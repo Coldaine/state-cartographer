@@ -4,6 +4,7 @@ graph_utils.py — Graph Inspection Utilities
 Wraps state graph definitions for common queries agents need:
 list states, valid transitions, reachable states, orphans, missing anchors, etc.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -16,33 +17,20 @@ def list_states(graph: dict[str, Any]) -> list[str]:
 
 def list_transitions(graph: dict[str, Any]) -> list[dict[str, Any]]:
     """Return all transitions with their IDs."""
-    return [
-        {"id": tid, **tdef}
-        for tid, tdef in graph.get("transitions", {}).items()
-    ]
+    return [{"id": tid, **tdef} for tid, tdef in graph.get("transitions", {}).items()]
 
 
 def transitions_from(graph: dict[str, Any], state_id: str) -> list[dict[str, Any]]:
     """Return all transitions available from a given state."""
-    return [
-        {"id": tid, **tdef}
-        for tid, tdef in graph.get("transitions", {}).items()
-        if tdef.get("source") == state_id
-    ]
+    return [{"id": tid, **tdef} for tid, tdef in graph.get("transitions", {}).items() if tdef.get("source") == state_id]
 
 
 def transitions_to(graph: dict[str, Any], state_id: str) -> list[dict[str, Any]]:
     """Return all transitions leading to a given state."""
-    return [
-        {"id": tid, **tdef}
-        for tid, tdef in graph.get("transitions", {}).items()
-        if tdef.get("dest") == state_id
-    ]
+    return [{"id": tid, **tdef} for tid, tdef in graph.get("transitions", {}).items() if tdef.get("dest") == state_id]
 
 
-def reachable_within(
-    graph: dict[str, Any], state_id: str, max_hops: int
-) -> set[str]:
+def reachable_within(graph: dict[str, Any], state_id: str, max_hops: int) -> set[str]:
     """Return all states reachable from state_id within N hops."""
     visited: set[str] = set()
     frontier = {state_id}
@@ -80,26 +68,17 @@ def orphan_states(graph: dict[str, Any]) -> list[str]:
 
 def states_missing_anchors(graph: dict[str, Any]) -> list[str]:
     """Return states that have no observation anchors defined."""
-    return sorted(
-        sid for sid, sdef in graph.get("states", {}).items()
-        if not sdef.get("anchors")
-    )
+    return sorted(sid for sid, sdef in graph.get("states", {}).items() if not sdef.get("anchors"))
 
 
 def transitions_missing_costs(graph: dict[str, Any]) -> list[str]:
     """Return transition IDs that have no cost annotation."""
-    return sorted(
-        tid for tid, tdef in graph.get("transitions", {}).items()
-        if "cost" not in tdef
-    )
+    return sorted(tid for tid, tdef in graph.get("transitions", {}).items() if "cost" not in tdef)
 
 
 def wait_states(graph: dict[str, Any]) -> list[str]:
     """Return states annotated as wait states."""
-    return sorted(
-        sid for sid, sdef in graph.get("states", {}).items()
-        if sdef.get("wait_state")
-    )
+    return sorted(sid for sid, sdef in graph.get("states", {}).items() if sdef.get("wait_state"))
 
 
 def graph_summary(graph: dict[str, Any]) -> dict[str, Any]:
@@ -116,10 +95,6 @@ def graph_summary(graph: dict[str, Any]) -> dict[str, Any]:
         "transitions_missing_costs": len(transitions_missing_costs(graph)),
         "orphan_states": orphan_states(graph),
         "wait_states": wait_states(graph),
-        "deterministic_transitions": sum(
-            1 for t in transitions.values() if t.get("method") == "deterministic"
-        ),
-        "vision_transitions": sum(
-            1 for t in transitions.values() if t.get("method") == "vision_required"
-        ),
+        "deterministic_transitions": sum(1 for t in transitions.values() if t.get("method") == "deterministic"),
+        "vision_transitions": sum(1 for t in transitions.values() if t.get("method") == "vision_required"),
     }

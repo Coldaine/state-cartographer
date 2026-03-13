@@ -1,4 +1,5 @@
 """Shared test fixtures for state-cartographer tests."""
+
 from __future__ import annotations
 
 import json
@@ -50,7 +51,12 @@ def mid_session():
         "current_state": "dock",
         "history": [
             {"type": "confirmed_state", "state_id": "main_menu", "timestamp": "2026-03-13T00:01:00Z"},
-            {"type": "transition", "transition_id": "main_to_dock", "from_state": "main_menu", "timestamp": "2026-03-13T00:02:00Z"},
+            {
+                "type": "transition",
+                "transition_id": "main_to_dock",
+                "from_state": "main_menu",
+                "timestamp": "2026-03-13T00:02:00Z",
+            },
             {"type": "confirmed_state", "state_id": "dock", "timestamp": "2026-03-13T00:03:00Z"},
         ],
     }

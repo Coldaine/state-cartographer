@@ -1,10 +1,11 @@
 """Tests for schema_validator.py — Graph Schema Validator."""
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "plugin" / "scripts"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 from schema_validator import validate_graph
 
@@ -28,9 +29,7 @@ class TestValidateGraph:
 
     def test_unknown_anchor_type(self):
         graph = {
-            "states": {
-                "s1": {"anchors": [{"type": "invalid_type", "cost": 1}]}
-            },
+            "states": {"s1": {"anchors": [{"type": "invalid_type", "cost": 1}]}},
             "transitions": {},
         }
         errors = validate_graph(graph)
@@ -38,9 +37,7 @@ class TestValidateGraph:
 
     def test_negative_cost(self):
         graph = {
-            "states": {
-                "s1": {"anchors": [{"type": "text_match", "pattern": "hi", "cost": -1}]}
-            },
+            "states": {"s1": {"anchors": [{"type": "text_match", "pattern": "hi", "cost": -1}]}},
             "transitions": {},
         }
         errors = validate_graph(graph)
@@ -48,9 +45,7 @@ class TestValidateGraph:
 
     def test_invalid_confidence_threshold(self):
         graph = {
-            "states": {
-                "s1": {"confidence_threshold": 1.5}
-            },
+            "states": {"s1": {"confidence_threshold": 1.5}},
             "transitions": {},
         }
         errors = validate_graph(graph)
@@ -58,9 +53,7 @@ class TestValidateGraph:
 
     def test_wait_state_missing_exit_signals(self):
         graph = {
-            "states": {
-                "s1": {"wait_state": True}
-            },
+            "states": {"s1": {"wait_state": True}},
             "transitions": {},
         }
         errors = validate_graph(graph)
@@ -85,9 +78,7 @@ class TestValidateGraph:
     def test_invalid_method(self):
         graph = {
             "states": {"s1": {}, "s2": {}},
-            "transitions": {
-                "t1": {"source": "s1", "dest": "s2", "method": "magic"}
-            },
+            "transitions": {"t1": {"source": "s1", "dest": "s2", "method": "magic"}},
         }
         errors = validate_graph(graph)
         assert any("unknown method" in e for e in errors)

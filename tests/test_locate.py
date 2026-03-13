@@ -1,10 +1,11 @@
 """Tests for locate.py — Passive State Classifier."""
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "plugin" / "scripts"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 from locate import (
     check_negative_anchors,
@@ -65,20 +66,12 @@ class TestConstrainBySession:
         assert result is None
 
     def test_session_with_transition(self, full_graph):
-        session = {
-            "history": [
-                {"type": "transition", "transition_id": "main_to_dock", "from_state": "main_menu"}
-            ]
-        }
+        session = {"history": [{"type": "transition", "transition_id": "main_to_dock", "from_state": "main_menu"}]}
         result = constrain_by_session(full_graph, session)
         assert result == ["dock"]
 
     def test_session_with_confirmed_state(self, full_graph):
-        session = {
-            "history": [
-                {"type": "confirmed_state", "state_id": "formation"}
-            ]
-        }
+        session = {"history": [{"type": "confirmed_state", "state_id": "formation"}]}
         result = constrain_by_session(full_graph, session)
         assert result == ["formation"]
 
@@ -99,11 +92,7 @@ class TestLocate:
         assert result["state"] == "unknown"
 
     def test_session_constrains_candidates(self, full_graph):
-        session = {
-            "history": [
-                {"type": "transition", "transition_id": "main_to_dock", "from_state": "main_menu"}
-            ]
-        }
+        session = {"history": [{"type": "transition", "transition_id": "main_to_dock", "from_state": "main_menu"}]}
         obs = {"text_content": "Dock", "dom_elements": ["#dock-header"]}
         result = locate(full_graph, session, obs)
         assert result["state"] == "dock"

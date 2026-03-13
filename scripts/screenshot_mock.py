@@ -9,6 +9,7 @@ Usage:
   python mock.py validate --graph graph.json --mock-dir mocks/
   python mock.py test-locate --graph graph.json --screenshot screenshot.png
 """
+
 from __future__ import annotations
 
 import argparse

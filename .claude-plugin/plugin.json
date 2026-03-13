@@ -1,0 +1,29 @@
+{
+  "name": "state-cartographer",
+  "version": "1.0.0",
+  "description": "Build, maintain, and navigate queryable state graphs of external systems. Turns screenshot-and-click automation into deterministic graph traversal.",
+  "author": {
+    "name": "Coldaine"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/Coldaine/state-cartographer",
+  "keywords": [
+    "state-machine",
+    "automation",
+    "navigation",
+    "graph",
+    "observation",
+    "pathfinding"
+  ],
+  "skills": [
+    "skills/state-graph-authoring",
+    "skills/state-graph-navigation"
+  ],
+  "agents": [
+    "agents/explorer.md",
+    "agents/consolidator.md",
+    "agents/optimizer.md"
+  ],
+  "commands": [],
+  "hooks": "hooks/hooks.json"
+}

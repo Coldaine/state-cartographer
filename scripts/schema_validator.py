@@ -4,6 +4,7 @@ schema_validator.py — Graph Schema Validator
 Validates graph definitions against the extended state-cartographer schema.
 Reports clear errors pointing to specific problems.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -54,32 +55,23 @@ def validate_graph(graph: dict[str, Any]) -> list[str]:
             if "cost" in anchor:
                 cost = anchor["cost"]
                 if not isinstance(cost, (int, float)) or cost < 0:
-                    errors.append(
-                        f"State '{state_id}' anchor [{i}]: cost must be non-negative number"
-                    )
+                    errors.append(f"State '{state_id}' anchor [{i}]: cost must be non-negative number")
 
         # Validate negative anchors
         for i, anchor in enumerate(state_def.get("negative_anchors", [])):
             anchor_type = anchor.get("type")
             if anchor_type not in VALID_ANCHOR_TYPES:
-                errors.append(
-                    f"State '{state_id}' negative_anchor [{i}]: unknown type '{anchor_type}'"
-                )
+                errors.append(f"State '{state_id}' negative_anchor [{i}]: unknown type '{anchor_type}'")
 
         # Validate confidence threshold
         if "confidence_threshold" in state_def:
             ct = state_def["confidence_threshold"]
             if not isinstance(ct, (int, float)) or ct < 0 or ct > 1:
-                errors.append(
-                    f"State '{state_id}': confidence_threshold must be between 0 and 1"
-                )
+                errors.append(f"State '{state_id}': confidence_threshold must be between 0 and 1")
 
         # Validate wait state annotations
-        if state_def.get("wait_state"):
-            if not state_def.get("exit_signals"):
-                errors.append(
-                    f"State '{state_id}': wait_state=true but no exit_signals defined"
-                )
+        if state_def.get("wait_state") and not state_def.get("exit_signals"):
+            errors.append(f"State '{state_id}': wait_state=true but no exit_signals defined")
 
     # Validate each transition
     for trans_id, trans_def in transitions.items():
@@ -93,30 +85,21 @@ def validate_graph(graph: dict[str, Any]) -> list[str]:
         if not source:
             errors.append(f"Transition '{trans_id}': missing 'source'")
         elif source not in state_ids:
-            errors.append(
-                f"Transition '{trans_id}': source '{source}' not found in states"
-            )
+            errors.append(f"Transition '{trans_id}': source '{source}' not found in states")
 
         if not dest:
             errors.append(f"Transition '{trans_id}': missing 'dest'")
         elif dest not in state_ids:
-            errors.append(
-                f"Transition '{trans_id}': dest '{dest}' not found in states"
-            )
+            errors.append(f"Transition '{trans_id}': dest '{dest}' not found in states")
 
         if "cost" in trans_def:
             cost = trans_def["cost"]
             if not isinstance(cost, (int, float)) or cost < 0:
-                errors.append(
-                    f"Transition '{trans_id}': cost must be non-negative number"
-                )
+                errors.append(f"Transition '{trans_id}': cost must be non-negative number")
 
         if "method" in trans_def:
             method = trans_def["method"]
             if method not in VALID_METHODS:
-                errors.append(
-                    f"Transition '{trans_id}': unknown method '{method}'. "
-                    f"Valid: {sorted(VALID_METHODS)}"
-                )
+                errors.append(f"Transition '{trans_id}': unknown method '{method}'. Valid: {sorted(VALID_METHODS)}")
 
     return errors
