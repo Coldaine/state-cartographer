@@ -164,6 +164,16 @@ def locate(
     candidates.sort(key=lambda c: c["confidence"], reverse=True)
 
     best = candidates[0]
+
+    # If no candidate has any positive confidence, state is unknown
+    if best["confidence"] <= 0.0:
+        return {
+            "state": "unknown",
+            "confidence": 0.0,
+            "escalation": "vision_review",
+            "message": "No matching state found. Observations match nothing in the graph.",
+        }
+
     if best["confidence"] >= best["threshold"] and (
         len(candidates) == 1 or best["confidence"] > candidates[1]["confidence"]
     ):
