@@ -1,0 +1,15 @@
+{
+  "initial_state": "a",
+  "states": {
+    "a": {"anchors": [], "confidence_threshold": 0.5},
+    "b": {"anchors": [], "confidence_threshold": 0.5},
+    "c": {"anchors": [], "confidence_threshold": 0.5},
+    "d": {"anchors": [], "confidence_threshold": 0.5}
+  },
+  "transitions": {
+    "a_to_b": {"source": "a", "dest": "b", "method": "deterministic", "cost": 1},
+    "a_to_c": {"source": "a", "dest": "c", "method": "vision_required", "cost": 50},
+    "b_to_d": {"source": "b", "dest": "d", "method": "deterministic", "cost": 1},
+    "c_to_d": {"source": "c", "dest": "d", "method": "deterministic", "cost": 1}
+  }
+}
