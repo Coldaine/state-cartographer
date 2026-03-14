@@ -48,7 +48,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["scripts", "screenshot_mock", "locate", "pathfind", "session", "graph_utils", "schema_validator"]
+known-first-party = ["scripts", "screenshot_mock", "locate", "pathfind", "session", "graph_utils", "schema_validator", "alas_log_parser", "alas_converter", "siphon", "observe", "calibrate", "adb_bridge"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -11,8 +11,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
-from observe import build_observations, extract_pixel_coords
 from png_factory import make_rgb_png
+
+from observe import build_observations, extract_pixel_coords
 
 SCRIPTS_DIR = Path(__file__).parent.parent / "scripts"
 

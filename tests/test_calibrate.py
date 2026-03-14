@@ -10,8 +10,9 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
-from calibrate import calibrate, calibrate_state
 from png_factory import make_rgb_png
+
+from calibrate import calibrate, calibrate_state
 
 SCRIPTS_DIR = Path(__file__).parent.parent / "scripts"
 
