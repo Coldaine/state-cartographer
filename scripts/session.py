@@ -16,7 +16,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -35,7 +35,7 @@ def init_session(graph_path: str) -> dict[str, Any]:
     """Create a new empty session."""
     return {
         "graph_path": graph_path,
-        "created_at": datetime.now(UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "current_state": None,
         "history": [],
     }
@@ -48,7 +48,7 @@ def confirm_state(session: dict[str, Any], state_id: str) -> dict[str, Any]:
         {
             "type": "confirmed_state",
             "state_id": state_id,
-            "timestamp": datetime.now(UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
     )
     return session
@@ -61,7 +61,7 @@ def record_transition(session: dict[str, Any], transition_id: str) -> dict[str, 
             "type": "transition",
             "transition_id": transition_id,
             "from_state": session.get("current_state"),
-            "timestamp": datetime.now(UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
     )
     # Current state becomes uncertain until next confirm
