@@ -10,12 +10,13 @@ Usage:
   python session.py transition --session session.json --event tap_dock
   python session.py query --session session.json
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -34,7 +35,7 @@ def init_session(graph_path: str) -> dict[str, Any]:
     """Create a new empty session."""
     return {
         "graph_path": graph_path,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "current_state": None,
         "history": [],
     }
@@ -43,22 +44,26 @@ def init_session(graph_path: str) -> dict[str, Any]:
 def confirm_state(session: dict[str, Any], state_id: str) -> dict[str, Any]:
     """Record a confirmed state in the session."""
     session["current_state"] = state_id
-    session["history"].append({
-        "type": "confirmed_state",
-        "state_id": state_id,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    })
+    session["history"].append(
+        {
+            "type": "confirmed_state",
+            "state_id": state_id,
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+    )
     return session
 
 
 def record_transition(session: dict[str, Any], transition_id: str) -> dict[str, Any]:
     """Record a transition taken in the session."""
-    session["history"].append({
-        "type": "transition",
-        "transition_id": transition_id,
-        "from_state": session.get("current_state"),
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    })
+    session["history"].append(
+        {
+            "type": "transition",
+            "transition_id": transition_id,
+            "from_state": session.get("current_state"),
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+    )
     # Current state becomes uncertain until next confirm
     session["current_state"] = None
     return session
@@ -67,12 +72,8 @@ def record_transition(session: dict[str, Any], transition_id: str) -> dict[str, 
 def query_session(session: dict[str, Any]) -> dict[str, Any]:
     """Return current session state and summary."""
     history = session.get("history", [])
-    confirmed_states = [
-        h["state_id"] for h in history if h["type"] == "confirmed_state"
-    ]
-    transitions_taken = [
-        h["transition_id"] for h in history if h["type"] == "transition"
-    ]
+    confirmed_states = [h["state_id"] for h in history if h["type"] == "confirmed_state"]
+    transitions_taken = [h["transition_id"] for h in history if h["type"] == "transition"]
 
     return {
         "current_state": session.get("current_state"),

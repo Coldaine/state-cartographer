@@ -1,12 +1,13 @@
 """Tests for pathfind.py — Weighted Route Planner."""
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "plugin" / "scripts"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
-from pathfind import build_adjacency, dijkstra, pathfind
+from pathfind import build_adjacency, pathfind
 
 
 class TestPathfind:
@@ -48,9 +49,7 @@ class TestPathfind:
         assert "b" not in route_states
 
     def test_prefer_deterministic(self, full_graph):
-        result = pathfind(
-            full_graph, "main_menu", "auto_battle", prefer_deterministic=True
-        )
+        result = pathfind(full_graph, "main_menu", "auto_battle", prefer_deterministic=True)
         assert "route" in result
         assert result["deterministic_steps"] >= 0
 

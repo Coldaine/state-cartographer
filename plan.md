@@ -6,12 +6,15 @@ State Cartographer is a Claude Code plugin for building queryable state graphs o
 
 ## Current Status
 
-**Phase: Project Bootstrap (Complete)**
+**Phase: Phase 1 Foundation (Complete)**
 
-The project has been scaffolded with:
-- Core Python scripts (`locate.py`, `pathfind.py`, `session.py`, `graph_utils.py`, `schema_validator.py`, `mock.py`)
-- Plugin structure (skills, agents, rules, commands)
-- Test suite with fixtures
+The project has been scaffolded and restructured as a proper Claude Code plugin:
+- Core Python scripts (`locate.py`, `pathfind.py`, `session.py`, `graph_utils.py`, `schema_validator.py`, `screenshot_mock.py`)
+- Plugin content (skills, agents, rules, commands) moved to root level (no more `plugin/` subdirectory)
+- `pyproject.toml` replaces `requirements.txt`; UV for environment management, Ruff for linting
+- Claude Code hooks (`hooks/hooks.json`, `hooks/post_write.py`)
+- Plugin manifest (`.claude-plugin/plugin.json`)
+- Test suite with fixtures — all tests passing
 - CI pipeline (GitHub Actions, Python 3.11/3.12/3.13)
 - Design documentation organized in `docs/`
 
@@ -26,7 +29,7 @@ The project has been scaffolded with:
 **Workflow:**
 1. Run `pytest tests/ -v` — see what fails
 2. Fix each script until its tests pass
-3. Run `pytest tests/ --cov=plugin/scripts` — verify coverage
+3. Run `pytest tests/ --cov=scripts` — verify coverage
 4. All 6 modules at 80%+ coverage
 
 **What's being validated:**
@@ -48,7 +51,7 @@ The project has been scaffolded with:
 **Workflow:**
 1. Write 5-10 more graph fixtures (edge cases: empty graphs, self-loops, disconnected components, deep hierarchies)
 2. Write property tests for schema validation (any valid graph passes, any invalid graph fails with a specific error)
-3. Document the schema completely in `plugin/skills/state-graph-authoring/references/schema.md`
+3. Document the schema completely in `skills/state-graph-authoring/references/schema.md`
 
 **What's being validated:**
 - Every field in the schema has a defined type, constraints, and default value

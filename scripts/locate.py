@@ -17,6 +17,7 @@ Output:
 Usage:
   python locate.py --graph graph.json --session session.json --observations obs.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -146,11 +147,13 @@ def locate(
         confidence = evaluate_anchors(state_id, anchors, observations)
 
         threshold = state_def.get("confidence_threshold", 0.7)
-        candidates.append({
-            "state": state_id,
-            "confidence": confidence,
-            "threshold": threshold,
-        })
+        candidates.append(
+            {
+                "state": state_id,
+                "confidence": confidence,
+                "threshold": threshold,
+            }
+        )
 
     if not candidates:
         return {
@@ -181,10 +184,7 @@ def locate(
 
     # Ambiguous — return candidates with disambiguation probes
     return {
-        "candidates": [
-            {"state": c["state"], "confidence": c["confidence"]}
-            for c in candidates[:5]
-        ],
+        "candidates": [{"state": c["state"], "confidence": c["confidence"]} for c in candidates[:5]],
         "disambiguation": _suggest_probes(candidates, states),
     }
 
@@ -201,25 +201,31 @@ def _suggest_probes(
         state_def = states.get(state_id, {})
         for anchor in state_def.get("anchors", []):
             if anchor.get("type") == "dom_element":
-                probes.append({
-                    "action": "check_dom_element",
-                    "selector": anchor.get("selector"),
-                    "resolves": state_id,
-                    "cost": anchor.get("cost", 5),
-                })
+                probes.append(
+                    {
+                        "action": "check_dom_element",
+                        "selector": anchor.get("selector"),
+                        "resolves": state_id,
+                        "cost": anchor.get("cost", 5),
+                    }
+                )
             elif anchor.get("type") == "text_match":
-                probes.append({
-                    "action": "check_text",
-                    "pattern": anchor.get("pattern"),
-                    "resolves": state_id,
-                    "cost": anchor.get("cost", 5),
-                })
+                probes.append(
+                    {
+                        "action": "check_text",
+                        "pattern": anchor.get("pattern"),
+                        "resolves": state_id,
+                        "cost": anchor.get("cost", 5),
+                    }
+                )
 
-    probes.append({
-        "action": "press_back",
-        "observe": "response",
-        "cost": 10,
-    })
+    probes.append(
+        {
+            "action": "press_back",
+            "observe": "response",
+            "cost": 10,
+        }
+    )
 
     probes.sort(key=lambda p: p.get("cost", 99))
     return probes

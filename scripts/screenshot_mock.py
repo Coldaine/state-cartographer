@@ -1,14 +1,14 @@
 """
-mock.py — Screenshot Mock Manager
+screenshot_mock.py — Screenshot Mock Manager
 
 Manages the offline development dataset: capture, validate anchors against
-screenshots, and test the locate classifier against known-state images.
+screenshots for known-state images.
 
 Usage:
-  python mock.py capture --state main_menu --file screenshot.png --output-dir mocks/
-  python mock.py validate --graph graph.json --mock-dir mocks/
-  python mock.py test-locate --graph graph.json --screenshot screenshot.png
+    python screenshot_mock.py capture --state main_menu --file screenshot.png --output-dir mocks/
+    python screenshot_mock.py validate --graph graph.json --mock-dir mocks/
 """
+
 from __future__ import annotations
 
 import argparse

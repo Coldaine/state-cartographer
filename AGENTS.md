@@ -27,41 +27,41 @@
 
 | Skill | Purpose |
 |-------|---------|
-| [plugin/skills/state-graph-authoring/SKILL.md](plugin/skills/state-graph-authoring/SKILL.md) | Core playbook: exploration → consolidation → optimization → maintenance |
-| [plugin/skills/state-graph-navigation/SKILL.md](plugin/skills/state-graph-navigation/SKILL.md) | Using an existing graph for cheap navigation |
+| [skills/state-graph-authoring/SKILL.md](skills/state-graph-authoring/SKILL.md) | Core playbook: exploration → consolidation → optimization → maintenance |
+| [skills/state-graph-navigation/SKILL.md](skills/state-graph-navigation/SKILL.md) | Using an existing graph for cheap navigation |
 
 ### Agents (Subagent Definitions)
 
 | Agent | Role |
 |-------|------|
-| [plugin/agents/explorer.md](plugin/agents/explorer.md) | Vision-heavy BFS navigation, builds raw observation dataset |
-| [plugin/agents/consolidator.md](plugin/agents/consolidator.md) | Analyzes observations, chooses anchors, produces graph.json |
-| [plugin/agents/optimizer.md](plugin/agents/optimizer.md) | Replaces vision transitions with deterministic alternatives |
+| [agents/explorer.md](agents/explorer.md) | Vision-heavy BFS navigation, builds raw observation dataset |
+| [agents/consolidator.md](agents/consolidator.md) | Analyzes observations, chooses anchors, produces graph.json |
+| [agents/optimizer.md](agents/optimizer.md) | Replaces vision transitions with deterministic alternatives |
 
 ### Rules (Always-On)
 
 | Rule | Governs |
 |------|---------|
-| [plugin/rules/safety.md](plugin/rules/safety.md) | Confidence tiers, irreversible action guards, escalation paths |
-| [plugin/rules/orientation.md](plugin/rules/orientation.md) | State confirmation after transitions, disambiguation, recovery |
-| [plugin/rules/graph-maintenance.md](plugin/rules/graph-maintenance.md) | When and how to update the graph during operation |
+| [rules/safety.md](rules/safety.md) | Confidence tiers, irreversible action guards, escalation paths |
+| [rules/orientation.md](rules/orientation.md) | State confirmation after transitions, disambiguation, recovery |
+| [rules/graph-maintenance.md](rules/graph-maintenance.md) | When and how to update the graph during operation |
 
 ### Scripts (Runtime Tools)
 
 | Script | Function |
 |--------|----------|
-| `plugin/scripts/locate.py` | Passive state classifier — "where am I?" |
-| `plugin/scripts/pathfind.py` | Weighted route planner — "how do I get there?" |
-| `plugin/scripts/session.py` | Session state manager — tracks confirmed states and transitions |
-| `plugin/scripts/graph_utils.py` | Graph inspection utilities — list states, find orphans, check reachability |
-| `plugin/scripts/schema_validator.py` | Schema validator — checks graph.json integrity |
-| `plugin/scripts/mock.py` | Mock/screenshot manager — capture and validate against graph |
+| `scripts/locate.py` | Passive state classifier — “where am I?” |
+| `scripts/pathfind.py` | Weighted route planner — “how do I get there?” |
+| `scripts/session.py` | Session state manager — tracks confirmed states and transitions |
+| `scripts/graph_utils.py` | Graph inspection utilities — list states, find orphans, check reachability |
+| `scripts/schema_validator.py` | Schema validator — checks graph.json integrity |
+| `scripts/screenshot_mock.py` | Mock/screenshot manager — capture and validate against graph |
 
 ### References
 
 | Reference | Content |
 |-----------|---------|
-| [plugin/skills/state-graph-authoring/references/schema.md](plugin/skills/state-graph-authoring/references/schema.md) | Complete graph.json schema specification |
+| [skills/state-graph-authoring/references/schema.md](skills/state-graph-authoring/references/schema.md) | Complete graph.json schema specification |
 
 ## Examples
 
@@ -76,4 +76,4 @@
 | [README.md](README.md) | Project overview for GitHub |
 | [LICENSE](LICENSE) | MIT License |
 | [.github/workflows/ci.yml](.github/workflows/ci.yml) | CI pipeline: pytest on Python 3.11/3.12/3.13 |
-| [project-layout-and-bootstrap.md](project-layout-and-bootstrap.md) | Original bootstrap instructions (historical reference) |
+| [docs/bootstrap.md](docs/bootstrap.md) | Original bootstrap instructions (historical reference) |

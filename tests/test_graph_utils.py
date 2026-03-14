@@ -1,20 +1,19 @@
 """Tests for graph_utils.py — Graph Inspection Utilities."""
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "plugin" / "scripts"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 from graph_utils import (
     graph_summary,
     list_states,
-    list_transitions,
     orphan_states,
     reachable_within,
     states_missing_anchors,
     transitions_from,
-    transitions_missing_costs,
     transitions_to,
     wait_states,
 )

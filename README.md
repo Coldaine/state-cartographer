@@ -1,6 +1,6 @@
 # State Cartographer
 
-A toolkit and methodology for building, maintaining, and navigating queryable state graphs of external systems. Enables AI agents to map unfamiliar interfaces, orient themselves from observations alone, and navigate via the cheapest available path.
+A Claude Code plugin and toolkit for building, maintaining, and navigating queryable state graphs of external systems. Enables AI agents to map unfamiliar interfaces, orient themselves from observations alone, and navigate via the cheapest available path.
 
 ## What This Is
 
@@ -22,21 +22,31 @@ The state graph becomes an API for a system that never published one.
 git clone https://github.com/Coldaine/state-cartographer.git
 cd state-cartographer
 
-# Python environment
-python -m venv .venv
-.venv\Scripts\activate  # Windows
-# source .venv/bin/activate  # Linux/Mac
-pip install -r plugin/scripts/requirements.txt
-pip install pytest
+# Install with UV (creates .venv automatically)
+uv sync
 
 # Run tests
-pytest tests/ -v
+uv run pytest tests/ -v
+
+# Lint
+uv run ruff check scripts/ tests/ hooks/ --fix
+uv run ruff format scripts/ tests/ hooks/
 ```
 
 ## Project Structure
 
 ```
 state-cartographer/
+├── .claude-plugin/        # Claude Code plugin manifest
+│   └── plugin.json
+├── skills/                # Skill playbooks (SKILL.md files)
+├── agents/                # Subagent definitions
+├── commands/              # Slash commands
+├── rules/                 # Always-on rules
+├── scripts/               # Python tooling
+├── hooks/                 # Claude Code hooks
+│   ├── hooks.json
+│   └── post_write.py
 ├── docs/                  # Design documents and architecture decisions
 │   ├── NORTH_STAR.md      # Vision and guiding principles
 │   ├── synthesis.md       # Full problem statement and conversation synthesis
@@ -44,15 +54,9 @@ state-cartographer/
 │   ├── architecture.md    # Layer mapping and architectural decisions
 │   └── decisions/         # Architecture Decision Records
 │
-├── plugin/                # THE PRODUCT — the Claude Code plugin
-│   ├── skills/            # Skill playbooks (SKILL.md files)
-│   ├── agents/            # Subagent definitions
-│   ├── commands/          # Slash commands
-│   ├── rules/             # Always-on rules
-│   └── scripts/           # Python tooling
-│
 ├── tests/                 # pytest tests for scripts
 ├── examples/              # Example graph definitions
+├── pyproject.toml         # Project config and dependencies
 └── dev/                   # Development utilities
 ```
 

@@ -9,6 +9,7 @@ Usage:
   python pathfind.py --graph graph.json --from current_state --to target_state --avoid broken_state
   python pathfind.py --graph graph.json --from current_state --to target_state --prefer deterministic
 """
+
 from __future__ import annotations
 
 import argparse
@@ -37,7 +38,7 @@ def build_adjacency(
     transitions = graph.get("transitions", {})
     adj: dict[str, list[tuple[str, float, dict[str, Any]]]] = {}
 
-    for trans_id, trans_def in transitions.items():
+    for _trans_id, trans_def in transitions.items():
         source = trans_def.get("source")
         dest = trans_def.get("dest")
         if not source or not dest:
@@ -96,13 +97,15 @@ def dijkstra(
     current = end
     while prev.get(current) is not None:
         from_state, trans_def = prev[current]
-        route.append({
-            "from": from_state,
-            "to": current,
-            "action": trans_def.get("action", {}),
-            "method": trans_def.get("method", "unknown"),
-            "cost": trans_def.get("cost", 10),
-        })
+        route.append(
+            {
+                "from": from_state,
+                "to": current,
+                "action": trans_def.get("action", {}),
+                "method": trans_def.get("method", "unknown"),
+                "cost": trans_def.get("cost", 10),
+            }
+        )
         current = from_state
 
     route.reverse()

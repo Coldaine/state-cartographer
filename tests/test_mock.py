@@ -1,12 +1,13 @@
-"""Tests for mock.py — Screenshot Mock Manager."""
+"""Tests for screenshot_mock.py — Screenshot Mock Manager."""
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "plugin" / "scripts"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
-from mock import capture, validate
+from screenshot_mock import capture, validate
 
 
 class TestCapture:
