@@ -26,6 +26,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
+try:
+    import imagehash
+    from PIL import Image
+
+    HAS_VISION = True
+except ImportError:
+    HAS_VISION = False
+
 
 def load_json(path: Path) -> dict[str, Any]:
     """Load and return a JSON file."""
@@ -41,27 +49,32 @@ def evaluate_anchors(
     """Evaluate observation anchors for a state and return confidence score.
 
     Anchors are evaluated in cost order (cheapest first). Each matching anchor
-    increases confidence. Negative anchors immediately disqualify.
+    increases confidence. Only evaluatable anchors count toward the total — anchors
+    that require unavailable data (e.g. screenshot_region without Pillow/imagehash, or
+    without a 'screenshot' key in observations) are skipped and do not penalize the score.
     """
     if not anchors:
         return 0.0
 
     sorted_anchors = sorted(anchors, key=lambda a: a.get("cost", 10))
     matches = 0
-    total = len(sorted_anchors)
+    evaluated = 0  # count only anchors we can actually evaluate
 
     for anchor in sorted_anchors:
         anchor_type = anchor.get("type", "")
         if anchor_type == "text_match":
+            evaluated += 1
             pattern = anchor.get("pattern", "")
             if observations.get("text_content") and pattern in observations["text_content"]:
                 matches += 1
         elif anchor_type == "dom_element":
+            evaluated += 1
             selector = anchor.get("selector", "")
             present_elements = observations.get("dom_elements", [])
             if selector in present_elements:
                 matches += 1
         elif anchor_type == "pixel_color":
+            evaluated += 1
             expected = tuple(anchor.get("expected_rgb", []))
             x, y = anchor.get("x", 0), anchor.get("y", 0)
             pixel_data = observations.get("pixels", {})
@@ -69,10 +82,30 @@ def evaluate_anchors(
             if actual and tuple(actual) == expected:
                 matches += 1
         elif anchor_type == "screenshot_region":
-            # Perceptual hash comparison - requires imagehash
-            matches += 0  # placeholder until imagehash integration
+            # Perceptual hash comparison — requires Pillow and imagehash (vision extra).
+            # Skip gracefully if deps missing, no screenshot in observations, or no stored hash.
+            if not HAS_VISION or not observations.get("screenshot") or not anchor.get("hash"):
+                continue
+            evaluated += 1
+            try:
+                region = anchor.get("region", {})
+                x, y = region.get("x", 0), region.get("y", 0)
+                w, h = region.get("width", 64), region.get("height", 64)
+                algorithm = anchor.get("hash_algorithm", "phash")
+                threshold = anchor.get("threshold", 10)
 
-    return matches / total if total > 0 else 0.0
+                img = Image.open(observations["screenshot"])
+                cropped = img.crop((x, y, x + w, y + h))
+                hash_func = getattr(imagehash, algorithm, imagehash.phash)
+                current_hash = hash_func(cropped)
+                ref_hash = imagehash.hex_to_hash(anchor["hash"])
+
+                if (current_hash - ref_hash) <= threshold:
+                    matches += 1
+            except (OSError, ValueError, AttributeError):
+                pass  # image read failure → 0 contribution for this anchor
+
+    return matches / evaluated if evaluated > 0 else 0.0
 
 
 def check_negative_anchors(
@@ -91,6 +124,31 @@ def check_negative_anchors(
             pattern = anchor.get("pattern", "")
             if observations.get("text_content") and pattern in observations["text_content"]:
                 return True
+        elif anchor_type == "pixel_color":
+            expected = tuple(anchor.get("expected_rgb", []))
+            x, y = anchor.get("x", 0), anchor.get("y", 0)
+            pixel_data = observations.get("pixels", {})
+            actual = pixel_data.get(f"{x},{y}")
+            if actual and tuple(actual) == expected:
+                return True
+        elif anchor_type == "screenshot_region":
+            if not HAS_VISION or not observations.get("screenshot") or not anchor.get("hash"):
+                continue
+            try:
+                region = anchor.get("region", {})
+                x, y = region.get("x", 0), region.get("y", 0)
+                w, h = region.get("width", 64), region.get("height", 64)
+                algorithm = anchor.get("hash_algorithm", "phash")
+                threshold = anchor.get("threshold", 10)
+                img = Image.open(observations["screenshot"])
+                cropped = img.crop((x, y, x + w, y + h))
+                hash_func = getattr(imagehash, algorithm, imagehash.phash)
+                current_hash = hash_func(cropped)
+                ref_hash = imagehash.hex_to_hash(anchor["hash"])
+                if (current_hash - ref_hash) <= threshold:
+                    return True
+            except (OSError, ValueError, AttributeError):
+                pass
     return False
 
 
@@ -245,6 +303,17 @@ def main():
     result = locate(graph, session, observations)
     json.dump(result, sys.stdout, indent=2)
     print()
+
+
+def pixel_coords_from_graph(graph: dict[str, Any]) -> list[tuple[int, int]]:
+    """Extract all pixel sampling coordinates from pixel_color anchors across all states."""
+    coords: set[tuple[int, int]] = set()
+    for state_def in graph.get("states", {}).values():
+        all_anchors = state_def.get("anchors", []) + state_def.get("negative_anchors", [])
+        for anchor in all_anchors:
+            if anchor.get("type") == "pixel_color":
+                coords.add((anchor.get("x", 0), anchor.get("y", 0)))
+    return sorted(coords)
 
 
 if __name__ == "__main__":

@@ -105,7 +105,84 @@ class TestPathfindIntegration:
         )
         assert_success(result)
         data = json.loads(result.stdout)
-        assert data["route"] is not None
+        # landing_page → login_form (det) → dashboard (vision) → profile_edit (det) = 3 hops
+        assert data["hops"] == 3
+        assert data["hops"] == len(data["route"])
+        assert data["deterministic_steps"] == 2
+        assert data["vision_steps"] == 1
+
+
+class TestSessionIntegration:
+    def test_init_session(self, tmp_path):
+        graph = tmp_path / "graph.json"
+        graph.write_text('{"states": {}, "transitions": {}}')
+        session_file = tmp_path / "session.json"
+        result = run_script("session.py", "init", "--graph", str(graph), "--output", str(session_file))
+        assert_success(result)
+        assert session_file.exists()
+        data = json.loads(session_file.read_text())
+        assert data["current_state"] is None
+        assert data["history"] == []
+
+    def test_confirm_state(self, tmp_path):
+        graph = tmp_path / "graph.json"
+        graph.write_text('{"states": {}, "transitions": {}}')
+        session_file = tmp_path / "session.json"
+        run_script("session.py", "init", "--graph", str(graph), "--output", str(session_file))
+        result = run_script("session.py", "confirm", "--session", str(session_file), "--state", "main_menu")
+        assert_success(result)
+        data = json.loads(session_file.read_text())
+        assert data["current_state"] == "main_menu"
+
+    def test_record_transition(self, tmp_path):
+        graph = tmp_path / "graph.json"
+        graph.write_text('{"states": {}, "transitions": {}}')
+        session_file = tmp_path / "session.json"
+        run_script("session.py", "init", "--graph", str(graph), "--output", str(session_file))
+        run_script("session.py", "confirm", "--session", str(session_file), "--state", "main_menu")
+        result = run_script("session.py", "transition", "--session", str(session_file), "--event", "tap_dock")
+        assert_success(result)
+        data = json.loads(session_file.read_text())
+        assert data["current_state"] is None
+        assert any(h["type"] == "transition" for h in data["history"])
+
+    def test_query_session(self, tmp_path):
+        graph = tmp_path / "graph.json"
+        graph.write_text('{"states": {}, "transitions": {}}')
+        session_file = tmp_path / "session.json"
+        run_script("session.py", "init", "--graph", str(graph), "--output", str(session_file))
+        run_script("session.py", "confirm", "--session", str(session_file), "--state", "dock")
+        result = run_script("session.py", "query", "--session", str(session_file))
+        assert_success(result)
+        data = json.loads(result.stdout)
+        assert data["current_state"] == "dock"
+
+
+class TestObserveIntegration:
+    def test_observe_screenshot_no_graph(self, tmp_path):
+        screenshot = tmp_path / "screen.png"
+        screenshot.write_bytes(b"fake png data")
+        result = run_script("observe.py", "--screenshot", str(screenshot))
+        assert_success(result)
+        data = json.loads(result.stdout)
+        assert "screenshot" in data
+        assert "pixels" in data
+        assert data["pixels"] == {}
+
+    def test_observe_screenshot_with_graph(self, tmp_path):
+        screenshot = tmp_path / "screen.png"
+        screenshot.write_bytes(b"fake png data")
+        graph = tmp_path / "graph.json"
+        graph.write_text('{"states": {"s1": {"anchors": [{"type": "text_match", "pattern": "x"}]}}, "transitions": {}}')
+        result = run_script("observe.py", "--screenshot", str(screenshot), "--graph", str(graph))
+        assert_success(result)
+        data = json.loads(result.stdout)
+        # No pixel_color anchors in graph → pixels dict empty
+        assert data["pixels"] == {}
+
+    def test_observe_missing_screenshot(self, tmp_path):
+        result = run_script("observe.py", "--screenshot", str(tmp_path / "missing.png"))
+        assert result.returncode == 2
 
 
 class TestFixtureGraphsValid:

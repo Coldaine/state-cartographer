@@ -15,6 +15,14 @@ State Cartographer provides:
 
 The state graph becomes an API for a system that never published one.
 
+## Why This Exists
+
+This project was inspired by [ALAS (AzurLaneAutoScript)](https://github.com/Zuosizhu/Alas-with-Dashboard), a 9-year-old automation framework that built a complete 43-state page graph for the mobile game Azur Lane — by hand, over years of iteration. ALAS proved the pattern: color-based state detection, BFS pathfinding, deterministic navigation, and recovery from unknown states.
+
+State Cartographer generalizes that approach into a **methodology and toolkit** that any LLM agent can follow to build an equivalent state graph for *any* external system. The playbook replaces years of manual iteration with systematic, agent-driven graph construction.
+
+ALAS's page definitions, button coordinates, and navigation logic serve as the primary reference case for validating that our schema and tools are expressive enough to represent real-world systems.
+
 ## Quick Start
 
 ```bash
@@ -23,7 +31,10 @@ git clone https://github.com/Coldaine/state-cartographer.git
 cd state-cartographer
 
 # Install with UV (creates .venv automatically)
-uv sync
+uv sync --extra dev          # test tooling (pytest, ruff)
+uv sync --extra vision       # screenshot/vision support (Pillow, imagehash)
+# Or install everything:
+uv sync --extra dev,vision
 
 # Run tests
 uv run pytest tests/ -v

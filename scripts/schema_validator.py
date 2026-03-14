@@ -15,6 +15,39 @@ from typing import Any
 
 VALID_ANCHOR_TYPES = {"text_match", "dom_element", "pixel_color", "screenshot_region"}
 VALID_METHODS = {"deterministic", "vision_required", "unknown"}
+VALID_HASH_ALGORITHMS = {"phash", "dhash", "ahash", "whash"}
+
+
+def _validate_anchor(anchor: dict, label: str, errors: list[str]) -> None:
+    """Validate a single anchor dict, appending errors to the list."""
+    anchor_type = anchor.get("type")
+    if anchor_type not in VALID_ANCHOR_TYPES:
+        errors.append(f"{label}: unknown type '{anchor_type}'. Valid: {sorted(VALID_ANCHOR_TYPES)}")
+    if "cost" in anchor:
+        cost = anchor["cost"]
+        if not isinstance(cost, (int, float)) or cost < 0:
+            errors.append(f"{label}: cost must be a non-negative number")
+
+    if anchor_type == "screenshot_region":
+        if "hash" in anchor and "region" not in anchor:
+            errors.append(f"{label}: screenshot_region with 'hash' must also have a 'region' dict")
+        if "region" in anchor:
+            region = anchor["region"]
+            if not isinstance(region, dict):
+                errors.append(f"{label}: 'region' must be an object with x, y, width, height")
+            else:
+                for field in ("x", "y", "width", "height"):
+                    if field in region and not isinstance(region[field], (int, float)):
+                        errors.append(f"{label}: region.{field} must be a number")
+        if "hash_algorithm" in anchor and anchor["hash_algorithm"] not in VALID_HASH_ALGORITHMS:
+            errors.append(
+                f"{label}: hash_algorithm '{anchor['hash_algorithm']}' is invalid. "
+                f"Valid: {sorted(VALID_HASH_ALGORITHMS)}"
+            )
+        if "threshold" in anchor:
+            t = anchor["threshold"]
+            if not isinstance(t, (int, float)) or t < 0:
+                errors.append(f"{label}: threshold must be a non-negative number")
 
 
 def validate_graph(graph: dict[str, Any]) -> list[str]:
@@ -50,16 +83,7 @@ def validate_graph(graph: dict[str, Any]) -> list[str]:
 
         # Validate anchors
         for i, anchor in enumerate(state_def.get("anchors", [])):
-            anchor_type = anchor.get("type")
-            if anchor_type not in VALID_ANCHOR_TYPES:
-                errors.append(
-                    f"State '{state_id}' anchor [{i}]: unknown type '{anchor_type}'. "
-                    f"Valid: {sorted(VALID_ANCHOR_TYPES)}"
-                )
-            if "cost" in anchor:
-                cost = anchor["cost"]
-                if not isinstance(cost, (int, float)) or cost < 0:
-                    errors.append(f"State '{state_id}' anchor [{i}]: cost must be non-negative number")
+            _validate_anchor(anchor, f"State '{state_id}' anchor [{i}]", errors)
 
         # Validate negative anchors
         for i, anchor in enumerate(state_def.get("negative_anchors", [])):

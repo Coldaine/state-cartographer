@@ -46,3 +46,36 @@ class TestValidate:
         result = validate(full_graph, mock_dir)
         assert "main_menu" in result["states_with_screenshots"]
         assert "dock" in result["states_missing_screenshots"]
+
+    def test_validate_returns_anchor_results(self, tmp_path):
+        # Graph with text_match anchors; validate() builds obs with text_content=None
+        # so text_match never fires — score must be 0.0 and pass must be False
+        graph = {
+            "states": {
+                "login": {
+                    "anchors": [{"type": "text_match", "pattern": "Login", "cost": 1}],
+                    "confidence_threshold": 0.7,
+                }
+            },
+            "transitions": {},
+        }
+        mock_dir = tmp_path / "mocks"
+        mock_dir.mkdir()
+        (mock_dir / "login_01.png").write_bytes(b"fake")
+
+        result = validate(graph, mock_dir)
+        assert "login" in result["anchor_results"]
+        screenshot_result = result["anchor_results"]["login"][0]
+        assert screenshot_result["score"] == 0.0  # no text_content in mock obs
+        assert screenshot_result["pass"] is False  # 0.0 < threshold 0.7
+        assert screenshot_result["threshold"] == 0.7
+
+    def test_validate_no_screenshots_for_state(self, full_graph, tmp_path):
+        mock_dir = tmp_path / "empty_mocks"
+        mock_dir.mkdir()
+
+        result = validate(full_graph, mock_dir)
+        # All states should be missing
+        for state_id in full_graph["states"]:
+            assert state_id in result["states_missing_screenshots"]
+        assert result["anchor_results"] == {}

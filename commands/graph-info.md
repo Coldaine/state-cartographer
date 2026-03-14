@@ -1,3 +1,10 @@
+---
+name: Graph Info
+description: Get a summary of a state graph including total states, transitions, completeness metrics, and potential issues.
+type: command
+usage: /graph-info
+---
+
 # Graph Info
 
 Get a summary of a state graph: total states, transitions, completeness metrics, and potential issues.

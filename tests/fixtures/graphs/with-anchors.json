@@ -4,7 +4,8 @@
     "main_menu": {
       "anchors": [
         {"type": "text_match", "pattern": "Welcome, Commander", "cost": 2},
-        {"type": "dom_element", "selector": "#main-menu-container", "cost": 1}
+        {"type": "dom_element", "selector": "#main-menu-container", "cost": 1},
+        {"type": "screenshot_region", "region": {"x": 0, "y": 0, "width": 80, "height": 40}, "hash": "ffffffffffffffff", "hash_algorithm": "phash", "threshold": 10, "cost": 5}
       ],
       "negative_anchors": [
         {"type": "dom_element", "selector": ".loading-spinner"}

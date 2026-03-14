@@ -17,15 +17,17 @@ The architecture doc recommends Python with pytransitions as the graph engine. T
 
 **Revision**: the architecture doc should present this as an open question with tradeoffs, not a recommendation. The first sprint should include a spike to test both pytransitions and at least one other option against the actual requirements of `locate()` and `pathfind()`.
 
-### 2. Multi-agent decomposition is aspirational, not confirmed
+### 2. Multi-agent decomposition is implemented; runtime validation is pending
 
-The project layout proposes three subagents (explorer, consolidator, optimizer) as distinct agent definitions. This may be the right architecture, but we don't know yet:
+The project now ships three fully-defined subagent definitions in `agents/`: `explorer.md`, `consolidator.md`, and `optimizer.md`. They are registered in `.claude-plugin/plugin.json` and follow the established frontmatter format used across agents and rules.
 
-- We haven't validated that subagents are the right primitive here (vs. commands, vs. skill phases, vs. just prompting)
-- The overhead of spawning subagents may not be worth it for early iterations
-- The boundaries between phases may turn out to be blurry in practice
+What remains unvalidated:
 
-**Revision**: the `plugin/agents/` directory stays in the layout as a target, but the first iterations should work as a single skill with phases, not as separate agents. Agent decomposition happens only after we've manually run the workflow enough times to know where the natural handoff points actually are.
+- Whether spawning separate subagents is worth the overhead in practice vs. running as unified skill phases
+- Where the natural handoff boundaries actually fall after real exploration sessions
+- Whether the three-phase split (explore → consolidate → optimize) holds up or needs merging/splitting
+
+**Status**: Implementation complete; runtime validation requires running the full workflow against a real external system. The agent decomposition can be collapsed back to unified phases if practice shows the boundaries are too blurry.
 
 ### 3. The specific script interfaces are speculative
 
