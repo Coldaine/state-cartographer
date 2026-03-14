@@ -1,3 +1,10 @@
+---
+name: Find Path
+description: Find the cheapest route between two states in the graph using weighted Dijkstra pathfinding.
+type: command
+usage: /pathfind
+---
+
 # Find Path
 
 Find the cheapest route between two states in the graph using weighted pathfinding.

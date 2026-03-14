@@ -26,4 +26,4 @@ jobs:
           uv run ruff check --no-fix scripts/ tests/ hooks/
           uv run ruff format --check scripts/ tests/ hooks/
       - name: Run tests
-        run: uv run pytest tests/ -v --cov=scripts
+        run: uv run pytest tests/ -v

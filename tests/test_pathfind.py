@@ -48,15 +48,28 @@ class TestPathfind:
         route_states = [r["to"] for r in result["route"]]
         assert "b" not in route_states
 
-    def test_prefer_deterministic(self, full_graph):
-        result = pathfind(full_graph, "main_menu", "auto_battle", prefer_deterministic=True)
-        assert "route" in result
-        assert result["deterministic_steps"] >= 0
+    def test_prefer_deterministic(self):
+        # Inline graph: vision route is cheaper nominally but more expensive when biased.
+        # Without preference: vision_required (cost 4) wins over deterministic (cost 10).
+        # With preference: vision doubles to 8, deterministic halves to 5 -> deterministic wins.
+        graph = {
+            "states": {"start": {"anchors": []}, "end": {"anchors": []}},
+            "transitions": {
+                "via_vision": {"source": "start", "dest": "end", "method": "vision_required", "cost": 4},
+                "via_det": {"source": "start", "dest": "end", "method": "deterministic", "cost": 10},
+            },
+        }
+        without = pathfind(graph, "start", "end", prefer_deterministic=False)
+        with_pref = pathfind(graph, "start", "end", prefer_deterministic=True)
+
+        assert without["route"][0]["method"] == "vision_required"  # cheaper without bias
+        assert with_pref["route"][0]["method"] == "deterministic"  # wins after bias applied
 
     def test_counts_methods(self, full_graph):
+        # main_menu → sortie_select (deterministic) → auto_battle (vision_required)
         result = pathfind(full_graph, "main_menu", "auto_battle")
-        assert "deterministic_steps" in result
-        assert "vision_steps" in result
+        assert result["deterministic_steps"] == 1
+        assert result["vision_steps"] == 1
 
 
 class TestBuildAdjacency:

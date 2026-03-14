@@ -28,7 +28,9 @@
     "commands/locate.md",
     "commands/validate.md",
     "commands/graph-info.md",
-    "commands/pathfind.md"
+    "commands/pathfind.md",
+    "commands/observe.md",
+    "commands/calibrate.md"
   ],
   "rules": [
     "rules/safety.md",

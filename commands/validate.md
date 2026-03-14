@@ -1,3 +1,10 @@
+---
+name: Validate Graph
+description: Check a graph definition for schema errors, missing fields, and structural issues.
+type: command
+usage: /validate
+---
+
 # Validate Graph
 
 Check a graph definition for schema errors, missing fields, and structural issues.

@@ -23,7 +23,10 @@ git clone https://github.com/Coldaine/state-cartographer.git
 cd state-cartographer
 
 # Install with UV (creates .venv automatically)
-uv sync
+uv sync --extra dev          # test tooling (pytest, ruff)
+uv sync --extra vision       # screenshot/vision support (Pillow, imagehash)
+# Or install everything:
+uv sync --extra dev,vision
 
 # Run tests
 uv run pytest tests/ -v

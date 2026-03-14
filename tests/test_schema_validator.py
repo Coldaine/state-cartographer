@@ -82,3 +82,51 @@ class TestValidateGraph:
         }
         errors = validate_graph(graph)
         assert any("unknown method" in e for e in errors)
+
+    def test_valid_screenshot_region_anchor(self):
+        graph = {
+            "states": {
+                "s1": {
+                    "anchors": [
+                        {
+                            "type": "screenshot_region",
+                            "region": {"x": 0, "y": 0, "width": 80, "height": 40},
+                            "hash": "ffffffffffffffff",
+                            "hash_algorithm": "phash",
+                            "threshold": 10,
+                            "cost": 5,
+                        }
+                    ]
+                }
+            },
+            "transitions": {},
+        }
+        errors = validate_graph(graph)
+        assert errors == []
+
+    def test_screenshot_region_hash_without_region(self):
+        graph = {
+            "states": {"s1": {"anchors": [{"type": "screenshot_region", "hash": "ffffffffffffffff", "cost": 5}]}},
+            "transitions": {},
+        }
+        errors = validate_graph(graph)
+        assert any("region" in e for e in errors)
+
+    def test_screenshot_region_invalid_algorithm(self):
+        graph = {
+            "states": {
+                "s1": {
+                    "anchors": [
+                        {
+                            "type": "screenshot_region",
+                            "region": {"x": 0, "y": 0, "width": 10, "height": 10},
+                            "hash": "deadbeef01234567",
+                            "hash_algorithm": "invalid_algo",
+                        }
+                    ]
+                }
+            },
+            "transitions": {},
+        }
+        errors = validate_graph(graph)
+        assert any("hash_algorithm" in e for e in errors)

@@ -1,3 +1,10 @@
+---
+name: Locate Current State
+description: Determine the current state of the external system by evaluating observations against the state graph.
+type: command
+usage: /locate
+---
+
 # Locate Current State
 
 Determine the current state of the external system by evaluating observations against the state graph.
