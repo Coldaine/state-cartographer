@@ -29,3 +29,4 @@ vendor/AzurLaneAutoScript/.pytest_cache/
 vendor/AzurLaneAutoScript/.mypy_cache/
 vendor/AzurLaneAutoScript/.ruff_cache/
 vendor/AzurLaneAutoScript/.venv/
+.pytest_tmp/
