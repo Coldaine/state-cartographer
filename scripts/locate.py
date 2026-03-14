@@ -124,6 +124,31 @@ def check_negative_anchors(
             pattern = anchor.get("pattern", "")
             if observations.get("text_content") and pattern in observations["text_content"]:
                 return True
+        elif anchor_type == "pixel_color":
+            expected = tuple(anchor.get("expected_rgb", []))
+            x, y = anchor.get("x", 0), anchor.get("y", 0)
+            pixel_data = observations.get("pixels", {})
+            actual = pixel_data.get(f"{x},{y}")
+            if actual and tuple(actual) == expected:
+                return True
+        elif anchor_type == "screenshot_region":
+            if not HAS_VISION or not observations.get("screenshot") or not anchor.get("hash"):
+                continue
+            try:
+                region = anchor.get("region", {})
+                x, y = region.get("x", 0), region.get("y", 0)
+                w, h = region.get("width", 64), region.get("height", 64)
+                algorithm = anchor.get("hash_algorithm", "phash")
+                threshold = anchor.get("threshold", 10)
+                img = Image.open(observations["screenshot"])
+                cropped = img.crop((x, y, x + w, y + h))
+                hash_func = getattr(imagehash, algorithm, imagehash.phash)
+                current_hash = hash_func(cropped)
+                ref_hash = imagehash.hex_to_hash(anchor["hash"])
+                if (current_hash - ref_hash) <= threshold:
+                    return True
+            except (OSError, ValueError, AttributeError):
+                pass
     return False
 
 

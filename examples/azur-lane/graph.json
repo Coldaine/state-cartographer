@@ -1,0 +1,280 @@
+{
+  "initial_state": "page_main",
+  "metadata": {
+    "app": "Azur Lane",
+    "emulator": "MEMU",
+    "resolution": "1280x720",
+    "adb_serial": "127.0.0.1:21503",
+    "source": "Coordinates derived from AzurLaneAutoScript (ALAS) page definitions",
+    "calibration_required": true,
+    "calibration_note": "All expected_rgb values are [0,0,0] placeholders. Run calibrate.py against each page before use."
+  },
+  "states": {
+    "page_main": {
+      "description": "Main hub screen. Fleet collection tiles visible in center. Home button (GOTO_MAIN) NOT present in top-right corner.",
+      "anchors": [
+        {
+          "type": "pixel_color",
+          "x": 903,
+          "y": 391,
+          "expected_rgb": [0, 0, 0],
+          "cost": 1,
+          "label": "MAIN_GOTO_FLEET area center — unique fleet-collection blue tile on main page"
+        },
+        {
+          "type": "pixel_color",
+          "x": 249,
+          "y": 691,
+          "expected_rgb": [0, 0, 0],
+          "cost": 1,
+          "label": "Dock nav tab center — deselected/default color when viewed from main page"
+        }
+      ],
+      "confidence_threshold": 0.7
+    },
+    "page_dock": {
+      "description": "Ship collection (dock) page. Shows full shipgirl roster. Dock tab highlighted in bottom navigation bar.",
+      "anchors": [
+        {
+          "type": "pixel_color",
+          "x": 1229,
+          "y": 34,
+          "expected_rgb": [0, 0, 0],
+          "cost": 1,
+          "label": "GOTO_MAIN home button — present on all non-main pages"
+        },
+        {
+          "type": "pixel_color",
+          "x": 249,
+          "y": 691,
+          "expected_rgb": [0, 0, 0],
+          "cost": 1,
+          "label": "Dock nav tab center — selected/highlighted color when on dock page"
+        }
+      ],
+      "confidence_threshold": 0.7
+    },
+    "page_fleet": {
+      "description": "Fleet management page. Shows fleet formation slots for combat assignment.",
+      "anchors": [
+        {
+          "type": "pixel_color",
+          "x": 1229,
+          "y": 34,
+          "expected_rgb": [0, 0, 0],
+          "cost": 1,
+          "label": "GOTO_MAIN home button"
+        },
+        {
+          "type": "pixel_color",
+          "x": 640,
+          "y": 80,
+          "expected_rgb": [0, 0, 0],
+          "cost": 1,
+          "label": "Fleet page header bar center — unique color/content on fleet page"
+        }
+      ],
+      "confidence_threshold": 0.7
+    },
+    "page_build": {
+      "description": "Ship construction (build) page. Build tab highlighted in bottom right navigation bar.",
+      "anchors": [
+        {
+          "type": "pixel_color",
+          "x": 1229,
+          "y": 34,
+          "expected_rgb": [0, 0, 0],
+          "cost": 1,
+          "label": "GOTO_MAIN home button"
+        },
+        {
+          "type": "pixel_color",
+          "x": 1035,
+          "y": 699,
+          "expected_rgb": [0, 0, 0],
+          "cost": 1,
+          "label": "Build nav tab center — selected/highlighted color when on build page"
+        }
+      ],
+      "confidence_threshold": 0.7
+    },
+    "page_guild": {
+      "description": "Guild page. Guild tab visible in bottom-right corner of navigation bar.",
+      "anchors": [
+        {
+          "type": "pixel_color",
+          "x": 1229,
+          "y": 34,
+          "expected_rgb": [0, 0, 0],
+          "cost": 1,
+          "label": "GOTO_MAIN home button"
+        },
+        {
+          "type": "pixel_color",
+          "x": 1193,
+          "y": 689,
+          "expected_rgb": [0, 0, 0],
+          "cost": 1,
+          "label": "Guild nav tab center — selected/highlighted color when on guild page"
+        }
+      ],
+      "confidence_threshold": 0.7
+    },
+    "page_reward": {
+      "description": "Daily missions and reward collection page.",
+      "anchors": [
+        {
+          "type": "pixel_color",
+          "x": 1229,
+          "y": 34,
+          "expected_rgb": [0, 0, 0],
+          "cost": 1,
+          "label": "GOTO_MAIN home button"
+        },
+        {
+          "type": "pixel_color",
+          "x": 640,
+          "y": 80,
+          "expected_rgb": [0, 0, 0],
+          "cost": 1,
+          "label": "Reward page header bar center"
+        }
+      ],
+      "confidence_threshold": 0.7
+    },
+    "page_campaign": {
+      "description": "Campaign / world map selection page.",
+      "anchors": [
+        {
+          "type": "pixel_color",
+          "x": 1229,
+          "y": 34,
+          "expected_rgb": [0, 0, 0],
+          "cost": 1,
+          "label": "GOTO_MAIN home button"
+        },
+        {
+          "type": "pixel_color",
+          "x": 640,
+          "y": 80,
+          "expected_rgb": [0, 0, 0],
+          "cost": 1,
+          "label": "Campaign page header bar center"
+        }
+      ],
+      "confidence_threshold": 0.7
+    }
+  },
+  "transitions": {
+    "main_to_dock": {
+      "source": "page_main",
+      "dest": "page_dock",
+      "method": "deterministic",
+      "cost": 10,
+      "action": {
+        "type": "adb_tap",
+        "x": 249,
+        "y": 691
+      }
+    },
+    "main_to_fleet": {
+      "source": "page_main",
+      "dest": "page_fleet",
+      "method": "deterministic",
+      "cost": 10,
+      "action": {
+        "type": "adb_tap",
+        "x": 882,
+        "y": 394
+      }
+    },
+    "main_to_build": {
+      "source": "page_main",
+      "dest": "page_build",
+      "method": "deterministic",
+      "cost": 10,
+      "action": {
+        "type": "adb_tap",
+        "x": 1035,
+        "y": 699
+      }
+    },
+    "main_to_guild": {
+      "source": "page_main",
+      "dest": "page_guild",
+      "method": "deterministic",
+      "cost": 10,
+      "action": {
+        "type": "adb_tap",
+        "x": 1193,
+        "y": 689
+      }
+    },
+    "dock_to_main": {
+      "source": "page_dock",
+      "dest": "page_main",
+      "method": "deterministic",
+      "cost": 10,
+      "action": {
+        "type": "adb_tap",
+        "x": 1229,
+        "y": 34
+      }
+    },
+    "fleet_to_main": {
+      "source": "page_fleet",
+      "dest": "page_main",
+      "method": "deterministic",
+      "cost": 10,
+      "action": {
+        "type": "adb_tap",
+        "x": 1229,
+        "y": 34
+      }
+    },
+    "build_to_main": {
+      "source": "page_build",
+      "dest": "page_main",
+      "method": "deterministic",
+      "cost": 10,
+      "action": {
+        "type": "adb_tap",
+        "x": 1229,
+        "y": 34
+      }
+    },
+    "guild_to_main": {
+      "source": "page_guild",
+      "dest": "page_main",
+      "method": "deterministic",
+      "cost": 10,
+      "action": {
+        "type": "adb_tap",
+        "x": 1229,
+        "y": 34
+      }
+    },
+    "reward_to_main": {
+      "source": "page_reward",
+      "dest": "page_main",
+      "method": "deterministic",
+      "cost": 10,
+      "action": {
+        "type": "adb_tap",
+        "x": 1229,
+        "y": 34
+      }
+    },
+    "campaign_to_main": {
+      "source": "page_campaign",
+      "dest": "page_main",
+      "method": "deterministic",
+      "cost": 10,
+      "action": {
+        "type": "adb_tap",
+        "x": 1229,
+        "y": 34
+      }
+    }
+  }
+}

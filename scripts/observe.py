@@ -18,6 +18,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import sys
 from pathlib import Path
@@ -84,10 +85,37 @@ def build_observations(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Observation extractor — builds observations dict from a screenshot")
-    parser.add_argument("--screenshot", required=True, help="Path to screenshot PNG")
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--screenshot", help="Path to an existing screenshot PNG")
+    source.add_argument(
+        "--adb",
+        metavar="SERIAL",
+        help="ADB device serial to capture a live screenshot (e.g. 127.0.0.1:21503)",
+    )
     parser.add_argument("--graph", help="Path to graph.json (extracts pixel_color anchor coords)")
     parser.add_argument("--output", help="Write observations JSON to file (default: stdout)")
     args = parser.parse_args()
+
+    # If --adb is supplied, take a live screenshot and save it to a temp file.
+    _tmp_path: Path | None = None
+    if args.adb:
+        import tempfile
+
+        try:
+            from adb_bridge import screenshot as _adb_screenshot
+        except ImportError:
+            sys.stderr.write("adb_bridge module not found. Is it in the same directory?\n")
+            return 2
+        try:
+            png_bytes = _adb_screenshot(args.adb)
+        except RuntimeError as e:
+            sys.stderr.write(f"ADB screenshot failed: {e}\n")
+            return 2
+        tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)  # noqa: SIM115
+        tmp.write(png_bytes)
+        tmp.close()
+        _tmp_path = Path(tmp.name)
+        args.screenshot = str(_tmp_path)
 
     screenshot_path = Path(args.screenshot)
     if not screenshot_path.exists():
@@ -114,6 +142,10 @@ def main() -> int:
         Path(args.output).write_text(output)
     else:
         sys.stdout.write(output)
+
+    if _tmp_path is not None:
+        with contextlib.suppress(OSError):
+            _tmp_path.unlink()
 
     return 0
 
