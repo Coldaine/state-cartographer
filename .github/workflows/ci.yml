@@ -23,7 +23,7 @@ jobs:
           uv pip install -e ".[dev]"
       - name: Lint
         run: |
-          ruff check scripts/ tests/ hooks/
-          ruff format --check scripts/ tests/ hooks/
+          uv run ruff check --no-fix scripts/ tests/ hooks/
+          uv run ruff format --check scripts/ tests/ hooks/
       - name: Run tests
-        run: pytest tests/ -v --cov=scripts
+        run: uv run pytest tests/ -v --cov=scripts

@@ -7,6 +7,10 @@ Reports clear errors pointing to specific problems.
 
 from __future__ import annotations
 
+import argparse
+import json
+import sys
+from pathlib import Path
 from typing import Any
 
 VALID_ANCHOR_TYPES = {"text_match", "dom_element", "pixel_color", "screenshot_region"}
@@ -103,3 +107,32 @@ def validate_graph(graph: dict[str, Any]) -> list[str]:
                 errors.append(f"Transition '{trans_id}': unknown method '{method}'. Valid: {sorted(VALID_METHODS)}")
 
     return errors
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Validate a graph definition")
+    parser.add_argument("graph", help="Path to graph JSON file")
+    args = parser.parse_args()
+
+    try:
+        with Path(args.graph).open(encoding="utf-8") as file_obj:
+            graph = json.load(file_obj)
+    except FileNotFoundError:
+        print(f"ERROR: File not found: {args.graph}", file=sys.stderr)
+        return 2
+    except json.JSONDecodeError as exc:
+        print(f"ERROR: Invalid JSON in {args.graph}: {exc}", file=sys.stderr)
+        return 2
+
+    errors = validate_graph(graph)
+    if errors:
+        for error in errors:
+            print(f"ERROR: {error}", file=sys.stderr)
+        return 1
+
+    print("Valid: no errors found")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

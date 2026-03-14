@@ -6,7 +6,7 @@ Runs after any Write tool invocation. Performs two actions:
 2. If a .py file in scripts/ was written, runs ruff format on it.
 
 Receives hook input JSON on stdin. Outputs structured JSON on stdout.
-Exit 0 = success, exit 2 = blocking error.
+Exit 0 = success. Validation and formatting issues are reported as warnings.
 """
 
 from __future__ import annotations
@@ -54,19 +54,25 @@ def main() -> int:
 
     # Auto-format Python files in scripts/ after write
     if path.suffix == ".py" and "scripts" in path.parts:
-        try:
-            subprocess.run(
-                ["ruff", "format", str(path)],
-                capture_output=True,
-                timeout=10,
+        format_result = subprocess.run(
+            [sys.executable, "-m", "ruff", "format", str(path)],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        check_result = subprocess.run(
+            [sys.executable, "-m", "ruff", "check", "--fix", str(path)],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+        warning = format_result.stderr.strip() or check_result.stderr.strip()
+        if format_result.returncode != 0 or check_result.returncode != 0:
+            print(
+                json.dumps({"additionalContext": f"Ruff warning: {warning or 'ruff formatting failed'}"}),
+                flush=True,
             )
-            subprocess.run(
-                ["ruff", "check", "--fix", str(path)],
-                capture_output=True,
-                timeout=10,
-            )
-        except FileNotFoundError:
-            pass  # ruff not installed — skip silently
 
     return 0
 
