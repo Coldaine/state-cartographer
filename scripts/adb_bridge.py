@@ -6,15 +6,15 @@ other Android emulators.
 
 Usage (CLI):
   python adb_bridge.py devices
-  python adb_bridge.py connect --serial 127.0.0.1:21503
-  python adb_bridge.py screenshot --serial 127.0.0.1:21503 --output screen.png
-  python adb_bridge.py tap --serial 127.0.0.1:21503 --x 500 --y 400
-  python adb_bridge.py swipe --serial 127.0.0.1:21503 --x1 500 --y1 400 --x2 500 --y2 200
-  python adb_bridge.py keyevent --serial 127.0.0.1:21503 --keycode 4
+  python adb_bridge.py connect --serial 127.0.0.1:21513
+  python adb_bridge.py screenshot --serial 127.0.0.1:21513 --output screen.png
+  python adb_bridge.py tap --serial 127.0.0.1:21513 --x 500 --y 400
+  python adb_bridge.py swipe --serial 127.0.0.1:21513 --x1 500 --y1 400 --x2 500 --y2 200
+  python adb_bridge.py keyevent --serial 127.0.0.1:21513 --keycode 4
 
 MEMU default ADB ports:
-  127.0.0.1:21503  (most versions)
-  127.0.0.1:21513  (some newer versions)
+  127.0.0.1:21513  (current ALAS harness config in this repo)
+  127.0.0.1:21503  (older/common MEMU default)
 """
 
 from __future__ import annotations
@@ -24,13 +24,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Known MEMU ADB TCP serials (newest first so that newer versions succeed first).
+# Known MEMU ADB TCP serials, preferring the serial used by the current ALAS harness config.
 MEMU_SERIALS: list[str] = [
-    "127.0.0.1:21503",
     "127.0.0.1:21513",
+    "127.0.0.1:21503",
     "127.0.0.1:21523",
 ]
-DEFAULT_SERIAL = "127.0.0.1:21503"
+DEFAULT_SERIAL = "127.0.0.1:21513"
 
 
 # ---------------------------------------------------------------------------
@@ -78,7 +78,7 @@ def connect(serial: str) -> bool:
     """Connect to a device over TCP.
 
     Args:
-        serial: ADB TCP serial, e.g. ``'127.0.0.1:21503'``.
+        serial: ADB TCP serial, e.g. ``'127.0.0.1:21513'``.
 
     Returns:
         ``True`` if ADB reports the device is connected.
@@ -94,7 +94,7 @@ def screenshot(serial: str, output_path: Path | str | None = None) -> bytes:
     CRLF line-ending mangling that ``adb shell screencap -p`` can produce.
 
     Args:
-        serial: ADB device serial (e.g. ``'127.0.0.1:21503'``).
+        serial: ADB device serial (e.g. ``'127.0.0.1:21513'``).
         output_path: Optional path to write the PNG.  When provided the bytes
             are written to disk and also returned.
 
