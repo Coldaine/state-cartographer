@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import sys
 from pathlib import Path
 
@@ -65,10 +66,26 @@ class TestReachableWithin:
 
 
 class TestOrphanStates:
-    def test_finds_orphans(self, simple_linear_graph):
-        # In linear a->b->c->d, 'a' is initial so not orphan. All others have inbound.
+    def test_no_orphans_in_linear_chain(self, simple_linear_graph):
+        # a→b→c→d: every non-initial state has an inbound transition, result must be empty.
         result = orphan_states(simple_linear_graph)
-        assert result == []  # all have inbound or are initial
+        assert result == []
+
+    def test_detects_injected_orphan(self, simple_linear_graph):
+        # Inject a state that nothing points to — orphan_states must return it.
+        graph = copy.deepcopy(simple_linear_graph)
+        graph["states"]["orphan_xyz"] = {"anchors": []}
+        result = orphan_states(graph)
+        assert "orphan_xyz" in result
+        # Connected states must NOT appear in the orphan list.
+        assert "b" not in result
+        assert "c" not in result
+        assert "d" not in result
+
+    def test_initial_state_not_flagged_as_orphan(self, simple_linear_graph):
+        # 'a' has no inbound transitions but IS the initial_state — must not appear.
+        result = orphan_states(simple_linear_graph)
+        assert "a" not in result
 
 
 class TestStatesMissingAnchors:

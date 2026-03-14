@@ -89,6 +89,13 @@ class TestConnect:
         with patch("adb_bridge.subprocess.run", return_value=proc):
             assert adb_bridge.connect("127.0.0.1:21503") is True
 
+    def test_uses_correct_adb_command(self):
+        proc = _make_proc(stdout="connected to 127.0.0.1:21503\n")
+        with patch("adb_bridge.subprocess.run", return_value=proc) as mock_run:
+            adb_bridge.connect("127.0.0.1:21503")
+        called_args = mock_run.call_args[0][0]
+        assert called_args == ["adb", "connect", "127.0.0.1:21503"]
+
 
 # ---------------------------------------------------------------------------
 # screenshot()

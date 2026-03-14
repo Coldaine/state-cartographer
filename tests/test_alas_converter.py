@@ -15,8 +15,8 @@ import json  # noqa: E402
 import subprocess  # noqa: E402
 
 import pytest  # noqa: E402
-from alas_converter import build_graph  # noqa: E402
 
+from alas_converter import _parse_locale_dict, build_graph, region_center  # noqa: E402
 from schema_validator import validate_graph  # noqa: E402
 
 
@@ -82,3 +82,55 @@ def test_alas_converter_cli_matches_validator():
     assert output.exists()
     with contextlib.suppress(OSError):
         output.unlink()
+
+
+# ---------------------------------------------------------------------------
+# Unit tests — no ALAS submodule required
+# ---------------------------------------------------------------------------
+
+
+class TestRegionCenter:
+    """region_center() computes the integer center of an (x1, y1, x2, y2) box."""
+
+    def test_even_dimensions(self):
+        assert region_center((0, 0, 100, 100)) == (50, 50)
+
+    def test_odd_dimensions_floor_divides(self):
+        # Integer division: (0+101)//2 == 50
+        assert region_center((0, 0, 101, 101)) == (50, 50)
+
+    def test_offset_origin(self):
+        assert region_center((10, 20, 110, 220)) == (60, 120)
+
+    def test_already_at_center(self):
+        assert region_center((5, 5, 5, 5)) == (5, 5)
+
+    def test_returns_ints(self):
+        cx, cy = region_center((0, 0, 99, 99))
+        assert isinstance(cx, int)
+        assert isinstance(cy, int)
+
+
+class TestParseLocaleDict:
+    """_parse_locale_dict() safely evaluates a Python dict literal."""
+
+    def test_parses_string_values(self):
+        result = _parse_locale_dict("{'en': 'hello', 'cn': 'world'}")
+        assert result == {"en": "hello", "cn": "world"}
+
+    def test_parses_tuple_values(self):
+        result = _parse_locale_dict("{'en': (1, 2, 3), 'cn': (4, 5, 6)}")
+        assert result["en"] == (1, 2, 3)
+        assert result["cn"] == (4, 5, 6)
+
+    def test_parses_nested_tuple_area(self):
+        # area and button dicts use (x1, y1, x2, y2) tuples
+        raw = "{'en': (46, 286, 265, 322), 'cn': (46, 286, 265, 322)}"
+        result = _parse_locale_dict(raw)
+        assert result["en"] == (46, 286, 265, 322)
+
+    def test_raises_on_invalid_literal(self):
+        import pytest
+
+        with pytest.raises((ValueError, SyntaxError)):
+            _parse_locale_dict("not a dict at all {{{")
