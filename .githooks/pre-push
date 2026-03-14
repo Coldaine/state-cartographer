@@ -4,10 +4,10 @@
 set -e
 
 echo "[pre-push] Running ruff check..."
-uv run ruff check .
+uv run ruff check scripts tests hooks
 
 echo "[pre-push] Running ruff format check..."
-uv run ruff format --check .
+uv run ruff format --check scripts tests hooks
 
 echo "[pre-push] Running tests..."
 uv run pytest tests/ -q

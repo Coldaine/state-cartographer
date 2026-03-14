@@ -1,5 +1,9 @@
 # State Cartographer: Project Layout and Bootstrap Guide
 
+> Historical bootstrap reference. This document preserves early scaffolding and
+> pre-refactor examples. For the current repo layout and active contributor
+> workflow, treat `AGENTS.md`, `CLAUDE.md`, and `plan.md` as the source of truth.
+
 ## What This Project Is
 
 This is a **Claude Code plugin** under active development. The deliverables are skills, agents, commands, rules, and supporting Python scripts that together form a plugin called `state-cartographer`.
@@ -28,46 +32,46 @@ state-cartographer/
 │   └── decisions/                    # ADRs (Architecture Decision Records)
 │       └── 001-python-over-typescript.md
 │
-├── plugin/                           # *** THE PRODUCT — everything below here IS the plugin ***
+├── skills/                           # *** THE PRODUCT — everything below here IS the plugin ***
 │   │
-│   ├── skills/
-│   │   ├── state-graph-authoring/
-│   │   │   ├── SKILL.md              # Playbook for building/editing state graphs
-│   │   │   └── references/
-│   │   │       ├── schema.md         # Full schema extension spec (anchors, costs, etc.)
-│   │   │       ├── consolidator.md   # Deep instructions for consolidation decisions
-│   │   │       └── troubleshooting.md
-│   │   │
-│   │   └── state-graph-navigation/
-│   │       ├── SKILL.md              # Playbook for runtime orientation and traversal
-│   │       └── references/
-│   │           └── pathfinding.md    # Pathfinding algorithm details and options
+├── skills/
+│   ├── state-graph-authoring/
+│   │   ├── SKILL.md                  # Playbook for building/editing state graphs
+│   │   └── references/
+│   │       ├── schema.md             # Full schema extension spec (anchors, costs, etc.)
+│   │       ├── consolidator.md       # Deep instructions for consolidation decisions
+│   │       └── troubleshooting.md
 │   │
-│   ├── agents/
-│   │   ├── explorer.md               # Subagent: vision-heavy systematic navigation
-│   │   ├── consolidator.md           # Subagent: observation analysis, anchor identification
-│   │   └── optimizer.md              # Subagent: transition replacement analysis
-│   │
-│   ├── commands/
-│   │   ├── explore.md                # /cartographer:explore
-│   │   ├── consolidate.md            # /cartographer:consolidate
-│   │   ├── optimize.md               # /cartographer:optimize
-│   │   ├── locate.md                 # /cartographer:locate
-│   │   └── status.md                 # /cartographer:status
-│   │
-│   ├── rules/
-│   │   ├── safety.md                 # Confidence thresholds, irreversible action guards
-│   │   ├── orientation.md            # Confirm state after transition, flag unknowns
-│   │   └── graph-maintenance.md      # Flag unrecognized observations
-│   │
-│   └── scripts/                      # Python tooling called by skills and agents
-│       ├── locate.py                 # Passive state classifier
-│       ├── pathfind.py               # Weighted route planner (Dijkstra/A*)
-│       ├── session.py                # Session state manager
-│       ├── mock.py                   # Screenshot mock capture and validation
-│       ├── graph_utils.py            # pytransitions wrapper for common queries
-│       ├── schema_validator.py       # Validates graph definitions against the extended schema
-│       └── requirements.txt          # pytransitions, pillow, imagehash, etc.
+│   └── state-graph-navigation/
+│       └── SKILL.md                  # Playbook for runtime orientation and traversal
+│
+├── agents/
+│   ├── explorer.md                   # Subagent: vision-heavy systematic navigation
+│   ├── consolidator.md               # Subagent: observation analysis, anchor identification
+│   └── optimizer.md                  # Subagent: transition replacement analysis
+│
+├── commands/
+│   ├── observe.md
+│   ├── locate.md
+│   ├── pathfind.md
+│   ├── validate.md
+│   └── calibrate.md
+│
+├── rules/
+│   ├── safety.md                     # Confidence thresholds, irreversible action guards
+│   ├── orientation.md                # Confirm state after transition, flag unknowns
+│   └── graph-maintenance.md          # Flag unrecognized observations
+│
+├── scripts/                          # Python tooling called by skills and agents
+│   ├── locate.py                     # Passive state classifier
+│   ├── pathfind.py                   # Weighted route planner (Dijkstra/A*)
+│   ├── session.py                    # Session state manager
+│   ├── screenshot_mock.py            # Screenshot mock capture and validation
+│   ├── graph_utils.py                # pytransitions wrapper for common queries
+│   ├── schema_validator.py           # Validates graph definitions against the extended schema
+│   ├── adb_bridge.py                 # ADB provider and screenshot bridge
+│   ├── observe.py                    # Observation extraction
+│   └── calibrate.py                  # Anchor calibration
 │
 ├── tests/                            # Tests for the Python scripts
 │   ├── conftest.py
@@ -90,31 +94,28 @@ state-cartographer/
 │       ├── graph.json                # Starter template with annotated comments
 │       └── README.md
 │
-└── dev/                              # Development utilities (NOT part of the plugin)
-    ├── install-local.sh              # Symlink plugin/ into ~/.claude/ for local testing
-    ├── uninstall-local.sh
-    ├── package.sh                    # Package plugin/ into a .skill or distributable
-    └── lint-skills.sh                # Check SKILL.md frontmatter, reference links, etc.
+└── vendor/                           # External reference checkouts and local helper artifacts
+  └── AzurLaneAutoScript/           # ALAS reference checkout / submodule
 ```
 
 ---
 
 ## Key Distinctions the Working Agent Must Understand
 
-### The `plugin/` directory is the product
+### The root content directories are the product
 
-Everything inside `plugin/` will be distributed to end users. Changes here directly affect what users of the plugin experience. Markdown quality, script reliability, progressive disclosure structure all matter here.
+Everything inside `skills/`, `agents/`, `commands/`, `rules/`, and `scripts/` directly affects what users of the plugin experience. Markdown quality, script reliability, and progressive disclosure structure all matter here.
 
 ### Everything outside `plugin/` is development infrastructure
 
-`docs/`, `tests/`, `examples/`, `dev/` are for our use while building the plugin. They don't ship. They can be messy, experimental, in-progress.
+`docs/`, `tests/`, and `examples/` are for our use while building the plugin. `vendor/` contains external reference checkouts and local helper artifacts. They don't ship as plugin content.
 
 ### There are two kinds of agents in this project
 
 1. **Dev agents** (defined in the root `AGENTS.md`): agents that work on building/improving the plugin itself. These are us, right now.
-2. **Plugin agents** (defined in `plugin/agents/`): agents that end users invoke when using the plugin to automate external systems. These are the product.
+2. **Plugin agents** (defined in `agents/`): agents that end users invoke when using the plugin to automate external systems. These are the product.
 
-Do not confuse them. When editing `plugin/agents/explorer.md`, you are writing instructions for a *future agent that will explore external systems*. You are not that agent.
+Do not confuse them. When editing `agents/explorer.md`, you are writing instructions for a *future agent that will explore external systems*. You are not that agent.
 
 ### There are two kinds of CLAUDE.md
 

@@ -68,10 +68,10 @@ Take a screenshot. Document what you see.
 - Level 2: all states reachable from each Level 1 state
 - Use this tree structure to ensure systematic coverage, not random wandering
 
-**Use `mock.py capture` to record each state.**
+**Use `screenshot_mock.py capture` to record each state.**
 
 ```bash
-python plugin/scripts/mock.py capture \
+python scripts/screenshot_mock.py capture \
   --state main_menu \
   --screenshot screenshot.png \
   --notes "main menu, visible: nav menu, events banner, fleet status display"
@@ -81,7 +81,7 @@ python plugin/scripts/mock.py capture \
 
 For every distinct screen/state you reach, capture:
 
-1. **Screenshot** (via `mock.py capture`)
+1. **Screenshot** (via `screenshot_mock.py capture`)
 2. **DOM dump or system state** (if accessible)
 3. **Observation notes** (free-form, what you see)
 4. **Action that got you here**: what did you do in the previous state to reach this one?
@@ -102,8 +102,8 @@ If the **underlying structure is identical** and only the **content changes**, i
 Once you've captured screenshots and observations, you have a complete offline dataset. You can now build the graph definition and anchors without needing the live system.
 
 ```bash
-python plugin/scripts/mock.py validate --graph graph.json
-python plugin/scripts/mock.py test-locate --graph graph.json --screenshot screenshot.png
+python scripts/screenshot_mock.py validate --graph graph.json
+python scripts/screenshot_mock.py test-locate --graph graph.json --screenshot screenshot.png
 ```
 
 This decouples exploration from development.
@@ -147,7 +147,7 @@ See `references/schema.md` for complete schema.
 ### Step 5: Validation Checkpoint
 
 ```bash
-python plugin/scripts/mock.py validate --graph graph.json
+python scripts/screenshot_mock.py validate --graph graph.json
 ```
 
 ---
@@ -185,15 +185,15 @@ For each wait state, annotate:
 ### Step 1: Passive State Classification (`locate()`)
 
 ```bash
-python plugin/scripts/locate.py --graph graph.json --session session.json
+python scripts/locate.py --graph graph.json --session session.json
 ```
 
 ### Step 2: Session Management
 
 ```bash
-python plugin/scripts/session.py init --graph graph.json > session.json
-python plugin/scripts/session.py confirm --state main_menu --session session.json
-python plugin/scripts/session.py transition --event tap_dock --session session.json
+python scripts/session.py init --graph graph.json > session.json
+python scripts/session.py confirm --state main_menu --session session.json
+python scripts/session.py transition --event tap_dock --session session.json
 ```
 
 ### Step 3: Active Disambiguation
@@ -212,8 +212,8 @@ If `locate()` returns ambiguity, execute the suggested probing strategy. See `..
 4. Revalidate
 
 ```bash
-python plugin/scripts/mock.py capture --state new_state_name --screenshot screenshot.png
-python plugin/scripts/mock.py validate --graph graph.json
+python scripts/screenshot_mock.py capture --state new_state_name --screenshot screenshot.png
+python scripts/screenshot_mock.py validate --graph graph.json
 ```
 
 ---
@@ -224,7 +224,7 @@ python plugin/scripts/mock.py validate --graph graph.json
 2. **Choosing Fragile Anchors** — Prefer structural anchors (DOM IDs, window class names)
 3. **Confusing the Graph with the Task Automation** — The graph is infrastructure, not the automation itself
 4. **Not Enough Wait State Annotation** — Annotate wait states to avoid wasting vision tokens
-5. **Skipping Validation** — Always run `mock.py validate` after graph updates
+5. **Skipping Validation** — Always run `screenshot_mock.py validate` after graph updates
 
 ---
 
@@ -239,7 +239,7 @@ python plugin/scripts/mock.py validate --graph graph.json
 
 - [ ] `graph.json` covers all states involved in your automation task
 - [ ] Each state has at least two anchors (one low-cost, one fallback)
-- [ ] `mock.py validate` passes
+- [ ] `screenshot_mock.py validate` passes
 - [ ] `locate()` reliably returns current state
 - [ ] 80%+ transitions are deterministic (cost ≤ 5)
 - [ ] All wait states are annotated with exit signals

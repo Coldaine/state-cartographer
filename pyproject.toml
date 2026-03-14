@@ -29,6 +29,7 @@ packages = []
 target-version = "py311"
 line-length = 120
 fix = true
+extend-exclude = ["vendor"]
 
 [tool.ruff.lint]
 select = [

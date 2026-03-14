@@ -6,7 +6,15 @@ State Cartographer is a Claude Code plugin for building queryable state graphs o
 
 ## Current Status
 
-**Phase: Phase 1 Foundation (Complete)**
+**Phase: Phase 2 — ALAS Ingestion Unblock + Schema Validation (Active)**
+
+Phase 1 Foundation is complete (PR #6 merged). The repo now has 9 Python
+tooling scripts, 135 tests passing, CI pipeline with lint + multi-version
+tests, and git hooks for pre-commit autofix and pre-push gating.
+
+Immediate Phase 2 prerequisite work is ongoing: ALAS reference integration,
+repo hygiene for vendor paths, and documentation alignment. The converter
+described below is planned work, not an already-landed implementation.
 
 **Reference case:** ALAS (AzurLaneAutoScript) serves as the primary validation target.
 Its 43-page state graph with real color anchors and BFS navigation — built by hand
@@ -14,7 +22,7 @@ over 9 years — is the benchmark for whether our schema and tools can represent
 real-world system. ALAS is reference data, not a runtime dependency.
 
 The project has been scaffolded and restructured as a proper Claude Code plugin:
-- Core Python scripts (`locate.py`, `pathfind.py`, `session.py`, `graph_utils.py`, `schema_validator.py`, `screenshot_mock.py`)
+- Core Python scripts (`locate.py`, `pathfind.py`, `session.py`, `graph_utils.py`, `schema_validator.py`, `screenshot_mock.py`, `adb_bridge.py`, `observe.py`, `calibrate.py`)
 - Plugin content (skills, agents, rules, commands) moved to root level (no more `plugin/` subdirectory)
 - `pyproject.toml` replaces `requirements.txt`; UV for environment management, Ruff for linting
 - Claude Code hooks (`hooks/hooks.json`, `hooks/post_write.py`)
@@ -29,7 +37,7 @@ The project has been scaffolded and restructured as a proper Claude Code plugin:
 
 ### Phase 1: Foundation — Make the Tests Pass
 
-**Goal:** The 6 Python scripts work correctly against the test fixtures.
+**Goal:** The core Python scripts work correctly against the test fixtures.
 
 **Workflow:**
 1. Run `pytest tests/ -v` — see what fails
@@ -43,27 +51,87 @@ The project has been scaffolded and restructured as a proper Claude Code plugin:
 - `session.py` tracks state history correctly (init, confirm, transition, query)
 - `graph_utils.py` inspects graphs (list states, reachable states, orphans, missing anchors)
 - `schema_validator.py` catches invalid graph definitions
-- `mock.py` captures screenshots and validates anchor coverage
+- `screenshot_mock.py` captures screenshots and validates anchor coverage
 
 **Exit criteria:** `pytest tests/ -v` passes, CI is green.
 
 ---
 
-### Phase 2: Schema Validation — Lock Down the Data Format
+### Phase 2: Schema Validation via ALAS Conversion — Prove the Format Against Reality
 
-**Goal:** The graph.json schema is precisely specified and the validator enforces it.
+**Goal:** Validate the graph.json schema by converting the full ALAS 43-page state graph
+into our format. The schema is "locked down" when it can faithfully represent a real,
+battle-tested system — not when it passes synthetic edge cases.
 
-**Workflow:**
-1. Write 5-10 more graph fixtures (edge cases: empty graphs, self-loops, disconnected components, deep hierarchies)
-2. Write property tests for schema validation (any valid graph passes, any invalid graph fails with a specific error)
-3. Document the schema completely in `skills/state-graph-authoring/references/schema.md`
+**Why ALAS drives this phase:** ALAS's page graph is the single best stress test we have.
+It contains multi-locale anchors (cn/en/jp/tw), shared buttons across pages (GOTO_MAIN),
+bounding-box color detection, BFS pathfinding, "unknown" recovery states, commented-out
+event variants, and a page that uses a different home-button path (page_dorm). If our
+schema can represent all of this, it can represent anything in scope.
 
-**What's being validated:**
-- Every field in the schema has a defined type, constraints, and default value
-- The validator catches all known invalid patterns
-- Error messages are actionable ("state 'dock' has anchor with invalid type 'magic'")
+**Workstreams:**
 
-**Exit criteria:** Schema reference doc is complete. Validator has property tests. No ambiguity in what a valid graph looks like.
+#### 2a. ALAS Converter (`scripts/alas_converter.py`)
+
+**Status:** planned, not yet implemented.
+
+Parse ALAS source files and emit a complete graph.json:
+
+1. Read `module/ui/page.py` — extract all `Page(CHECK_BUTTON)` definitions and `.link()` calls
+2. Read `module/ui/assets.py` + other asset files — resolve each button's `area`, `color`, and `button` dicts
+3. For each page: emit a state with `pixel_color` anchors from the check_button's `color` field (use `en` locale by default, support `--locale` flag)
+4. For each `.link()` call: emit a transition with `adb_tap` action at the button's `button` center coordinates
+5. Handle special cases: `page_unknown` (no check_button), `page_main_white` (variant of page_main), commented-out coalition variants
+
+Output: `examples/azur-lane/graph.json` with all 43 pages, real RGB anchor values, and all transitions.
+
+Tests: `tests/test_alas_converter.py` — verify page count, transition count, anchor RGB values match ALAS source data.
+
+#### 2b. Schema Gaps and Fixes
+
+The conversion will surface schema gaps. Known candidates from reading the ALAS source:
+
+- **Locale-aware anchors**: ALAS stores per-locale (cn/en/jp/tw) coordinates and colors. Our schema has one anchor per state. Decision: do we add a `locale` field, or generate locale-specific graphs?
+- **Bounding-box anchors vs point anchors**: ALAS `area` is a bounding box `(x1,y1,x2,y2)` with an average color across the region. Our `pixel_color` checks a single pixel. May need `region_color` anchor type or document the center-pixel approximation.
+- **Button vs check duality**: In ALAS, a Button has both a detection region (`area`+`color`) and a click region (`button`). Our schema separates these into anchors and transition actions, which is correct, but we should document this mapping.
+- **Variant states**: `page_main` and `page_main_white` are the same screen with different UI themes. Need a pattern for this — separate states? state variants? conditional anchors?
+- **Recovery state**: `page_unknown` has `check_button=None` and only outbound links. Our schema should handle states with no anchors (the "I don't know where I am" fallback).
+
+For each gap found: update `references/schema.md`, update `schema_validator.py`, add test fixtures.
+
+#### 2c. Edge-Case Fixtures and Property Tests
+
+With the schema refined from 2b, write synthetic edge cases:
+
+1. Empty graph (0 states) — should fail validation
+2. Single state, no transitions — valid but warns about unreachable
+3. Self-loop transitions — valid
+4. Disconnected components — valid but warns about orphans
+5. Deep hierarchy (chain of 20+ states) — valid, tests pathfinder performance
+6. Duplicate anchor types on one state — valid (multiple pixel checks)
+7. State with no anchors — valid (may be `page_unknown` equivalent)
+8. Transition to nonexistent state — should fail validation
+9. Invalid anchor types — should fail validation
+10. Negative costs — should fail validation
+
+Property tests: any graph that passes the validator should be loadable by `locate.py`, `pathfind.py`, and `graph_utils.py` without crashes.
+
+#### 2d. ALAS as Reference Source
+
+Add `D:\_projects\ALAS` (specifically the `upstream_alas` subdirectory) as a reference data source.
+
+Option A: Git submodule pointing to the ALAS upstream repo — keeps it versioned and reproducible.
+Option B: Converter reads from a configurable path — simpler, user points it at their local ALAS checkout.
+
+Current contributor workflow is using `vendor/AzurLaneAutoScript` as a local submodule/reference checkout while the repo stabilizes its ingestion path. The long-term converter should still support `--alas-root` so contributors can point at any local ALAS checkout.
+
+**Exit criteria:**
+- `scripts/alas_converter.py` generates a valid 43-state graph.json from ALAS source
+- `python scripts/schema_validator.py --graph examples/azur-lane/graph.json` passes clean
+- `references/schema.md` documents all fields including any new ones added during conversion
+- 10+ edge-case fixtures in `tests/fixtures/graphs/`
+- All property tests pass: validator + locate + pathfind + graph_utils agree on valid/invalid
+- `graph_utils.py` can print a summary and Mermaid diagram of the full Azur Lane graph
 
 ---
 
@@ -77,7 +145,7 @@ The project has been scaffolded and restructured as a proper Claude Code plugin:
 3. Run `locate.py` against mock screenshots — verify correct classification
 4. Run `pathfind.py` — verify optimal routes
 5. Run `session.py` — verify session tracking through a multi-step workflow
-6. Run `mock.py validate` — verify anchor coverage
+6. Run `screenshot_mock.py validate` — verify anchor coverage
 
 **What's being validated:**
 - The tools work together as a pipeline
@@ -162,7 +230,7 @@ The project has been scaffolded and restructured as a proper Claude Code plugin:
 2. Start the state-graph-authoring skill
 3. Follow Phase 1 (Exploration): systematic BFS, capture screenshots
 4. Follow Phase 2 (Consolidation): collapse duplicates, choose anchors, build graph.json
-5. Validate: mock.py validate
+5. Validate: screenshot_mock.py validate
 6. Follow Phase 3 (Optimization): replace vision transitions with deterministic
 7. Navigate: use state-graph-navigation skill for cheap routing
 8. Maintain: update graph when the system changes
@@ -185,7 +253,7 @@ The project has been scaffolded and restructured as a proper Claude Code plugin:
 2. Capture screenshot + observations
 3. Diagnose: new state? broken anchor? changed transition?
 4. Update graph.json
-5. Revalidate: schema_validator.py + mock.py validate
+5. Revalidate: schema_validator.py + screenshot_mock.py validate
 6. Test affected routes
 ```
 
@@ -207,7 +275,7 @@ The project has been scaffolded and restructured as a proper Claude Code plugin:
 ```
 Layer 4: Agent Roles (explorer, consolidator, optimizer)
 Layer 3: Skill Playbooks (SKILL.md — the methodology)
-Layer 2: Runtime Tools (locate, pathfind, session, graph_utils, mock, validator)
+Layer 2: Runtime Tools (locate, pathfind, session, graph_utils, screenshot_mock, validator, adb_bridge, observe, calibrate)
 Layer 1: Schema Extensions (anchors, costs, wait states, thresholds)
 Layer 0: Existing Libraries (pytransitions, Pillow, imagehash, Playwright/ADB)
 ```

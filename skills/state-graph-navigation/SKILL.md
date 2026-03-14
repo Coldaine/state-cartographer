@@ -14,7 +14,7 @@ Once a state graph exists (built via the `state-graph-authoring` skill), this sk
 ### 1. Orient: Where Am I?
 
 ```bash
-python plugin/scripts/locate.py --graph graph.json --session session.json
+python scripts/locate.py --graph graph.json --session session.json
 ```
 
 Returns your current state with confidence score. Uses cheap anchor checks (DOM selectors, window titles, process focus) — no vision required for most states.
@@ -22,7 +22,7 @@ Returns your current state with confidence score. Uses cheap anchor checks (DOM 
 ### 2. Plan: How Do I Get There?
 
 ```bash
-python plugin/scripts/pathfind.py --graph graph.json --from current_state --to target_state
+python scripts/pathfind.py --graph graph.json --from current_state --to target_state
 ```
 
 Returns the cheapest route (sequence of transitions) from current state to target. Uses Dijkstra's algorithm over transition costs. Prefers deterministic transitions over vision-required ones.
@@ -41,8 +41,8 @@ For each transition in the route:
 ### 4. Track: Maintain Session
 
 ```bash
-python plugin/scripts/session.py confirm --state state_name --session session.json
-python plugin/scripts/session.py transition --event event_name --session session.json
+python scripts/session.py confirm --state state_name --session session.json
+python scripts/session.py transition --event event_name --session session.json
 ```
 
 Session history enables cheaper orientation on subsequent `locate()` calls.

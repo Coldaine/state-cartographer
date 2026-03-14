@@ -13,7 +13,7 @@ priority: high
 ### Step 1: Passive Classification (Cheap)
 
 ```bash
-python plugin/scripts/locate.py --graph graph.json --session session.json
+python scripts/locate.py --graph graph.json --session session.json
 ```
 
 Returns one of three outcomes:
@@ -42,7 +42,7 @@ Most ambiguities resolve in 1–2 probes. Rank probes by **information value**, 
 
 After disambiguation:
 ```bash
-python plugin/scripts/session.py confirm --state dock --session session.json
+python scripts/session.py confirm --state dock --session session.json
 ```
 
 ---
