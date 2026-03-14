@@ -120,6 +120,9 @@ def main() -> int:
     except FileNotFoundError:
         print(f"ERROR: File not found: {args.graph}", file=sys.stderr)
         return 2
+    except OSError as exc:
+        print(f"ERROR: Could not read {args.graph}: {exc}", file=sys.stderr)
+        return 2
     except json.JSONDecodeError as exc:
         print(f"ERROR: Invalid JSON in {args.graph}: {exc}", file=sys.stderr)
         return 2
