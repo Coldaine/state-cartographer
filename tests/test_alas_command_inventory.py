@@ -4,6 +4,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
@@ -17,11 +19,19 @@ CONFIGS = [
 ALAS_PY = REPO_ROOT / "vendor/AzurLaneAutoScript/alas.py"
 
 
+def _require_alas_scheduler_inputs() -> None:
+    missing = [path for path in [ALAS_PY, *CONFIGS] if not path.exists()]
+    if missing:
+        formatted = ", ".join(str(path) for path in missing)
+        pytest.skip(f"ALAS scheduler inputs not available: {formatted}")
+
+
 def _scheduled_map(inventory: dict) -> dict[str, dict]:
     return {entry["command"]: entry for entry in inventory["scheduled_commands"]}
 
 
 def test_build_inventory_finds_expected_scheduler_surface():
+    _require_alas_scheduler_inputs()
     inventory = build_inventory(config_paths=CONFIGS, alas_py=ALAS_PY)
     scheduled = _scheduled_map(inventory)
 
@@ -42,6 +52,7 @@ def test_build_inventory_finds_expected_scheduler_surface():
 
 
 def test_build_inventory_exposes_direct_only_runtime_methods():
+    _require_alas_scheduler_inputs()
     inventory = build_inventory(config_paths=CONFIGS, alas_py=ALAS_PY)
     direct_only = {entry["method"] for entry in inventory["direct_only_methods"]}
 
@@ -52,6 +63,7 @@ def test_build_inventory_exposes_direct_only_runtime_methods():
 
 
 def test_build_inventory_records_scheduler_occurrence_paths():
+    _require_alas_scheduler_inputs()
     inventory = build_inventory(config_paths=CONFIGS, alas_py=ALAS_PY)
     scheduled = _scheduled_map(inventory)
     occurrence = scheduled["Restart"]["occurrences"][0]

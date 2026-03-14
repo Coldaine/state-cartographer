@@ -5,6 +5,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
@@ -26,6 +28,7 @@ def test_infer_target_name_prefers_named_objects():
 
 
 def test_observation_runtime_records_classified_screenshot(tmp_path: Path):
+    PIL = pytest.importorskip("PIL.Image")
     graph = {
         "states": {
             "page_main": {
@@ -46,9 +49,7 @@ def test_observation_runtime_records_classified_screenshot(tmp_path: Path):
 
     import io
 
-    from PIL import Image
-
-    image = Image.open(io.BytesIO(png_bytes)).convert("RGB")
+    image = PIL.open(io.BytesIO(png_bytes)).convert("RGB")
     runtime.record_screenshot(serial="127.0.0.1:21513", image=image)
 
     assert runtime.session["current_state"] == "page_main"

@@ -7,23 +7,31 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 from alas_action_inventory import build_inventory, parse_class_methods  # noqa: E402
 
+CONTROL_PY = REPO_ROOT / "vendor" / "AzurLaneAutoScript" / "module" / "device" / "control.py"
+
+
+def _require_alas_control_surface() -> None:
+    if not CONTROL_PY.exists():
+        pytest.skip(f"ALAS control surface not available: {CONTROL_PY}")
+
 
 def test_parse_class_methods_reads_real_control_surface():
-    methods = parse_class_methods(
-        REPO_ROOT / "vendor" / "AzurLaneAutoScript" / "module" / "device" / "control.py",
-        "Control",
-    )
+    _require_alas_control_surface()
+    methods = parse_class_methods(CONTROL_PY, "Control")
     assert "click" in methods
     assert "swipe" in methods
     assert "drag" in methods
 
 
 def test_build_inventory_contains_core_primitive_and_semantic_actions():
+    _require_alas_control_surface()
     inventory = build_inventory()
 
     primitive = {entry["name"] for entry in inventory["primitive_actions"]}
@@ -43,6 +51,7 @@ def test_build_inventory_contains_core_primitive_and_semantic_actions():
 
 
 def test_cli_writes_inventory_json(tmp_path: Path):
+    _require_alas_control_surface()
     output = tmp_path / "action-inventory.json"
     result = subprocess.run(
         [
