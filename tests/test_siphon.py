@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -11,7 +10,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
-from siphon import capture_and_classify, get_latest_log_file
+from siphon import RE_PAGE_ARRIVE, RE_START_TASK, RE_UI_IDENTIFY, capture_and_classify, get_latest_log_file
 
 
 class TestGetLatestLogFile:
@@ -163,35 +162,40 @@ class TestCaptureAndClassify:
 
 
 class TestSiphonEventDetection:
-    """Test the regex patterns used in siphon's main loop to detect events."""
+    """Test the regex patterns used in siphon's main loop to detect events.
+
+    These tests import RE_PAGE_ARRIVE, RE_UI_IDENTIFY, and RE_START_TASK
+    directly from siphon.py so that if the patterns change in the source,
+    the tests will fail and catch the regression.
+    """
 
     def test_page_arrive_regex(self):
-        match = re.search(r"Page arrive:\s*(\S+)", "Page arrive: page_reward")
+        match = RE_PAGE_ARRIVE.search("Page arrive: page_reward")
         assert match is not None
         assert match.group(1) == "page_reward"
 
     def test_ui_identify_regex(self):
-        match = re.search(r"\[UI\]\s*(page_\S+)", "[UI] page_main")
+        match = RE_UI_IDENTIFY.search("[UI] page_main")
         assert match is not None
         assert match.group(1) == "page_main"
 
     def test_ui_identify_with_extra_whitespace(self):
-        match = re.search(r"\[UI\]\s*(page_\S+)", "[UI]  page_commission")
+        match = RE_UI_IDENTIFY.search("[UI]  page_commission")
         assert match is not None
         assert match.group(1) == "page_commission"
 
     def test_start_task_regex(self):
-        match = re.search(r"Start task `([^`]+)`", "Scheduler: Start task `Commission`")
+        match = RE_START_TASK.search("Scheduler: Start task `Commission`")
         assert match is not None
         assert match.group(1) == "Commission"
 
     def test_ui_regex_ignores_non_page(self):
-        match = re.search(r"\[UI\]\s*(page_\S+)", "[UI] Unknown ui page")
+        match = RE_UI_IDENTIFY.search("[UI] Unknown ui page")
         assert match is None
 
     def test_page_arrive_real_format(self):
         line = "2026-03-14 00:44:20.339 | INFO | Page arrive: page_reward"
         msg = line.split(" | ", 2)[2]
-        match = re.search(r"Page arrive:\s*(\S+)", msg)
+        match = RE_PAGE_ARRIVE.search(msg)
         assert match is not None
         assert match.group(1) == "page_reward"

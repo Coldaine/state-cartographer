@@ -26,14 +26,17 @@ class TestPathfind:
         # d has no outbound transitions in linear graph
         result = pathfind(simple_linear_graph, "d", "a")
         assert "error" in result
+        assert "No path" in result["error"]
 
     def test_invalid_start_state(self, simple_linear_graph):
         result = pathfind(simple_linear_graph, "nonexistent", "a")
         assert "error" in result
+        assert "not found" in result["error"]
 
     def test_invalid_end_state(self, simple_linear_graph):
         result = pathfind(simple_linear_graph, "a", "nonexistent")
         assert "error" in result
+        assert "not found" in result["error"]
 
     def test_cheapest_path_branching(self, branching_graph):
         result = pathfind(branching_graph, "a", "d")
@@ -76,10 +79,14 @@ class TestBuildAdjacency:
     def test_builds_from_graph(self, simple_linear_graph):
         adj = build_adjacency(simple_linear_graph)
         assert "a" in adj
-        assert len(adj["a"]) == 1  # a -> b
+        assert len(adj["a"]) == 1  # a -> b only
+        dest, cost, _trans = adj["a"][0]
+        assert dest == "b"  # correct destination
+        assert cost == 1.0  # default cost from fixture
 
     def test_avoids_states(self, branching_graph):
         adj = build_adjacency(branching_graph, avoid=["b"])
         # a should only have a->c, not a->b
         dests = [dest for dest, _, _ in adj.get("a", [])]
-        assert "b" not in dests
+        assert "c" in dests  # a->c should still be present
+        assert "b" not in dests  # a->b must be excluded

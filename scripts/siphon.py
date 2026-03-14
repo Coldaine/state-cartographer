@@ -30,6 +30,13 @@ DATA_DIR = PROJECT_ROOT / "data"
 SCREENSHOTS_DIR = DATA_DIR / "screenshots"
 OBSERVATIONS_FILE = DATA_DIR / "observations.jsonl"
 
+# ---------------------------------------------------------------------------
+# Event-detection regex patterns (exported so tests can import them directly)
+# ---------------------------------------------------------------------------
+RE_START_TASK = re.compile(r"Start task `([^`]+)`")
+RE_PAGE_ARRIVE = re.compile(r"Page arrive:\s*(\S+)")
+RE_UI_IDENTIFY = re.compile(r"\[UI\]\s*(page_\S+)")
+
 
 def get_latest_log_file(log_dir_arg: Path | None = None) -> Path:
     """Find the most recent ALAS log file."""
@@ -171,7 +178,7 @@ def main():
             # Parse line
             for log_line in LogParser.parse([raw_line]):
                 # Track current task (simple heuristic)
-                if match := re.search(r"Start task `([^`]+)`", log_line.message):
+                if match := RE_START_TASK.search(log_line.message):
                     state.current_task = match.group(1)
 
                 # Feed analyzer
@@ -189,12 +196,12 @@ def main():
                     last_page_switches = len(nav_analyzer.page_switches)
 
                 # 2. Page Arrive (direct match)
-                elif match := re.search(r"Page arrive:\s*(\S+)", log_line.message):
+                elif match := RE_PAGE_ARRIVE.search(log_line.message):
                     trigger_event = "PageArrive"
                     target_page = match.group(1)
 
                 # 3. [UI] identify (direct match)
-                elif match := re.search(r"\[UI\]\s*(page_\S+)", log_line.message):
+                elif match := RE_UI_IDENTIFY.search(log_line.message):
                     trigger_event = "PageIdentify"
                     target_page = match.group(1)
 

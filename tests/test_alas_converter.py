@@ -103,10 +103,12 @@ class TestRegionCenter:
         assert region_center((10, 20, 110, 220)) == (60, 120)
 
     def test_already_at_center(self):
-        assert region_center((5, 5, 5, 5)) == (5, 5)
+        # Non-trivial: box at offset with equal-width sides
+        assert region_center((10, 20, 90, 180)) == (50, 100)
 
     def test_returns_ints(self):
         cx, cy = region_center((0, 0, 99, 99))
+        assert cx == 49 and cy == 49  # (0+99)//2 == 49
         assert isinstance(cx, int)
         assert isinstance(cy, int)
 
