@@ -204,9 +204,7 @@ def build_inventory() -> dict[str, object]:
         )
         for method_name in method_names:
             record = methods[method_name]
-            semantic_actions.append(
-                _serialize(record, layer="semantic", category=_category_for_semantic(record))
-            )
+            semantic_actions.append(_serialize(record, layer="semantic", category=_category_for_semantic(record)))
 
     primitive_actions.sort(key=lambda row: (row["file"], row["line"], row["name"]))
     semantic_actions.sort(key=lambda row: (row["file"], row["line"], row["name"]))

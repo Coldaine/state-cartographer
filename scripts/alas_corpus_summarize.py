@@ -366,12 +366,9 @@ def _format_text(summary: dict[str, Any]) -> str:
     if summary.get("graph_path"):
         lines.append(f"graph: {summary.get('graph_path')}")
 
+    lines.append(f"events: {counts.get('events', 0)} (invalid_lines={counts.get('events_invalid_lines', 0)})")
     lines.append(
-        f"events: {counts.get('events', 0)} (invalid_lines={counts.get('events_invalid_lines', 0)})"
-    )
-    lines.append(
-        "observations: "
-        f"{counts.get('observations', 0)} (invalid_lines={counts.get('observations_invalid_lines', 0)})"
+        f"observations: {counts.get('observations', 0)} (invalid_lines={counts.get('observations_invalid_lines', 0)})"
     )
     lines.append(
         f"screenshots: on_disk={counts.get('screenshots_on_disk', 0)} "
@@ -446,7 +443,9 @@ def main(argv: Iterable[str] | None = None) -> int:
 
     run_dir: Path | None = Path(args.run_dir).resolve() if args.run_dir else None
     if args.latest:
-        root = Path(args.runs_root) if args.runs_root else (Path(__file__).resolve().parents[1] / "data" / "alas-observe")
+        root = (
+            Path(args.runs_root) if args.runs_root else (Path(__file__).resolve().parents[1] / "data" / "alas-observe")
+        )
         run_dir = _pick_latest_run_dir(root)
         if run_dir is None:
             sys.stderr.write(f"No runs found under {root}\n")

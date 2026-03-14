@@ -177,4 +177,3 @@ def test_summarize_run_counts_states_assignments_and_mismatches(tmp_path: Path) 
     assert summary["mismatches"]["missing_screenshot_files"] == 1
     assert summary["mismatches"]["inconsistent_current_state"] == 1
     assert "page_shop" in summary["mismatches"]["event_states_not_in_graph"]
-

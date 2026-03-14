@@ -22,9 +22,7 @@ def validate_event(event: dict[str, Any]) -> None:
     if missing:
         raise ValueError(f"Missing required event fields: {missing}")
     if event["event_type"] not in VALID_EVENT_TYPES:
-        raise ValueError(
-            f"Invalid event_type {event['event_type']!r}. Valid: {sorted(VALID_EVENT_TYPES)}"
-        )
+        raise ValueError(f"Invalid event_type {event['event_type']!r}. Valid: {sorted(VALID_EVENT_TYPES)}")
     if not isinstance(event["ok"], bool):
         raise ValueError("Event field 'ok' must be boolean")
 

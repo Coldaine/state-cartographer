@@ -238,7 +238,11 @@ def _cluster_to_json(records: list[ImageFingerprint], cluster: list[int], cluste
     for index in sorted_indices:
         record = records[index]
         distance = None
-        if representative.fingerprint_method == "phash" and representative.hash_int is not None and record.hash_int is not None:
+        if (
+            representative.fingerprint_method == "phash"
+            and representative.hash_int is not None
+            and record.hash_int is not None
+        ):
             distance = hamming_distance(representative.hash_int, record.hash_int)
         elif representative.fingerprint_method != "phash":
             distance = 0 if record.fingerprint == representative.fingerprint else None
