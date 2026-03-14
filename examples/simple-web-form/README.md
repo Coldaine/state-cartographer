@@ -16,7 +16,7 @@ A 7-state graph modeling a typical web application with login, dashboard, settin
 
 ## Transitions
 
-11 transitions total: 8 deterministic (clicks, navigation), 3 vision-required (form submissions).
+11 transitions total: 7 deterministic (clicks, navigation), 4 vision-required (form submissions).
 
 ## Usage
 

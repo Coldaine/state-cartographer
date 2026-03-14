@@ -51,7 +51,7 @@ class TestValidatorIntegration:
 
     def test_invalid_json_fails_cleanly(self, tmp_path):
         bad_graph = tmp_path / "bad-json.json"
-        bad_graph.write_text('{bad json')
+        bad_graph.write_text("{bad json")
         result = run_script("schema_validator.py", str(bad_graph))
         assert result.returncode == 2
         assert "Invalid JSON" in result.stderr
