@@ -766,7 +766,7 @@
             105
           ],
           "cost": 1,
-          "label": "HOSIPITAL_CHECK \u2014 check region center"
+          "label": "HOSPITAL_CHECK \u2014 check region center"
         }
       ],
       "confidence_threshold": 0.7

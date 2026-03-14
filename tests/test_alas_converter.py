@@ -7,6 +7,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ALAS_ROOT = REPO_ROOT / "vendor" / "AzurLaneAutoScript"
+ALAS_PAGE_PY = ALAS_ROOT / "module" / "ui" / "page.py"
 
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
@@ -16,13 +17,22 @@ import subprocess  # noqa: E402
 
 import pytest  # noqa: E402
 
-from alas_converter import _parse_locale_dict, build_graph, region_center  # noqa: E402
+from alas_converter import (  # noqa: E402
+    _parse_locale_dict,
+    build_graph,
+    region_center,
+)
 from schema_validator import validate_graph  # noqa: E402
 
 
+def require_alas_page_source() -> None:
+    """Skip integration coverage unless the checked-out ALAS page source exists."""
+    if not ALAS_PAGE_PY.exists():
+        pytest.skip("ALAS page source is not present")
+
+
 def test_alas_converter_build_graph_shape():
-    if not ALAS_ROOT.exists():
-        pytest.skip("ALAS submodule is not present")
+    require_alas_page_source()
 
     graph = build_graph(locale="en")
     assert graph["initial_state"] == "page_main"
@@ -54,8 +64,7 @@ def test_alas_converter_build_graph_shape():
 
 
 def test_alas_converter_cli_matches_validator():
-    if not ALAS_ROOT.exists():
-        pytest.skip("ALAS submodule is not present")
+    require_alas_page_source()
 
     output = REPO_ROOT / "examples" / "_tmp_alas_converter_graph.json"
     result = subprocess.run(
@@ -82,6 +91,16 @@ def test_alas_converter_cli_matches_validator():
     assert output.exists()
     with contextlib.suppress(OSError):
         output.unlink()
+
+
+def test_build_graph_raises_helpful_error_when_alas_missing(monkeypatch: pytest.MonkeyPatch):
+    missing_page = REPO_ROOT / "vendor" / "_missing" / "module" / "ui" / "page.py"
+    monkeypatch.setattr("alas_converter.PAGE_PY", missing_page)
+
+    with pytest.raises(FileNotFoundError, match="git submodule update --init vendor/AzurLaneAutoScript") as exc_info:
+        build_graph(locale="en")
+
+    assert str(missing_page) in str(exc_info.value)
 
 
 # ---------------------------------------------------------------------------

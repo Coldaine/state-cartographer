@@ -65,6 +65,12 @@ _LINK_RE = re.compile(
     re.MULTILINE,
 )
 
+_LABEL_ALIASES = {
+    # Upstream ALAS uses this misspelling as an identifier, but the generated
+    # graph label is user-facing and should read cleanly.
+    "HOSIPITAL_CHECK": "HOSPITAL_CHECK",
+}
+
 
 # ---------------------------------------------------------------------------
 # Button loading
@@ -104,6 +110,21 @@ def load_buttons(locale: str = "en") -> dict[str, dict[str, Any]]:
     return buttons
 
 
+def ensure_alas_sources_present() -> None:
+    """Raise a helpful error if the checked-out ALAS source tree is unavailable."""
+    if not PAGE_PY.exists():
+        raise FileNotFoundError(
+            f"{PAGE_PY} not found.\n"
+            "Make sure the ALAS submodule is checked out:\n"
+            "  git submodule update --init vendor/AzurLaneAutoScript"
+        )
+
+
+def display_button_name(name: str) -> str:
+    """Return a user-facing button label for generated graph metadata."""
+    return _LABEL_ALIASES.get(name, name)
+
+
 # ---------------------------------------------------------------------------
 # Geometry helpers
 # ---------------------------------------------------------------------------
@@ -128,6 +149,7 @@ def parse_page_graph(
 
     Returns (states_dict, transitions_dict) ready for graph.json.
     """
+    ensure_alas_sources_present()
     text = PAGE_PY.read_text(encoding="utf-8")
 
     # Strip pure-comment lines so commented-out page defs aren't picked up.
@@ -163,7 +185,7 @@ def parse_page_graph(
                     "y": cy,
                     "expected_rgb": [r, g, b],
                     "cost": 1,
-                    "label": f"{check_btn} — check region center",
+                    "label": f"{display_button_name(check_btn)} — check region center",
                 }
             )
         states[page_name] = {
@@ -218,6 +240,7 @@ def parse_page_graph(
 
 def build_graph(locale: str = "en", serial: str = "127.0.0.1:21513") -> dict[str, Any]:
     """Build a complete graph.json dict from ALAS source data."""
+    ensure_alas_sources_present()
     buttons = load_buttons(locale)
     states, transitions = parse_page_graph(buttons)
     return {
@@ -265,11 +288,11 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    if not PAGE_PY.exists():
+    try:
+        ensure_alas_sources_present()
+    except FileNotFoundError as exc:
         print(
-            f"ERROR: {PAGE_PY} not found.\n"
-            "Make sure the ALAS submodule is checked out:\n"
-            "  git submodule update --init vendor/AzurLaneAutoScript",
+            f"ERROR: {exc}",
             file=sys.stderr,
         )
         sys.exit(1)
