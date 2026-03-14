@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Pre-push hook: full lint check + test suite.
+# No autofix — CI-equivalent gate before code leaves the machine.
+set -e
+
+echo "[pre-push] Running ruff check..."
+uv run ruff check .
+
+echo "[pre-push] Running ruff format check..."
+uv run ruff format --check .
+
+echo "[pre-push] Running tests..."
+uv run pytest tests/ -q
+
+echo "[pre-push] All checks passed."

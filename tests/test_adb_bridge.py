@@ -53,11 +53,7 @@ class TestDevices:
         assert result[0] == {"serial": "127.0.0.1:21503", "state": "device"}
 
     def test_parses_multiple_devices(self):
-        out = (
-            "List of devices attached\n"
-            "127.0.0.1:21503\tdevice\n"
-            "emulator-5554\toffline\n"
-        )
+        out = "List of devices attached\n127.0.0.1:21503\tdevice\nemulator-5554\toffline\n"
         proc = _make_proc(stdout=out)
         with patch("adb_bridge.subprocess.run", return_value=proc):
             result = adb_bridge.devices()

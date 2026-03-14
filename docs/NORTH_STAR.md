@@ -96,3 +96,9 @@ These are real problems we've identified but haven't solved yet. They are docume
 **Existing tools are allies.** We build on top of SCXML semantics, pytransitions, Playwright, ADB, and whatever else the user already has. We don't reimplement solved problems.
 
 **The human stays in the loop for judgment, not for labor.** The agent does the systematic work. The human provides the domain knowledge and makes the calls that require understanding intent, consequence, or business context.
+
+## Reference Case
+
+ALAS (AzurLaneAutoScript) is the existence proof. Over 9 years, it built a 43-state page graph for Azur Lane with color-based anchors, BFS pathfinding, deterministic transitions, and recovery from unknown states. Every problem State Cartographer addresses — state detection, cheap navigation, orientation, progressive optimization — ALAS solved by hand for one specific system.
+
+State Cartographer exists because that manual process should be a playbook, not a heroic engineering effort. The ALAS page graph (`module/ui/page.py`, `module/ui/assets.py`, `module/ui/ui.py`) is the canonical reference for validating our schema, tools, and methodology against a real, battle-tested system.

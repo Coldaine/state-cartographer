@@ -7,6 +7,15 @@ helps agents build queryable state graphs of external systems they're automating
 The plugin content (skills, agents, rules, scripts, commands) lives at root level.
 Dev infrastructure lives in `docs/`, `tests/`, `examples/`, and `dev/`.
 
+**ALAS is the reference case.** The project's design, schema, and playbook are
+validated against AzurLaneAutoScript (ALAS), a 9-year-old automation framework
+that solved these problems by hand for Azur Lane. ALAS is reference data — its
+43-page state graph with real color anchors, coordinates, and transitions proves
+the pattern works. State Cartographer generalizes the approach into a playbook
+any LLM agent can follow for any external system. Never try to run or wrap ALAS;
+read its `module/ui/page.py` and `module/ui/assets.py` to understand what a
+complete, battle-tested state graph looks like.
+
 ## Project structure
 
 - `skills/`    — Skill playbooks (SKILL.md files).

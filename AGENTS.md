@@ -11,6 +11,31 @@
 | [docs/NORTH_STAR.md](docs/NORTH_STAR.md) | Vision, goals, guiding principles, open questions |
 | [docs/architecture.md](docs/architecture.md) | 5-layer architecture, capability-to-layer mapping |
 
+## Reference Case: ALAS (AzurLaneAutoScript)
+
+ALAS is the existence proof for State Cartographer. It is a 9-year-old Python automation framework for Azur Lane that has already solved — by hand — every problem this project generalizes:
+
+- 43 page definitions with color-based state detection anchors
+- BFS pathfinding between pages
+- Deterministic navigation via button clicks at known coordinates
+- Recovery from unknown states via GOTO_MAIN fallback
+- Per-locale support (cn/en/jp/tw)
+
+**ALAS is reference data, not something to run or wrap.** Its page graph, button definitions, and navigation logic validate whether our schema, tools, and playbook are complete enough to represent a real-world system. Any agent working on this project should understand that ALAS's `module/ui/page.py` (state graph), `module/ui/assets.py` (anchor definitions), and `module/ui/ui.py` (locate + navigate) are the canonical examples of what State Cartographer produces.
+
+| ALAS Component | State Cartographer Equivalent |
+|---|---|
+| `Page` class + `page.py` | `graph.json` state definitions |
+| `Button.color` + `Button.area` | `pixel_color` anchors with `expected_rgb` |
+| `Button.button` (click region) | Transition `action` with `adb_tap` coordinates |
+| `Page.links` | `transitions` in graph.json |
+| `UI.ui_get_current_page()` | `scripts/locate.py` |
+| `UI.ui_goto(destination)` | `scripts/pathfind.py` |
+| `Page.init_connection()` (BFS) | Dijkstra's in `pathfind.py` |
+| GOTO_MAIN fallback | Recovery strategy in `rules/orientation.md` |
+
+The ALAS repo is available as a git submodule at `external/alas/`.
+
 ## Design Documents
 
 | Document | Topic |

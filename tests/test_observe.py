@@ -12,10 +12,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 from observe import build_observations, extract_pixel_coords
-
-# Make the PIL-free PNG factory available from conftest
-sys.path.insert(0, str(Path(__file__).parent))
-from conftest import make_rgb_png
+from png_factory import make_rgb_png
 
 SCRIPTS_DIR = Path(__file__).parent.parent / "scripts"
 

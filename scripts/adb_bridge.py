@@ -112,9 +112,7 @@ def screenshot(serial: str, output_path: Path | str | None = None) -> bytes:
     )
     if result.returncode != 0:
         stderr = result.stderr.decode("utf-8", errors="replace").strip()
-        raise RuntimeError(
-            f"Screenshot failed (returncode {result.returncode}): {stderr}"
-        )
+        raise RuntimeError(f"Screenshot failed (returncode {result.returncode}): {stderr}")
 
     data: bytes = result.stdout
     if not data or not data.startswith(b"\x89PNG"):
@@ -207,9 +205,7 @@ def key_event(serial: str, keycode: int | str) -> None:
 
 
 def main() -> int:  # pragma: no cover
-    parser = argparse.ArgumentParser(
-        description="ADB bridge — emulator control for State Cartographer"
-    )
+    parser = argparse.ArgumentParser(description="ADB bridge — emulator control for State Cartographer")
     sub = parser.add_subparsers(dest="command", required=True)
 
     # --- devices ---

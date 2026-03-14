@@ -8,6 +8,11 @@ State Cartographer is a Claude Code plugin for building queryable state graphs o
 
 **Phase: Phase 1 Foundation (Complete)**
 
+**Reference case:** ALAS (AzurLaneAutoScript) serves as the primary validation target.
+Its 43-page state graph with real color anchors and BFS navigation — built by hand
+over 9 years — is the benchmark for whether our schema and tools can represent a
+real-world system. ALAS is reference data, not a runtime dependency.
+
 The project has been scaffolded and restructured as a proper Claude Code plugin:
 - Core Python scripts (`locate.py`, `pathfind.py`, `session.py`, `graph_utils.py`, `schema_validator.py`, `screenshot_mock.py`)
 - Plugin content (skills, agents, rules, commands) moved to root level (no more `plugin/` subdirectory)

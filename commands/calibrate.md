@@ -1,5 +1,5 @@
 ---
-name: calibrate
+name: Calibrate
 description: Learn anchor values from real screenshots and write them to graph.json
 type: command
 usage: /calibrate
@@ -43,9 +43,9 @@ python scripts/calibrate.py --graph graph.json --screenshot screen.png --state a
 
 ```bash
 # Pixel color sampling only
-uv sync --extra dev
+uv sync --extra vision
 
-# Perceptual hash (screenshot_region) also requires:
+# Perceptual hash (screenshot_region) also requires imagehash:
 uv sync --extra vision
 ```
 

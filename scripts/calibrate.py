@@ -23,7 +23,7 @@ Usage:
     python calibrate.py --graph graph.json --screenshot screen.png --state login --dry-run
 
 Requirements:
-    Pixel color sampling only: uv sync --extra dev  (Pillow)
+    Pixel color sampling only: uv sync --extra vision  (Pillow)
     Screenshot region hashing: uv sync --extra vision  (Pillow + imagehash)
 """
 
@@ -62,7 +62,7 @@ def calibrate_state(
         img = Image.open(screenshot_path).convert("RGB")
     except ImportError:
         warnings.append(
-            "Pillow not installed — install with: uv sync --extra dev\n"
+            "Pillow not installed — install with: uv sync --extra vision\n"
             "  pixel_color and screenshot_region anchors cannot be calibrated."
         )
         return anchors, warnings
