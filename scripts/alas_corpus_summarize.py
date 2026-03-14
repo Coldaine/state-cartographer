@@ -18,11 +18,12 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from collections import Counter, defaultdict
+from collections import Counter
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 
 def _load_json(path: Path) -> dict[str, Any] | None:
@@ -76,7 +77,7 @@ def _load_graph_state_ids(graph_path: Path) -> set[str]:
         return set()
     states = graph.get("states")
     if isinstance(states, dict):
-        return {str(k) for k in states.keys()}
+        return {str(k) for k in states}
     if isinstance(states, list):
         ids = set()
         for item in states:
@@ -188,7 +189,7 @@ def summarize_run(run_dir: Path, *, graph_path: Path | None = None, top_n: int =
             if screenshot_path and not screenshot_path.exists():
                 missing_screenshots += 1
 
-    for path_str, c in screenshot_ref_counts.items():
+    for _path_str, c in screenshot_ref_counts.items():
         if c > 1:
             duplicate_screenshot_refs += int(c - 1)
 

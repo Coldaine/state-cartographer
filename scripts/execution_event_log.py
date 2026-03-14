@@ -5,17 +5,16 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 VALID_EVENT_TYPES = {"assignment", "observation", "execution", "recovery"}
 REQUIRED_FIELDS = {"ts", "run_id", "serial", "event_type", "ok"}
 
 
 def utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def validate_event(event: dict[str, Any]) -> None:

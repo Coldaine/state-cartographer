@@ -20,7 +20,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIGS = [
     REPO_ROOT / "vendor/AzurLaneAutoScript/config/template.json",
@@ -109,14 +108,14 @@ def _iter_scheduler_occurrences(node: Any, path: list[str]) -> list[dict[str, An
                     {
                         "task_path": ".".join(path),
                         "command": command,
-                        "command_path": ".".join(path + ["Scheduler", "Command"]),
+                        "command_path": ".".join([*path, "Scheduler", "Command"]),
                     }
                 )
         for key, value in node.items():
-            out.extend(_iter_scheduler_occurrences(value, path + [str(key)]))
+            out.extend(_iter_scheduler_occurrences(value, [*path, str(key)]))
     elif isinstance(node, list):
         for index, value in enumerate(node):
-            out.extend(_iter_scheduler_occurrences(value, path + [str(index)]))
+            out.extend(_iter_scheduler_occurrences(value, [*path, str(index)]))
     return out
 
 

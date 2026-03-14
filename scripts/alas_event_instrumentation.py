@@ -5,7 +5,7 @@ from __future__ import annotations
 import functools
 import time
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from execution_event_log import append_event, make_event
 

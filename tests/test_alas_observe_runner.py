@@ -44,8 +44,9 @@ def test_observation_runtime_records_classified_screenshot(tmp_path: Path):
     runtime = ObservationRuntime(graph_path=graph_path, run_dir=tmp_path / "run")
     png_bytes = make_rgb_png([(255, 0, 0)], width=1, height=1)
 
-    from PIL import Image
     import io
+
+    from PIL import Image
 
     image = Image.open(io.BytesIO(png_bytes)).convert("RGB")
     runtime.record_screenshot(serial="127.0.0.1:21513", image=image)

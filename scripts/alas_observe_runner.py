@@ -11,6 +11,7 @@ observers so the run produces:
 This script does not patch the vendor tree on disk. It monkeypatches selected
 methods in-process before starting the ALAS scheduler.
 """
+# ruff: noqa: E402
 
 from __future__ import annotations
 
@@ -19,7 +20,7 @@ import json
 import os
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -29,13 +30,15 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 sys.path.insert(0, str(ALAS_ROOT))
 
 from execution_event_log import append_event, make_event
-from locate import load_json as load_graph_json, locate
+
+from locate import load_json as load_graph_json
+from locate import locate
 from observe import build_observations, extract_pixel_coords
 from session import confirm_state, init_session, record_transition, save_json
 
 
 def utc_now_compact() -> str:
-    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
 
 
 def infer_target_name(args: tuple[Any, ...], kwargs: dict[str, Any]) -> str | None:
@@ -85,7 +88,7 @@ class ObservationRuntime:
                 {
                     "run_id": self.run_id,
                     "graph_path": str(self.graph_path),
-                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "created_at": datetime.now(UTC).isoformat(),
                 },
                 indent=2,
             )
@@ -127,7 +130,7 @@ class ObservationRuntime:
             return func(**kwargs)
         except KeyboardInterrupt:
             raise
-        except BaseException as exc:  # noqa: BLE001
+        except BaseException as exc:
             self.log_event(
                 serial=event_serial,
                 event_type="recovery",
@@ -232,7 +235,7 @@ class ObservationRuntime:
 
         self._write_observation_record(
             {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "assignment": self.current_assignment,
                 "screenshot": str(screenshot_path),
                 "locate_result": result,
