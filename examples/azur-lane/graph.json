@@ -15,18 +15,42 @@
       "anchors": [
         {
           "type": "pixel_color",
-          "x": 903,
-          "y": 391,
+          "x": 1195,
+          "y": 552,
           "expected_rgb": [
-            183,
-            215,
-            247
+            30,
+            101,
+            255
           ],
           "cost": 1,
-          "label": "MAIN_GOTO_FLEET \u2014 check region center"
+          "label": "MAIN_BATTLE_BLUE \u2014 live main screen"
+        },
+        {
+          "type": "pixel_color",
+          "x": 1090,
+          "y": 554,
+          "expected_rgb": [
+            233,
+            233,
+            233
+          ],
+          "cost": 1,
+          "label": "MAIN_FORMATION_WHITE \u2014 live main screen"
+        },
+        {
+          "type": "pixel_color",
+          "x": 306,
+          "y": 679,
+          "expected_rgb": [
+            246,
+            247,
+            250
+          ],
+          "cost": 1,
+          "label": "MAIN_DOCK_WHITE \u2014 live main screen"
         }
       ],
-      "confidence_threshold": 0.7
+      "confidence_threshold": 0.66
     },
     "page_campaign_menu": {
       "description": "Campaign Menu page (Azur Lane)",
@@ -44,7 +68,7 @@
           "label": "CAMPAIGN_MENU_CHECK \u2014 check region center"
         }
       ],
-      "confidence_threshold": 0.7
+      "confidence_threshold": 0.66
     },
     "page_campaign": {
       "description": "Campaign page (Azur Lane)",
@@ -60,6 +84,90 @@
           ],
           "cost": 1,
           "label": "CAMPAIGN_CHECK \u2014 check region center"
+        }
+      ],
+      "confidence_threshold": 0.66
+    },
+    "page_loading_story": {
+      "description": "Loading / update-complete story splash (Azur Lane)",
+      "anchors": [
+        {
+          "type": "pixel_color",
+          "x": 94,
+          "y": 509,
+          "expected_rgb": [
+            38,
+            95,
+            138
+          ],
+          "cost": 1,
+          "label": "LOADING_LEFT_BADGE_BLUE — live loading splash"
+        },
+        {
+          "type": "pixel_color",
+          "x": 844,
+          "y": 251,
+          "expected_rgb": [
+            209,
+            237,
+            254
+          ],
+          "cost": 1,
+          "label": "LOADING_IRIS_BACKGROUND — live loading splash"
+        },
+        {
+          "type": "pixel_color",
+          "x": 1236,
+          "y": 688,
+          "expected_rgb": [
+            70,
+            104,
+            149
+          ],
+          "cost": 1,
+          "label": "LOADING_PROGRESS_CUBE_BLUE — live loading splash"
+        }
+      ],
+      "confidence_threshold": 0.7
+    },
+    "page_publisher_splash": {
+      "description": "Publisher logo splash (Yongshi / Manjuu / Yostar)",
+      "anchors": [
+        {
+          "type": "pixel_color",
+          "x": 161,
+          "y": 287,
+          "expected_rgb": [
+            162,
+            43,
+            31
+          ],
+          "cost": 1,
+          "label": "PUBLISHER_YONGSHI_RED — live publisher splash"
+        },
+        {
+          "type": "pixel_color",
+          "x": 522,
+          "y": 353,
+          "expected_rgb": [
+            175,
+            171,
+            150
+          ],
+          "cost": 1,
+          "label": "PUBLISHER_MANJUU_GOLD — live publisher splash"
+        },
+        {
+          "type": "pixel_color",
+          "x": 928,
+          "y": 350,
+          "expected_rgb": [
+            178,
+            178,
+            178
+          ],
+          "cost": 1,
+          "label": "PUBLISHER_YOSTAR_GRAY — live publisher splash"
         }
       ],
       "confidence_threshold": 0.7
@@ -103,6 +211,90 @@
     "page_unknown": {
       "description": "Unknown page (Azur Lane)",
       "anchors": [],
+      "confidence_threshold": 0.7
+    },
+    "page_title": {
+      "description": "Title / press-start page (Azur Lane)",
+      "anchors": [
+        {
+          "type": "pixel_color",
+          "x": 80,
+          "y": 60,
+          "expected_rgb": [
+            57,
+            70,
+            192
+          ],
+          "cost": 1,
+          "label": "TITLE_LOGO_BLUE — live title screen"
+        },
+        {
+          "type": "pixel_color",
+          "x": 130,
+          "y": 370,
+          "expected_rgb": [
+            28,
+            161,
+            243
+          ],
+          "cost": 1,
+          "label": "TITLE_TWITTER_BLUE — live title screen"
+        },
+        {
+          "type": "pixel_color",
+          "x": 1241,
+          "y": 37,
+          "expected_rgb": [
+            78,
+            78,
+            89
+          ],
+          "cost": 1,
+          "label": "TITLE_GEAR_DARK — live title screen"
+        }
+      ],
+      "confidence_threshold": 0.66
+    },
+    "page_announcement": {
+      "description": "Announcements modal (Azur Lane)",
+      "anchors": [
+        {
+          "type": "pixel_color",
+          "x": 419,
+          "y": 92,
+          "expected_rgb": [
+            141,
+            150,
+            157
+          ],
+          "cost": 1,
+          "label": "ANNOUNCEMENT_EVENT_TAB — live announcement modal"
+        },
+        {
+          "type": "pixel_color",
+          "x": 1203,
+          "y": 91,
+          "expected_rgb": [
+            92,
+            98,
+            99
+          ],
+          "cost": 1,
+          "label": "ANNOUNCEMENT_CLOSE_X — live announcement modal"
+        },
+        {
+          "type": "pixel_color",
+          "x": 388,
+          "y": 324,
+          "expected_rgb": [
+            146,
+            150,
+            162
+          ],
+          "cost": 1,
+          "label": "ANNOUNCEMENT_PATCH_NOTE — live announcement modal"
+        }
+      ],
       "confidence_threshold": 0.7
     },
     "page_exercise": {
@@ -275,12 +467,36 @@
           "x": 158,
           "y": 27,
           "expected_rgb": [
-            116,
-            129,
-            167
+            207,
+            222,
+            243
           ],
           "cost": 1,
-          "label": "GUILD_CHECK \u2014 check region center"
+          "label": "GUILD_TITLE \u2014 live guild screen"
+        },
+        {
+          "type": "pixel_color",
+          "x": 36,
+          "y": 184,
+          "expected_rgb": [
+            244,
+            246,
+            144
+          ],
+          "cost": 1,
+          "label": "GUILD_LOBBY_HIGHLIGHT \u2014 live guild screen"
+        },
+        {
+          "type": "pixel_color",
+          "x": 1231,
+          "y": 24,
+          "expected_rgb": [
+            24,
+            34,
+            68
+          ],
+          "cost": 1,
+          "label": "GUILD_HOME_ICON \u2014 live guild screen"
         }
       ],
       "confidence_threshold": 0.7
