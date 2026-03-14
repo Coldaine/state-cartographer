@@ -101,7 +101,7 @@ states:
 
 **Novel capability #11.**
 
-### Schema spec document location: `references/schema.md`
+### Schema spec document location: `skills/state-graph-authoring/references/schema.md`
 Comprehensive spec for all extension fields. Loaded on demand when the agent is building or editing a state graph definition.
 
 ---
@@ -153,13 +153,13 @@ Maintains the running record of confirmed states and transitions for the current
 
 **Part of novel capability #3 (session awareness for locate).**
 
-### 2d. `mock.py` — Screenshot Mock Manager
+### 2d. `screenshot_mock.py` — Screenshot Mock Manager
 
 Manages the offline development dataset.
 
-- `python scripts/mock.py capture --state main_menu --file screenshot.png` → associates screenshot with state
-- `python scripts/mock.py validate --graph graph.json` → runs all anchors against all captured screenshots, reports which states have good coverage and which anchors fail
-- `python scripts/mock.py test-locate --graph graph.json --screenshot screenshot.png` → tests the locate classifier against a known-state screenshot
+- `python scripts/screenshot_mock.py capture --state main_menu --file screenshot.png` → associates screenshot with state
+- `python scripts/screenshot_mock.py validate --graph graph.json` → runs all anchors against all captured screenshots, reports which states have good coverage and which anchors fail
+- `python scripts/screenshot_mock.py test-locate --graph graph.json --screenshot screenshot.png` → tests the locate classifier against a known-state screenshot
 
 **Novel capability #10.**
 
@@ -201,7 +201,7 @@ SKILL.md
 │   - How to merge states that are "the same"
 │   - How to split states that look the same but aren't
 │   - When to ask the human for input
-│   - How to validate anchors using mock.py
+│   - How to validate anchors using screenshot_mock.py
 ├── Phase 3: Transition Replacement
 │   - How to identify candidates for deterministic replacement
 │   - Common patterns (back button, menu button, confirm dialog)
@@ -239,7 +239,7 @@ Full specification of all schema extensions (anchors, costs, wait states, confid
 Instructions for the exploration phase. How to systematically navigate an unknown system, what to capture at each state, how to handle errors during exploration, how to structure exploration for maximum coverage with minimum redundancy.
 
 ### `references/consolidator.md`
-Instructions for the consolidation phase. Decision criteria for merging/splitting states. How to identify stable anchors. How to use mock.py validate. Specific patterns to watch for (rotating content, context-dependent dialogs, loading states that masquerade as real states).
+Instructions for the consolidation phase. Decision criteria for merging/splitting states. How to identify stable anchors. How to use screenshot_mock.py validate. Specific patterns to watch for (rotating content, context-dependent dialogs, loading states that masquerade as real states).
 
 ### `references/optimizer.md`
 Instructions for the transition replacement pass. How to analyze each transition for replacement candidates. How to write and test deterministic action implementations. How to annotate costs. How to verify that the replaced transition reliably reaches the expected target state.
@@ -260,9 +260,11 @@ state-cartographer/
 │   ├── locate.py               (passive state classifier)
 │   ├── pathfind.py             (weighted route planner)
 │   ├── session.py              (session manager)
-│   ├── mock.py                 (screenshot mock manager)
+│   ├── screenshot_mock.py      (screenshot mock manager)
 │   ├── graph_utils.py          (pytransitions wrapper)
-│   └── requirements.txt        (pytransitions, pillow, etc.)
+│   ├── adb_bridge.py           (ADB provider and screenshot bridge)
+│   ├── observe.py              (observation extraction)
+│   └── calibrate.py            (anchor calibration)
 ├── references/
 │   ├── schema.md               (full schema extension spec)
 │   ├── explorer.md             (exploration phase instructions)
@@ -286,7 +288,7 @@ Layer 1 (schema extensions)
   └── Extends graph definition format with anchors, costs, wait states, thresholds
        │
 Layer 2 (runtime tools)
-  └── locate.py, pathfind.py, session.py, mock.py
+  └── locate.py, pathfind.py, session.py, screenshot_mock.py, adb_bridge.py, observe.py, calibrate.py
   └── These consume Layer 1 schema, call Layer 0 for graph introspection
        │
 Layer 3 (SKILL.md playbook)

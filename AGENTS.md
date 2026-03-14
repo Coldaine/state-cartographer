@@ -34,7 +34,7 @@ ALAS is the existence proof for State Cartographer. It is a 9-year-old Python au
 | `Page.init_connection()` (BFS) | Dijkstra's in `pathfind.py` |
 | GOTO_MAIN fallback | Recovery strategy in `rules/orientation.md` |
 
-The ALAS repo is available as a git submodule at `external/alas/`.
+The ALAS repo is available as a git submodule at `vendor/AzurLaneAutoScript/`.
 
 ## Design Documents
 
@@ -80,7 +80,8 @@ The ALAS repo is available as a git submodule at `external/alas/`.
 | `scripts/session.py` | Session state manager — tracks confirmed states and transitions |
 | `scripts/graph_utils.py` | Graph inspection utilities — list states, find orphans, check reachability |
 | `scripts/schema_validator.py` | Schema validator — checks graph.json integrity |
-| `scripts/screenshot_mock.py` | Mock/screenshot manager — capture and validate against graph || `scripts/observe.py` | Observation extractor — builds obs dict from screenshot or live ADB capture |
+| `scripts/screenshot_mock.py` | Mock/screenshot manager — capture and validate against graph |
+| `scripts/observe.py` | Observation extractor — builds obs dict from screenshot or live ADB capture |
 | `scripts/calibrate.py` | Anchor calibrator — learns pixel colors / hashes from real screenshots |
 | `scripts/adb_bridge.py` | ADB bridge — screenshot, tap, swipe, keyevent for MEMU/Android emulators |
 ### References
@@ -93,6 +94,8 @@ The ALAS repo is available as a git submodule at `external/alas/`.
 
 | Example | Description |
 |---------|-------------|
+| [examples/azur-lane/](examples/azur-lane/) | In-progress Azur Lane reference graph derived from ALAS concepts |
+| [examples/simple-web-form/](examples/simple-web-form/) | Small realistic example for navigation and authoring flows |
 | [examples/template/](examples/template/) | Starter 3-state graph template with README |
 
 ## Project Meta

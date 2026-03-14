@@ -4,7 +4,7 @@
 
 This project requires two fundamentally different testing approaches that operate at different layers and test different things:
 
-1. **Python unit/integration tests** for the scripts in `plugin/scripts/`. These are traditional pytest tests. They test whether `locate.py` returns the correct state given known inputs, whether `pathfind.py` computes the cheapest route, whether `session.py` tracks history correctly. These are deterministic, fast, and run in CI.
+1. **Python unit/integration tests** for the scripts in `scripts/`. These are traditional pytest tests. They test whether `locate.py` returns the correct state given known inputs, whether `pathfind.py` computes the cheapest route, whether `session.py` tracks history correctly. These are deterministic, fast, and run in CI.
 
 2. **Skill evals** for the SKILL.md files, agents, commands, and rules. These test whether Claude actually uses the skill correctly when given realistic prompts. Does the skill trigger when it should? Does the agent follow the playbook? Does the output match expectations? These are LLM-evaluated, slower, and run via the skill-creator eval framework.
 
@@ -16,7 +16,7 @@ Both are necessary. Neither substitutes for the other. A perfectly tested `locat
 
 ### What we're testing
 
-Every script in `plugin/scripts/` gets conventional pytest tests. These are the deterministic tools that do real work.
+Every script in `scripts/` gets conventional pytest tests. These are the deterministic tools that do real work.
 
 ### Test structure
 
@@ -28,21 +28,18 @@ tests/
 │   │   ├── simple-linear.json     # A → B → C → D, no branching
 │   │   ├── branching.json         # A → B|C, B → D, C → D
 │   │   ├── with-anchors.json      # Full schema: anchors, costs, wait states
-│   │   ├── hierarchical.json      # Nested states (menu → submenu → action)
-│   │   └── malformed.json         # Missing required fields, bad references
-│   ├── sessions/
-│   │   ├── fresh.json             # Empty session, no history
-│   │   ├── mid-traversal.json     # Session with 5 confirmed states
-│   │   └── ambiguous.json         # Session where last transition has multiple targets
-│   └── observations/
-│       ├── clear-match.json       # Observations that unambiguously match one state
-│       ├── ambiguous.json         # Observations that match multiple states
-│       ├── no-match.json          # Observations that match nothing
-│       └── partial.json           # Some anchors match, others don't
+│   └── graphs/
+│       ├── simple-linear.json     # A → B → C → D, no branching
+│       ├── branching.json         # A → B|C, B → D, C → D
+│       └── with-anchors.json      # Full schema: anchors, costs, wait states
 ├── test_graph_utils.py
+├── test_adb_bridge.py
+├── test_calibrate.py
+├── test_integration.py
 ├── test_schema_validator.py
 ├── test_session.py
 ├── test_locate.py
+├── test_observe.py
 ├── test_pathfind.py
 └── test_mock.py
 ```
@@ -111,7 +108,7 @@ pytest tests/ -v
 pytest tests/test_locate.py -v
 
 # With coverage
-pytest tests/ --cov=plugin/scripts --cov-report=html
+pytest tests/ --cov=scripts --cov-report=html
 ```
 
 ### CI integration
@@ -130,8 +127,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install -r plugin/scripts/requirements.txt pytest pytest-cov
-      - run: pytest tests/ -v --cov=plugin/scripts
+      - run: pip install uv
+      - run: uv venv
+      - run: uv pip install -e ".[dev]"
+      - run: pytest tests/ -v --cov=scripts
 ```
 
 ---
@@ -258,20 +257,20 @@ evals/
 Within Claude Code, using the skill-creator plugin:
 
 ```
-/skill-creator eval --skill-path plugin/skills/state-graph-authoring --eval-set evals/trigger-evals/authoring-skill.json
+/skill-creator eval --skill-path skills/state-graph-authoring --eval-set evals/trigger-evals/authoring-skill.json
 ```
 
 Or for benchmarking (multiple runs with variance analysis):
 
 ```
-/skill-creator benchmark --skill-path plugin/skills/state-graph-authoring --eval-set evals/output-evals/authoring-scenarios.json --runs 5
+/skill-creator benchmark --skill-path skills/state-graph-authoring --eval-set evals/output-evals/authoring-scenarios.json --runs 5
 ```
 
 ### When to run what
 
 | Situation | Python tests | Skill evals |
 |---|---|---|
-| Changed a script in plugin/scripts/ | Yes (pytest) | Maybe (if the change affects how the skill calls the script) |
+| Changed a script in scripts/ | Yes (pytest) | Maybe (if the change affects how the skill calls the script) |
 | Changed a SKILL.md | No | Yes (trigger + output evals) |
 | Changed an agent definition | No | Yes (agent evals) |
 | Changed a rule | No | Yes (rule evals) |

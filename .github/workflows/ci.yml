@@ -18,9 +18,9 @@ jobs:
           uv venv
           uv pip install -e ".[dev]"
       - name: Ruff check
-        run: uv run ruff check --no-fix .
+        run: uv run ruff check --no-fix scripts tests hooks
       - name: Ruff format
-        run: uv run ruff format --check .
+        run: uv run ruff format --check scripts tests hooks
 
   test:
     runs-on: ubuntu-latest

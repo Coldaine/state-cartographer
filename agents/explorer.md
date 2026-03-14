@@ -6,7 +6,7 @@ audience: Applied during Phase 1 (Exploration) of state graph authoring
 prerequisites:
   - A live connection to the target system
   - At least one known entry state
-  - Screenshot capture capability via mock.py
+  - Screenshot capture capability via screenshot_mock.py
 ---
 
 # State Explorer Agent
@@ -37,7 +37,7 @@ Document exhaustively:
 - Take a screenshot
 - Capture DOM (if web) or window structure (if desktop/mobile)
 - Write observation notes
-- Call `python plugin/scripts/mock.py capture --state entry_state_name --screenshot screenshot.png --notes "..."`
+- Call `python scripts/screenshot_mock.py capture --state entry_state_name --screenshot screenshot.png --notes "..."`
 
 ### Level 1: All First-Hop States
 
@@ -45,7 +45,7 @@ For each action available from the entry state, execute it:
 1. Navigate there
 2. Take screenshot, capture DOM, write observations
 3. Record the action that got you here
-4. Capture with `mock.py`
+4. Capture with `screenshot_mock.py`
 
 After visiting all Level 1 states, return to entry state before proceeding to Level 2.
 
@@ -61,7 +61,7 @@ Maintain a mental model as a traversal tree. When you encounter a state you've a
 
 ## What to Record at Each State
 
-1. **Screenshot** (`mock.py capture`)
+1. **Screenshot** (`screenshot_mock.py capture`)
 2. **Observation Notes** — Screen identity, key UI elements, what changes vs. what's stable, available actions
 3. **DOM Dump** (if web) or **System State** (if mobile/desktop)
 4. **Available Transitions** — Every interactive element and what it does

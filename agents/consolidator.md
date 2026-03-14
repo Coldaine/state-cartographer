@@ -67,7 +67,7 @@ See skill's `references/schema.md` for complete schema.
 ## Step 6: Validate
 
 ```bash
-python plugin/scripts/mock.py validate --graph graph.json --screenshots /path/to/screenshots/
+python scripts/screenshot_mock.py validate --graph graph.json --screenshots /path/to/screenshots/
 ```
 
 Resolve: unmatched screenshots, overlapping anchors, missing anchors.
@@ -87,4 +87,4 @@ Resolve: unmatched screenshots, overlapping anchors, missing anchors.
 1. **Over-splitting** — Same structure = same state, even if content differs
 2. **Choosing fragile anchors** — Prefer structural anchors over pixel positions
 3. **Missing negative anchors** — Use them to disambiguate similar-looking states
-4. **Skipping validation** — Always run `mock.py validate` before moving on
+4. **Skipping validation** — Always run `screenshot_mock.py validate` before moving on

@@ -1,0 +1,3 @@
+[submodule "vendor/AzurLaneAutoScript"]
+	path = vendor/AzurLaneAutoScript
+	url = https://github.com/LmeSzinc/AzurLaneAutoScript.git

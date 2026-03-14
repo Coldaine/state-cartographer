@@ -184,7 +184,7 @@ Mark with `fragile: true` when the action might break (brittle selectors, coordi
 Use the schema validator to check graph integrity:
 
 ```bash
-python plugin/scripts/schema_validator.py --graph graph.json
+python scripts/schema_validator.py --graph graph.json
 ```
 
 Checks:

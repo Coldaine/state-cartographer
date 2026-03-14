@@ -22,7 +22,7 @@ Update the graph when any of these occur during operation:
 ### 1. Capture the Anomaly
 
 ```bash
-python plugin/scripts/mock.py capture \
+python scripts/screenshot_mock.py capture \
   --state suspected_state_name \
   --screenshot screenshot.png \
   --notes "Description of what happened"
@@ -42,8 +42,8 @@ Edit the graph definition directly. For new states, add anchors. For broken tran
 ### 4. Revalidate
 
 ```bash
-python plugin/scripts/schema_validator.py --graph graph.json
-python plugin/scripts/mock.py validate --graph graph.json
+python scripts/schema_validator.py --graph graph.json
+python scripts/screenshot_mock.py validate --graph graph.json
 ```
 
 ### 5. Test
