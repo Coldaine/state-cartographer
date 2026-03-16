@@ -1,15 +1,16 @@
 # Architecture: Capability-to-Layer Mapping
 
-State Cartographer is an automation runtime with six layers. Layers 0-2 handle navigation (the original scope). Layers 3-5 handle task automation (the runtime engine).
+State Cartographer is an automation runtime with seven layers. Layers 0-2 handle navigation (the original scope). Layers 3-5 handle task automation (the runtime engine). Layer 4.5 handles data collection (ship census, stat recording).
 
 ```
-Layer 5: Agent Supervision (LLM reasoning for planning + anomaly handling)
-Layer 4: Task Scheduler + Daemon Loop (what runs when)
-Layer 3: Task Definitions + Resource Model (what each task does + game state)
+Layer 5:   Agent Supervision       (LLM reasoning for planning + anomaly handling)
+Layer 4.5: Data Collection         (ship census, pagination, stat recording)
+Layer 4:   Task Scheduler + Daemon (what runs when, priority queue)
+Layer 3:   Task Engine + Resources (task definitions, resource model, executor)
 ───────── automation boundary ─────────
-Layer 2: Runtime Navigation Tools (locate, pathfind, session, observe, calibrate, adb_bridge)
-Layer 1: Schema + Graph (graph.json, tasks.json, anchors, costs, transitions)
-Layer 0: Libraries (pytransitions, Pillow, imagehash, ADB)
+Layer 2:   Runtime Navigation Tools (locate, pathfind, session, observe, calibrate, adb_bridge)
+Layer 1:   Schema + Graph          (graph.json, tasks.json, anchors, costs, transitions)
+Layer 0:   Libraries               (pytransitions, Pillow, imagehash, ADB)
 ```
 
 ## Layer 0: Don't Build (Use Existing)
@@ -389,14 +390,47 @@ CLI: `python scripts/scheduler.py --tasks tasks.json --resources store.json --dr
 
 ---
 
+## Layer 4.5: Data Collection Scheduler
+
+A second scheduling loop dedicated to **read-heavy, pagination-driven** data
+gathering. Sits between the task scheduler and agent supervision because it
+uses navigation tools (Layer 2) but produces data for agent decisions (Layer 5).
+
+**Why separate from Layer 4?**
+- Pagination workflows (dock census, depot scan) are fundamentally different from
+  fire-and-forget tasks (collect commissions, feed dorm)
+- Data collection is interruptible and resumable (save page index, restart later)
+- Must yield to the primary scheduler when urgent tasks become ready
+
+**Jobs:**
+- `ship_census` — page through dock, read rarity/level/name per card (7×2 grid, 25-40 pages)
+- `ship_detail` — tap each ship, read stats/equipment/skills from detail pages
+- `formation_audit` — record all fleet compositions
+- `resource_scan` — read oil/coins/gems from main screen + depot
+- `dorm_status` — comfort, food level, assigned ships, mood
+- `guild_roster` — page through guild member list
+- `opsi_map` — record zone exploration/completion status
+
+**Pagination engine:** Generic `screenshot → extract → scroll → repeat` loop with
+end-of-list detection (card count vs header, scroll position, duplicate frame).
+
+**Preemption:** When primary scheduler has a task ready, data collection pauses
+(saves checkpoint), defers to primary task, then resumes from checkpoint.
+
+See: `docs/data-collection.md` for full design.
+
+---
+
 ## Layer 5: Agent Supervision
 
 The agent is NOT the loop. The agent is the supervisor.
 
 - **Before the loop**: Review task list, adjust priorities, enable/disable tasks
 - **During the loop**: Called ONLY when tooling can't handle something (unknown state, new popup, resource decision needing judgment)
+- **Vision fallback**: When deterministic navigation fails, the vision agent analyzes the screenshot and suggests recovery. Patterns that repeat 3+ times get promoted to deterministic graph entries.
 - **Between sessions**: Review logs, update graph, add new tasks discovered during play
 - **Planning**: "Commission finishes in 42 minutes, Research in 15 — queue Research collection first"
+- **Census review**: Analyze ship stats to recommend fleet compositions, equipment swaps, skill training priorities
 
 The agent does NOT manually call `session.py confirm` after every tap. The executor does that automatically.
 
@@ -423,7 +457,13 @@ Layer 4 (scheduler)
   └── scheduler.py — picks tasks, checks resources, computes next runs
   └── Calls Layer 3 executor to run tasks
        │
+Layer 4.5 (data collection)
+  └── data_collector.py — pagination jobs, census, stat recording
+  └── Uses Layer 2 for navigation, produces data for Layer 5
+  └── Yields to Layer 4 when primary tasks are due
+       │
 Layer 5 (agent supervision)
   └── LLM agent reviews schedule, handles unknowns, adjusts priorities
   └── Called by Layer 4 on escalation
+  └── Analyzes Layer 4.5 census data for planning
 ```

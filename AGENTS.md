@@ -9,7 +9,9 @@
 | [plan.md](plan.md) | Master plan: development phases, key workflows, success metrics |
 | [CLAUDE.md](CLAUDE.md) | Project conventions, commands, coding standards for Claude Code |
 | [docs/NORTH_STAR.md](docs/NORTH_STAR.md) | Vision, goals, guiding principles, open questions |
-| [docs/architecture.md](docs/architecture.md) | 5-layer architecture, capability-to-layer mapping |
+| [docs/architecture.md](docs/architecture.md) | 7-layer architecture, capability-to-layer mapping |
+| [docs/workflows.md](docs/workflows.md) | Complete Azur Lane workflow inventory (26 workflows) |
+| [docs/data-collection.md](docs/data-collection.md) | Data collection scheduler, ship census, pagination design |
 
 ## Reference Case: ALAS (AzurLaneAutoScript)
 
@@ -40,8 +42,14 @@ The ALAS repo is available as a git submodule at `vendor/AzurLaneAutoScript/`.
 
 | Document | Topic |
 |----------|-------|
-| [docs/synthesis.md](docs/synthesis.md) | State machine tooling synthesis — survey of existing tools and how they fit |
-| [docs/novel-capabilities.md](docs/novel-capabilities.md) | Enumeration of capabilities no existing library provides (anchors, weighted pathfinding, etc.) |
+| [docs/redesign-plan.md](docs/redesign-plan.md) | Diagnosis + redesign from navigation library to automation runtime |
+| [docs/workflows.md](docs/workflows.md) | All 26 Azur Lane workflows with entry states, OCR regions, decisions |
+| [docs/data-collection.md](docs/data-collection.md) | Ship census, stat recording, pagination engine, second scheduler |
+| [docs/alas-execution-event-schema.md](docs/alas-execution-event-schema.md) | NDJSON event log schema for recording all actions |
+| [docs/alas-state-machine-build-plan.md](docs/alas-state-machine-build-plan.md) | Concrete work program for ALAS → SC artifact conversion |
+| [docs/alas-live-ops.md](docs/alas-live-ops.md) | Hard rules for live ALAS harness operation |
+| [docs/synthesis.md](docs/synthesis.md) | State machine tooling synthesis — survey of existing tools |
+| [docs/novel-capabilities.md](docs/novel-capabilities.md) | Capabilities no existing library provides |
 | [docs/testing-strategy.md](docs/testing-strategy.md) | Testing approach: unit, integration, end-to-end, mock system |
 | [docs/revisions-and-open-design-spaces.md](docs/revisions-and-open-design-spaces.md) | Open design decisions and areas needing resolution |
 | [docs/decisions/001-python-over-typescript.md](docs/decisions/001-python-over-typescript.md) | ADR: Why Python instead of TypeScript |
@@ -73,10 +81,11 @@ The ALAS repo is available as a git submodule at `vendor/AzurLaneAutoScript/`.
 
 ### Scripts (Runtime Tools)
 
+#### Layer 2: Navigation
 | Script | Function |
 |--------|----------|
-| `scripts/locate.py` | Passive state classifier — “where am I?” |
-| `scripts/pathfind.py` | Weighted route planner — “how do I get there?” |
+| `scripts/locate.py` | Passive state classifier — "where am I?" |
+| `scripts/pathfind.py` | Weighted route planner — "how do I get there?" |
 | `scripts/session.py` | Session state manager — tracks confirmed states and transitions |
 | `scripts/graph_utils.py` | Graph inspection utilities — list states, find orphans, check reachability |
 | `scripts/schema_validator.py` | Schema validator — checks graph.json integrity |
@@ -84,6 +93,30 @@ The ALAS repo is available as a git submodule at `vendor/AzurLaneAutoScript/`.
 | `scripts/observe.py` | Observation extractor — builds obs dict from screenshot or live ADB capture |
 | `scripts/calibrate.py` | Anchor calibrator — learns pixel colors / hashes from real screenshots |
 | `scripts/adb_bridge.py` | ADB bridge — screenshot, tap, swipe, keyevent for MEMU/Android emulators |
+
+#### Layer 3-4: Task Engine + Scheduler
+| Script | Function |
+|--------|----------|
+| `scripts/task_model.py` | Task manifest load/validate/save — schedule types, action types |
+| `scripts/resource_model.py` | Resource store — threshold gating, timer tracking, persistence |
+| `scripts/scheduler.py` | Priority-based task scheduling with resource constraints |
+| `scripts/executor.py` | Task execution engine — auto navigation + auto session tracking |
+
+#### Recording + Instrumentation
+| Script | Function |
+|--------|----------|
+| `scripts/execution_event_log.py` | Append-only NDJSON event stream — records every action |
+| `scripts/alas_observe_runner.py` | Passive observer — attaches to ALAS, captures screenshots + events |
+| `scripts/alas_event_instrumentation.py` | Monkeypatch instrumentation for ALAS method recording |
+| `scripts/alas_log_parser.py` | Structures ALAS text logs into task runs + error analysis |
+
+#### ALAS Reference Tools
+| Script | Function |
+|--------|----------|
+| `scripts/alas_converter.py` | Generates graph.json from ALAS page definitions |
+| `scripts/alas_command_inventory.py` | Enumerates all ALAS scheduler commands/tasks |
+| `scripts/alas_action_inventory.py` | Enumerates all ALAS emulator actions |
+| `scripts/alas_corpus_summarize.py` | Summarizes observation corpus from ALAS runs |
 ### References
 
 | Reference | Content |

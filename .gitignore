@@ -31,3 +31,6 @@ vendor/AzurLaneAutoScript/.ruff_cache/
 vendor/AzurLaneAutoScript/.venv/
 .pytest_tmp/
 data/alas-observe/
+data/screenshots/
+data/census/
+tmp/

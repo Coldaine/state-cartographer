@@ -55,7 +55,7 @@ The agent reviews the schedule, adjusts priorities, enables/disables tasks, and 
 
 ### 3. Navigation should be cheap and deterministic
 
-Given a state graph with anchors, `locate()` cheaply determines the current state and `pathfind()` returns the optimal route. No LLM reasoning for the common case.
+Given a state graph with anchors, `locate()` cheaply determines the current state and `pathfind()` returns the optimal route. No LLM reasoning for the common case. When deterministic navigation fails, the vision agent takes over — and every pattern handled by vision that repeats 3+ times gets promoted to a deterministic entry in the graph.
 
 ### 4. Recovery should be automatic for known errors
 
@@ -65,13 +65,21 @@ When a task fails with a known error pattern, the scheduler injects a recovery t
 
 The scheduler checks resource requirements before running a task ("don't farm if oil < 200"). Resources are observed from the game UI, not computed.
 
-### 6. The system should be buildable incrementally
+### 6. Data collection should be a first-class operation
 
-Start with the graph (navigation). Add task definitions. Add scheduling. Add resource tracking. Each layer works independently and adds value on its own, but the full stack is where the real power lives.
+The system must be able to inventory the entire dock (400+ ships), read individual ship stats/equipment/skills, record fleet formations, and snapshot resource levels. This requires a separate data collection scheduler with pagination support, interruptibility, and resumption from checkpoints.
 
-### 7. The methodology should be teachable to an LLM
+### 7. Recording captures everything
 
-The full process — from exploration through task definition, scheduling, and supervision — should be captured as a playbook an LLM can follow.
+Every action during live piloting — every screenshot, every tap, every state transition, every OCR read — is recorded in an append-only NDJSON event log. This corpus enables replay, debugging, anchor recalibration, and progressive optimization.
+
+### 8. The system should be buildable incrementally
+
+Start with the graph (navigation). Add task definitions. Add scheduling. Add resource tracking. Add data collection. Each layer works independently and adds value on its own, but the full stack is where the real power lives.
+
+### 9. The methodology should be teachable to an LLM
+
+The full process — from exploration through task definition, scheduling, data collection, and supervision — should be captured as a playbook an LLM can follow.
 
 ## What This Is Not
 
@@ -81,15 +89,19 @@ The full process — from exploration through task definition, scheduling, and s
 
 ## Open Questions
 
-**Task definition authoring.** How does an agent discover and define new tasks for an unfamiliar system? Exploration currently finds states and transitions; it should also identify repeatable task patterns.
+**Data collection at scale.** Paging through 400+ ships in the dock, reading stats/equipment/skills for each one — the pagination engine needs to be robust, interruptible, and resumable. How do we handle OCR errors mid-census? How do we detect we've scrolled past the end?
 
-**Resource observation.** OCR-based resource reading is fragile. What's the right abstraction — dedicated screen regions? Template matching? Hybrid approaches?
+**Resource observation.** OCR-based resource reading is fragile. The right abstraction combines dedicated screen regions, color-based status detection, and template matching. Different data types need different methods (numbers via OCR, status via color, icons via template match).
 
-**Decision engine depth.** Simple threshold gating ("oil >= 200") is implemented. Complex decisions ("which of 4 commissions to accept based on rewards vs. duration") need a strategy.
+**Vision agent integration.** When deterministic navigation fails, the vision agent must take over seamlessly. The handoff protocol — when to escalate, what context to pass, how to incorporate the agent's recovery action back into the graph — needs to be tight.
+
+**Gesture recording and replay.** Swipes through the dock, map panning in OpSi, pinch-to-zoom — these gestures need to be recorded as parameterized actions (start, end, duration) and replayable.
+
+**Decision engine depth.** Simple threshold gating ("oil >= 200") is implemented. Complex decisions ("which of 4 commissions to accept based on rewards vs. duration") need a strategy. The agent brings judgment; the tooling brings speed.
+
+**Progressive determinism.** Every time the vision agent handles a new case, the system should learn from it. After 3 repeats of the same pattern, it becomes a deterministic handler. The goal is to shrink the vision-required set to <5% of all operations.
 
 **Multi-account / multi-server.** ALAS supports per-account configuration. The task model should support this but the scope isn't defined yet.
-
-**Scale.** Does the scheduler + executor pattern hold for systems with hundreds of tasks and thousands of states?
 
 ## Guiding Principles
 
