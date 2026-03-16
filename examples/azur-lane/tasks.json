@@ -1,0 +1,247 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "description": "Azur Lane daily automation tasks derived from ALAS task structure",
+    "game": "azur_lane",
+    "server": "en",
+    "notes": "Task definitions mirror ALAS's scheduler priority and action patterns. Action sequences are simplified representations — real execution will need calibration against live screenshots."
+  },
+  "tasks": {
+    "restart": {
+      "entry_state": "page_unknown",
+      "enabled": true,
+      "description": "Kill and relaunch the game app, wait for login, navigate to main",
+      "schedule": {
+        "type": "manual",
+        "notes": "Injected on GameStuckError — never runs on a timer"
+      },
+      "actions": [
+        {"type": "wait", "seconds": 3, "description": "Wait for app kill"},
+        {"type": "wait_until", "target_state": "page_login", "timeout_seconds": 60},
+        {"type": "tap", "coords": [640, 360], "description": "Tap to dismiss login screen"},
+        {"type": "wait_until", "target_state": "page_main", "timeout_seconds": 30}
+      ],
+      "error_strategy": "escalate",
+      "next_run": null
+    },
+
+    "reward": {
+      "entry_state": "page_reward",
+      "enabled": true,
+      "description": "Collect mail, missions, and any pending rewards",
+      "schedule": {
+        "type": "interval",
+        "interval_minutes": 20,
+        "notes": "Check often — rewards accumulate from commissions, daily tasks, etc."
+      },
+      "actions": [
+        {"type": "navigate", "target_state": "page_reward"},
+        {"type": "tap", "coords": [1100, 200], "description": "Tap collect all"},
+        {"type": "wait", "seconds": 1},
+        {"type": "tap", "coords": [640, 600], "description": "Confirm collection"},
+        {"type": "wait", "seconds": 1}
+      ],
+      "error_strategy": "skip",
+      "next_run": "2020-01-01T00:00:00"
+    },
+
+    "commission": {
+      "entry_state": "page_commission",
+      "enabled": true,
+      "description": "Collect completed commissions and dispatch new ones",
+      "schedule": {
+        "type": "interval",
+        "interval_minutes": 60,
+        "notes": "Check hourly — commissions take 1-12 hours"
+      },
+      "resource_requirements": {},
+      "actions": [
+        {"type": "navigate", "target_state": "page_commission"},
+        {"type": "wait", "seconds": 2, "description": "Wait for commission list to load"},
+        {"type": "tap", "coords": [1100, 680], "description": "Collect completed commissions"},
+        {"type": "wait", "seconds": 1},
+        {"type": "tap", "coords": [640, 600], "description": "Confirm collection"},
+        {"type": "wait", "seconds": 1},
+        {"type": "read_resource", "resource": "commission_slots", "description": "Check available slots"},
+        {"type": "tap", "coords": [900, 400], "description": "Dispatch new commission"},
+        {"type": "wait", "seconds": 1}
+      ],
+      "error_strategy": "retry",
+      "next_run": "2020-01-01T00:00:00"
+    },
+
+    "research": {
+      "entry_state": "page_research",
+      "enabled": true,
+      "description": "Collect completed research and start new project",
+      "schedule": {
+        "type": "interval",
+        "interval_minutes": 120,
+        "notes": "Research projects take 2-12 hours"
+      },
+      "actions": [
+        {"type": "navigate", "target_state": "page_research"},
+        {"type": "wait", "seconds": 2},
+        {"type": "tap", "coords": [640, 400], "description": "Collect or select research"},
+        {"type": "wait", "seconds": 1},
+        {"type": "tap", "coords": [640, 600], "description": "Confirm"},
+        {"type": "wait", "seconds": 1}
+      ],
+      "error_strategy": "retry",
+      "next_run": "2020-01-01T00:00:00"
+    },
+
+    "dorm": {
+      "entry_state": "page_dormevent",
+      "enabled": true,
+      "description": "Feed ships in dorm, collect comfort rewards",
+      "schedule": {
+        "type": "interval",
+        "interval_minutes": 360,
+        "notes": "Food lasts 6 hours at minimum"
+      },
+      "actions": [
+        {"type": "navigate", "target_state": "page_dormevent"},
+        {"type": "wait", "seconds": 2},
+        {"type": "tap", "coords": [200, 600], "description": "Open food menu"},
+        {"type": "wait", "seconds": 1},
+        {"type": "tap", "coords": [400, 300], "description": "Select food"},
+        {"type": "tap", "coords": [640, 500], "description": "Feed"},
+        {"type": "wait", "seconds": 1}
+      ],
+      "error_strategy": "skip",
+      "next_run": "2020-01-01T00:00:00"
+    },
+
+    "guild": {
+      "entry_state": "page_guild",
+      "enabled": true,
+      "description": "Collect guild rewards, check-in, donate tech",
+      "schedule": {
+        "type": "server_reset",
+        "reset_hour": 0,
+        "notes": "Guild resets daily at server midnight"
+      },
+      "actions": [
+        {"type": "navigate", "target_state": "page_guild"},
+        {"type": "wait", "seconds": 2},
+        {"type": "tap", "coords": [800, 400], "description": "Check-in"},
+        {"type": "wait", "seconds": 1},
+        {"type": "tap", "coords": [640, 500], "description": "Confirm check-in"},
+        {"type": "wait", "seconds": 1}
+      ],
+      "error_strategy": "skip",
+      "next_run": "2020-01-01T00:00:00"
+    },
+
+    "daily": {
+      "entry_state": "page_campaign",
+      "enabled": true,
+      "description": "Run daily challenge stages (escort, advance, fierce assault)",
+      "schedule": {
+        "type": "server_reset",
+        "reset_hour": 0,
+        "notes": "Daily stages reset at server midnight"
+      },
+      "resource_requirements": {
+        "oil": {"min": 200}
+      },
+      "actions": [
+        {"type": "navigate", "target_state": "page_campaign"},
+        {"type": "wait", "seconds": 2},
+        {"type": "tap", "coords": [900, 300], "description": "Select daily stage"},
+        {"type": "wait", "seconds": 1},
+        {"type": "tap", "coords": [1100, 600], "description": "Start battle"},
+        {"type": "wait_until", "target_state": "page_campaign", "timeout_seconds": 120, "description": "Wait for battle to complete"}
+      ],
+      "error_strategy": "retry",
+      "next_run": "2020-01-01T00:00:00"
+    },
+
+    "exercise": {
+      "entry_state": "page_exercise",
+      "enabled": true,
+      "description": "Run PvP exercise battles",
+      "schedule": {
+        "type": "interval",
+        "interval_minutes": 720,
+        "notes": "Exercise attempts reset every 12 hours"
+      },
+      "actions": [
+        {"type": "navigate", "target_state": "page_exercise"},
+        {"type": "wait", "seconds": 2},
+        {"type": "repeat", "count": 5, "description": "Run up to 5 exercise battles",
+          "body": [
+            {"type": "tap", "coords": [1050, 300], "description": "Select opponent"},
+            {"type": "wait", "seconds": 1},
+            {"type": "tap", "coords": [1100, 600], "description": "Start battle"},
+            {"type": "wait", "seconds": 30, "description": "Wait for battle"},
+            {"type": "tap", "coords": [640, 600], "description": "Confirm result"},
+            {"type": "wait", "seconds": 2}
+          ]
+        }
+      ],
+      "error_strategy": "skip",
+      "next_run": "2020-01-01T00:00:00"
+    },
+
+    "meowfficer": {
+      "entry_state": "page_meowfficer",
+      "enabled": true,
+      "description": "Collect meowfficer rewards and manage cats",
+      "schedule": {
+        "type": "server_reset",
+        "reset_hour": 0
+      },
+      "actions": [
+        {"type": "navigate", "target_state": "page_meowfficer"},
+        {"type": "wait", "seconds": 2},
+        {"type": "tap", "coords": [400, 400], "description": "Collect"},
+        {"type": "wait", "seconds": 1}
+      ],
+      "error_strategy": "skip",
+      "next_run": "2020-01-01T00:00:00"
+    },
+
+    "shop": {
+      "entry_state": "page_munitions",
+      "enabled": true,
+      "description": "Buy daily free items from shop",
+      "schedule": {
+        "type": "server_reset",
+        "reset_hour": 0
+      },
+      "actions": [
+        {"type": "navigate", "target_state": "page_munitions"},
+        {"type": "wait", "seconds": 2},
+        {"type": "tap", "coords": [200, 300], "description": "Buy free item"},
+        {"type": "wait", "seconds": 1},
+        {"type": "tap", "coords": [640, 500], "description": "Confirm purchase"},
+        {"type": "wait", "seconds": 1}
+      ],
+      "error_strategy": "skip",
+      "next_run": "2020-01-01T00:00:00"
+    },
+
+    "retire": {
+      "entry_state": "page_fleet",
+      "enabled": false,
+      "description": "Retire excess ships when dock is near capacity",
+      "schedule": {
+        "type": "manual",
+        "notes": "Run when dock_capacity > 90%"
+      },
+      "resource_requirements": {
+        "dock_usage_pct": {"min": 90}
+      },
+      "actions": [
+        {"type": "navigate", "target_state": "page_fleet"},
+        {"type": "wait", "seconds": 2},
+        {"type": "tap", "coords": [1100, 50], "description": "Open retire menu"},
+        {"type": "wait", "seconds": 1}
+      ],
+      "error_strategy": "skip",
+      "next_run": null
+    }
+  }
+}

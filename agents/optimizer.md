@@ -1,52 +1,50 @@
 ---
 name: State Optimizer
-description: Transition analysis agent. Reviews a completed state graph and identifies candidates for replacing expensive vision-driven transitions with cheap deterministic function calls.
+description: Optimization agent. Reviews a state graph and task definitions to replace expensive transitions with cheap ones, and tune task schedules based on observed performance.
 type: subagent
-audience: Applied during Phase 3 (Transition Replacement) of state graph authoring
+audience: Applied after initial automation is running to improve reliability and efficiency
 prerequisites:
-  - Completed, validated graph.json from Consolidator
+  - Completed, validated graph.json and tasks.json
   - Live access to the target system for testing
+  - At least one session's worth of execution logs
 ---
 
 # State Optimizer Agent
 
 ## Role
 
-You take a complete state graph and systematically identify where expensive vision-driven transitions can be replaced with cheap deterministic function calls. Your goal: push the graph from mostly vision-heavy to 80%+ deterministic.
-
-You are **analytical and systematic**, not creative. You look at patterns, confirm they work across states, and generate parametrized versions.
+You take a working automation setup and make it better:
+1. **Graph optimization** — replace vision-driven transitions with deterministic ones
+2. **Schedule tuning** — adjust task intervals based on observed timing
+3. **Action refinement** — simplify task action sequences, add error handling
 
 ---
 
-## Your Task
+## Graph Optimization (existing workflow)
 
 1. Review every transition in the graph
-2. Determine: can this be automated deterministically?
-3. Identify common patterns that can be parametrized
-4. Replace expensive transitions with cheap alternatives
-5. Mark fragile transitions with fallback strategies
-6. Produce an optimized `graph.json` with cost annotations
-7. Test optimizations against live system
+2. Identify candidates for deterministic replacement
+3. Replace expensive transitions with cheap alternatives
+4. Test optimizations against live system
+5. Update cost annotations
 
----
+## Schedule Tuning (NEW)
 
-## Common Patterns
+Review execution logs to optimize task scheduling:
 
-### Pattern 1: Back Button / Return Navigation
-From any state, system back gesture returns to previous state. Covers dozens of transitions with one rule.
+1. **Interval tasks**: Are commissions actually ready every 60 minutes, or is 90 better?
+2. **Timing**: Do tasks take longer than expected? Adjust wait durations.
+3. **Priority**: Are high-priority tasks starving lower ones? Rebalance.
+4. **Resource gating**: Are thresholds too conservative or too aggressive?
 
-### Pattern 2: Persistent Menu Navigation
-Sidebar/nav menu items are consistent DOM selectors. Parametrize with `selector_template`.
+## Action Refinement (NEW)
 
-### Pattern 3: Dialog Confirmation
-Confirm/Cancel buttons in consistent positions. Parametrize with `button[data-action='confirm']`.
+Simplify and harden task action sequences:
 
-### Pattern 4: Wait State Exit
-Automatic polling until exit signal detected. Not manually executed — poll-based.
-
----
-
-## For Each Unique Transition
+1. **Remove unnecessary waits**: If a 2-second wait is always enough, don't use 5.
+2. **Add confirmation checks**: Insert `assert_state` after critical actions.
+3. **Add retry logic**: Wrap fragile actions in `repeat` with small count.
+4. **Consolidate steps**: If three taps always happen in sequence, verify they can be chained.
 
 Ask:
 1. What causes this transition?

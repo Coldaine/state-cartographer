@@ -1,5 +1,17 @@
 # Architecture: Capability-to-Layer Mapping
 
+State Cartographer is an automation runtime with six layers. Layers 0-2 handle navigation (the original scope). Layers 3-5 handle task automation (the runtime engine).
+
+```
+Layer 5: Agent Supervision (LLM reasoning for planning + anomaly handling)
+Layer 4: Task Scheduler + Daemon Loop (what runs when)
+Layer 3: Task Definitions + Resource Model (what each task does + game state)
+───────── automation boundary ─────────
+Layer 2: Runtime Navigation Tools (locate, pathfind, session, observe, calibrate, adb_bridge)
+Layer 1: Schema + Graph (graph.json, tasks.json, anchors, costs, transitions)
+Layer 0: Libraries (pytransitions, Pillow, imagehash, ADB)
+```
+
 ## Layer 0: Don't Build (Use Existing)
 
 These are solved problems. Pick an implementation, don't reinvent.
@@ -278,25 +290,140 @@ state-cartographer/
 
 ---
 
+## Layer 3: Task Definitions + Resource Model (`scripts/task_model.py`, `scripts/resource_model.py`, `scripts/executor.py`)
+
+The task layer turns navigation into automation. Instead of "navigate to commission screen," the question becomes "run the commission task: navigate there, collect rewards, dispatch new commissions, update resource state, schedule the next run."
+
+### 3a. Task Model (`scripts/task_model.py`)
+
+A task is a named, schedulable unit of work:
+
+```json
+{
+  "commission": {
+    "entry_state": "page_commission",
+    "enabled": true,
+    "schedule": { "type": "interval", "minutes": 60 },
+    "actions": [
+      { "action": "tap", "x": 600, "y": 400, "description": "Collect all" },
+      { "action": "wait", "seconds": 2 },
+      { "action": "tap", "x": 600, "y": 500, "description": "Dispatch" }
+    ],
+    "error_strategy": "restart"
+  }
+}
+```
+
+Functions:
+- `load_tasks(path)` — load and validate tasks.json
+- `validate_task_manifest(manifest)` — check required keys, schedule types, action types
+- `get_task()`, `is_task_enabled()`, `get_next_run()`, `set_next_run()`
+
+Schedule types: `interval` (every N minutes), `server_reset` (daily at server reset time), `one_shot` (run once then disable), `manual` (agent-triggered only).
+
+Action types: `navigate`, `tap`, `swipe`, `wait`, `wait_until`, `assert_state`, `read_resource`, `conditional`, `repeat`.
+
+### 3b. Resource Model (`scripts/resource_model.py`)
+
+A resource store tracks game state values between tasks:
+
+```python
+store = create_store()
+set_resource(store, "oil", 8500, source="ocr")
+set_resource(store, "coins", 42000, source="ocr")
+set_timer(store, "commission_1", expires_at)
+
+check_threshold(store, "oil", min_value=200)  # → True
+is_timer_expired(store, "commission_1")        # → False
+```
+
+Resources are updated by observation (OCR, pixel check) after each task, not by arithmetic. The model is a cache of last-observed values.
+
+Functions:
+- `create_store()`, `set_resource()`, `get_resource()`, `get_value()`
+- `check_threshold(store, name, min_value, max_value)` — for scheduler gating
+- `set_timer()`, `is_timer_expired()` — for commission/research completion tracking
+- `save_store()`, `load_store()` — JSON persistence
+
+### 3c. Task Executor (`scripts/executor.py`)
+
+Runs a task's action sequence with automatic state tracking:
+
+```python
+result = execute_task(task_def, graph, session, backend)
+# → navigates to entry_state (calls pathfind + adb_bridge)
+# → executes each action in sequence
+# → calls session.confirm automatically after state changes
+# → returns {"success": True, "actions_completed": 5}
+```
+
+Backend injection pattern for testability:
+- `mock_backend()` — logs all actions, returns success (for tests)
+- `default_backend()` — wires to real pathfind.py, adb_bridge.py, locate.py
+
+---
+
+## Layer 4: Task Scheduler (`scripts/scheduler.py`)
+
+The scheduler is the runtime heart. It decides what runs when.
+
+```python
+ready = get_ready_tasks(manifest, now, resources)    # enabled + due + resources met
+task = pick_next(manifest, now, resources)            # highest priority ready task
+next_run = compute_next_run(task_def, now)            # when to run again
+wakeup = next_wakeup(manifest, now)                   # when to check again
+```
+
+**Priority order** (configurable, default):
+restart > login > reward > commission > research > dorm > meowfficer > guild > daily > hard > exercise > event > campaign > retire > shop
+
+**Resource gating**: A task can declare resource requirements (`"requires": {"oil": {"min": 200}}`). The scheduler checks these before marking the task as ready.
+
+**Schedule computation**:
+- `interval` → now + N minutes
+- `server_reset` → next server reset time (configurable timezone + hour)
+- `one_shot` → datetime.max (run once, never again)
+- `manual` → None (only runs when agent explicitly triggers)
+
+CLI: `python scripts/scheduler.py --tasks tasks.json --resources store.json --dry-run`
+
+---
+
+## Layer 5: Agent Supervision
+
+The agent is NOT the loop. The agent is the supervisor.
+
+- **Before the loop**: Review task list, adjust priorities, enable/disable tasks
+- **During the loop**: Called ONLY when tooling can't handle something (unknown state, new popup, resource decision needing judgment)
+- **Between sessions**: Review logs, update graph, add new tasks discovered during play
+- **Planning**: "Commission finishes in 42 minutes, Research in 15 — queue Research collection first"
+
+The agent does NOT manually call `session.py confirm` after every tap. The executor does that automatically.
+
+---
+
 ## Layer Dependency Chain
 
 ```
 Layer 0 (existing libs)
-  └── pytransitions, Playwright/ADB/etc., SCXML semantics
+  └── pytransitions, Playwright/ADB/etc., Pillow, imagehash
        │
-Layer 1 (schema extensions)
-  └── Extends graph definition format with anchors, costs, wait states, thresholds
+Layer 1 (schema + data)
+  └── graph.json (states, transitions, anchors, costs)
+  └── tasks.json (task definitions, schedules, actions)
        │
-Layer 2 (runtime tools)
-  └── locate.py, pathfind.py, session.py, screenshot_mock.py, adb_bridge.py, observe.py, calibrate.py
-  └── These consume Layer 1 schema, call Layer 0 for graph introspection
+Layer 2 (navigation tools)
+  └── locate.py, pathfind.py, session.py, observe.py, calibrate.py, adb_bridge.py, graph_utils.py
        │
-Layer 3 (SKILL.md playbook)
-  └── Tells the agent how and when to use Layer 2 tools
-  └── Progressive disclosure to Layer 4
+Layer 3 (task engine)
+  └── task_model.py, resource_model.py, executor.py
+  └── Uses Layer 2 for navigation, adds scheduling + execution
        │
-Layer 4 (agent role references)
-  └── Deep instructions per phase, loaded on demand
+Layer 4 (scheduler)
+  └── scheduler.py — picks tasks, checks resources, computes next runs
+  └── Calls Layer 3 executor to run tasks
+       │
+Layer 5 (agent supervision)
+  └── LLM agent reviews schedule, handles unknowns, adjusts priorities
+  └── Called by Layer 4 on escalation
 ```
-
-The agent reads SKILL.md (Layer 3), which tells it to call scripts (Layer 2), which operate on the extended graph format (Layer 1), which is built on top of existing state machine libraries (Layer 0).
