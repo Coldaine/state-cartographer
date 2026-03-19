@@ -292,18 +292,18 @@ def _navigate_real(
     import sys
 
     sys.path.insert(0, str(Path(__file__).parent))
-    from pathfind import find_path
+    from pathfind import pathfind
 
     if current is None:
         return {"success": False, "error": "Current state unknown"}
 
-    result = find_path(graph, current, target)
+    result = pathfind(graph, current, target)
     if "error" in result:
         return {"success": False, "error": result["error"]}
 
     # Execute each step in the path
-    path_steps = result.get("path", [])
-    for step in path_steps:
+    route = result.get("route", [])
+    for step in route:
         action = step.get("action", {})
         if action.get("type") == "adb_tap":
             coords = action.get("coords")
