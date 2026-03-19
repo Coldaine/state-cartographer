@@ -567,3 +567,9 @@ After this consolidation:
 8. Circuit breaker triggers after repeated failures in tests
 9. Executor verifies arrival via `locate()` after every navigation (not blind)
 10. `pilot_bridge.py` has tests and is committed
+11. Agent control surface API exists (`runtime_api.py`) with at minimum:
+    - `where_am_i()` — one-call state classification (screenshot + locate)
+    - `navigate_to(target)` — one-call navigation with arrival verification
+    - `ensure_game_ready()` — full startup-to-login
+    - `execute_task(task_id)` — full task execution via scheduler+executor
+12. An agent session can use the Tier 1 calls instead of raw `PilotBridge.tap()` for normal operations, with direct tooling reserved for exploration and debugging

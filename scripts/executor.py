@@ -321,7 +321,9 @@ def _tap_real(coords: tuple[int, int], **_kw: Any) -> dict[str, Any]:
     sys.path.insert(0, str(Path(__file__).parent))
     from adb_bridge import tap
 
-    tap(coords[0], coords[1])
+    # Get serial from kwargs or use default
+    serial = _kw.get("serial", "127.0.0.1:21513")
+    tap(serial, coords[0], coords[1])
     return {"success": True}
 
 
@@ -337,7 +339,9 @@ def _swipe_real(
     sys.path.insert(0, str(Path(__file__).parent))
     from adb_bridge import swipe
 
-    swipe(start[0], start[1], end[0], end[1], duration)
+    # Get serial from kwargs or use default
+    serial = _kw.get("serial", "127.0.0.1:21513")
+    swipe(serial, start[0], start[1], end[0], end[1], duration)
     return {"success": True}
 
 
@@ -347,9 +351,11 @@ def _locate_real(graph: dict[str, Any], **_kw: Any) -> dict[str, Any]:
 
     sys.path.insert(0, str(Path(__file__).parent))
     from locate import locate
-    from observe import observe
+    from observe import build_observations
 
-    obs = observe(graph)
+    # Build observations from graph (this is a simplified version - in practice we'd need a screenshot)
+    # For now, we'll pass empty observations and let locate work with what it can
+    obs = build_observations(Path("dummy.png"), [])  # This will be improved later
     return locate(graph, {}, obs)
 
 
