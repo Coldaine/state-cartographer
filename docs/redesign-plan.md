@@ -20,7 +20,7 @@ ALAS — the reference system this project claims to generalize — is not prima
 | Error recovery as task injection (GameStuckError → inject Restart) | Partial (GOTO_MAIN fallback) |
 | Daemon lifecycle (while True: get_next_task → execute → loop) | **Nothing** |
 
-The current plan.md describes 6 phases. Every phase is about the graph: build it, validate it, optimize it, maintain it. Phase 4 ("Environment Provider Interface") is the closest to runtime, but it's still about plugging in screenshot/tap backends, not about scheduling or game logic.
+The current MASTER_PLAN.md describes 6 phases. Every phase is about the graph: build it, validate it, optimize it, maintain it. Phase 4 ("Environment Provider Interface") is the closest to runtime, but it's still about plugging in screenshot/tap backends, not about scheduling or game logic.
 
 **The fundamental assumption that's wrong:** "If we build a good enough state graph with deterministic navigation, the agent can do the rest." The agent cannot do the rest. The agent should not have to do the rest. The tooling should execute known task sequences autonomously, and the agent should supervise, plan, and intervene only when something unexpected happens.
 
@@ -183,7 +183,7 @@ Each task defined with: entry_state, action steps, schedule rule, resource effec
 
 ### Phase D: Documentation Rewrite
 
-**D1: Rewrite `plan.md`** — new phases reflect the full automation story
+**D1: Rewrite `MASTER_PLAN.md`** — new phases reflect the full automation story
 **D2: Rewrite `docs/NORTH_STAR.md`** — vision expands from "navigation" to "automation runtime"
 **D3: Rewrite `docs/architecture.md`** — add Layers 3-5
 **D4: Rewrite `skills/state-graph-navigation/SKILL.md`** — navigation is now a solved subroutine, not the top-level workflow
@@ -219,7 +219,7 @@ Each task defined with: entry_state, action steps, schedule rule, resource effec
 - New: `scripts/task_model.py`, `scripts/resource_model.py`, `scripts/scheduler.py`, `scripts/executor.py`
 - New: `examples/azur-lane/tasks.json`
 - New: `skills/task-automation/SKILL.md`
-- Rewrite: `plan.md`, `docs/NORTH_STAR.md`, `docs/architecture.md`
+- Rewrite: `MASTER_PLAN.md`, `docs/NORTH_STAR.md`, `docs/architecture.md`
 - Rewrite: `rules/orientation.md` (agent no longer manually tracks state)
 - Rewrite: agent definitions in `agents/`
 - Rewrite: `skills/state-graph-navigation/SKILL.md` (downgrade from "the workflow" to "a subroutine")
@@ -235,7 +235,7 @@ This work requires multiple specialized subagents:
 
 1. **Executor subagent**: Implement `task_model.py`, `resource_model.py`, `scheduler.py`, `executor.py` with tests
 2. **Executor subagent**: Create `examples/azur-lane/tasks.json` with commission/research/dorm/daily tasks
-3. **Writer subagent**: Rewrite `plan.md`, `NORTH_STAR.md`, `architecture.md`
+3. **Writer subagent**: Rewrite `MASTER_PLAN.md`, `NORTH_STAR.md`, `architecture.md`
 4. **Writer subagent**: Create `skills/task-automation/SKILL.md`
 5. **Writer subagent**: Rewrite agent definitions + `orientation.md` + navigation SKILL
 6. **Verifier subagent**: Run full test suite, verify nothing broke, check coverage

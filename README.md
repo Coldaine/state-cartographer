@@ -85,7 +85,7 @@ state-cartographer/
 
 ## Documentation
 
-See [plan.md](plan.md) for the current work program and [docs/NORTH_STAR.md](docs/NORTH_STAR.md) for the vision and goals.
+See [MASTER_PLAN.md](MASTER_PLAN.md) for the current work program and [docs/NORTH_STAR.md](docs/NORTH_STAR.md) for the vision and goals.
 
 | Document | Purpose |
 |----------|---------|

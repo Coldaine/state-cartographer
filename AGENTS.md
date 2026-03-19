@@ -6,7 +6,7 @@
 
 | Document | What It Covers |
 |----------|---------------|
-| [plan.md](plan.md) | Master plan: development phases, key workflows, success metrics |
+| [MASTER_PLAN.md](MASTER_PLAN.md) | Master plan: development phases, key workflows, success metrics |
 | [CLAUDE.md](CLAUDE.md) | Project conventions, commands, coding standards for Claude Code |
 | [docs/NORTH_STAR.md](docs/NORTH_STAR.md) | Vision, goals, guiding principles, open questions |
 | [docs/architecture.md](docs/architecture.md) | 7-layer architecture, capability-to-layer mapping |

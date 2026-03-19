@@ -34,7 +34,7 @@ At the time of writing, the branch is not clean:
 
 - staged: `.gitmodules`
 - staged: `vendor/AzurLaneAutoScript` submodule addition/update
-- modified: `plan.md`
+- modified: `MASTER_PLAN.md`
 - modified: `CLAUDE.md`
 - untracked: `vendor/alas_req_clean.txt`
 - untracked: `vendor/alas_requirements_clean.txt`
@@ -69,7 +69,7 @@ The repo contains multiple stale instructions that materially mislead work:
 1. Many docs still reference `plugin/scripts/...` even though scripts live in `scripts/`
 2. Many docs still reference `mock.py` even though the file is `scripts/screenshot_mock.py`
 3. `AGENTS.md` still says the ALAS submodule is at `external/alas/`
-4. `plan.md` describes Phase 2 around `scripts/alas_converter.py`, but that tool does not exist yet
+4. `MASTER_PLAN.md` describes Phase 2 around `scripts/alas_converter.py`, but that tool does not exist yet
 5. `docs/testing-strategy.md` still describes the older plugin-era layout
 
 ## Root cause analysis
@@ -162,7 +162,7 @@ Until this lands, every ALAS-related branch is dead on arrival.
 
 #### Acceptance criteria
 
-- high-traffic docs (`AGENTS.md`, `plan.md`, `CLAUDE.md`, `docs/testing-strategy.md`) reflect the current repo structure
+- high-traffic docs (`AGENTS.md`, `MASTER_PLAN.md`, `CLAUDE.md`, `docs/testing-strategy.md`) reflect the current repo structure
 - skill and agent instructions reference working commands
 - no top-level planning doc claims that `scripts/alas_converter.py` exists when it does not
 
@@ -178,7 +178,7 @@ Until this lands, every ALAS-related branch is dead on arrival.
 
 - current working state is using a submodule at `vendor/AzurLaneAutoScript`
 - historical docs mention `external/alas/`
-- `plan.md` has also described a non-submodule path-based approach in places
+- `MASTER_PLAN.md` has also described a non-submodule path-based approach in places
 
 #### Decision to record
 
@@ -247,7 +247,7 @@ The recovery should be split into small PRs.
 **Scope:**
 
 - `AGENTS.md`
-- `plan.md`
+- `MASTER_PLAN.md`
 - `docs/testing-strategy.md`
 - skill/rule/agent docs with broken commands
 

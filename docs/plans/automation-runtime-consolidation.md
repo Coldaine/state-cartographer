@@ -4,7 +4,7 @@
 
 ## Design North Star
 
-The updated documentation (`NORTH_STAR.md`, `architecture.md`, `plan.md`,
+The updated documentation (`NORTH_STAR.md`, `architecture.md`, `MASTER_PLAN.md`,
 `CLAUDE.md`) defines a clear **agent control surface** with three tiers:
 
 1. **High-level runtime calls**: `execute_task("commission")`,
@@ -70,7 +70,7 @@ generated fixes that address several gaps:
 | North Star (automation runtime vision) | Done | `docs/NORTH_STAR.md` |
 | Orientation rule (executor handles automatically) | Done | `rules/orientation.md` |
 | Agent definitions (task discovery, schedule tuning) | Done | `agents/*.md` |
-| Master plan (10 goal-based phases) | Done | `plan.md` |
+| Master plan (10 goal-based phases) | Done | `MASTER_PLAN.md` |
 | Workflow inventory (26 workflows documented) | Done | `docs/workflows.md` |
 
 ### What's Fragmented
@@ -118,7 +118,7 @@ gets the error but there's no automatic handling.
 
 ## Gap 3: No Agent Escalation Mechanism (IMPORTANT)
 
-**Problem:** When the executor hits an unknown state or repeated failures, plan.md
+**Problem:** When the executor hits an unknown state or repeated failures, MASTER_PLAN.md
 says "escalate to agent." But there's no escalation hook — no callback, no
 event, no way to pause the loop and ask for help.
 
@@ -430,7 +430,7 @@ via `task_model.validate_task_manifest()` before executing.
 
 ## Gap 13: No Agent Control Surface API (IMPORTANT)
 
-**Problem:** The updated docs (`NORTH_STAR.md`, `architecture.md`, `plan.md`,
+**Problem:** The updated docs (`NORTH_STAR.md`, `architecture.md`, `MASTER_PLAN.md`,
 `CLAUDE.md`) all describe a three-tier agent control surface:
 
 ```
@@ -482,7 +482,7 @@ The Tier 3 function packages context for the agent when the runtime escalates.
 **Problem:** `docs/architecture.md` describes Layer 4.5 (data collection with
 pagination, census jobs, checkpoint/resume). No `data_collector.py` exists.
 
-**Priority:** Deferred to Phase 7 per plan.md. Not needed for Phase 4.
+**Priority:** Deferred to Phase 7 per MASTER_PLAN.md. Not needed for Phase 4.
 
 ---
 
@@ -530,9 +530,9 @@ After the above glue code exists:
 6. Fix anchor/path failures iteratively until >90% success rate
 7. Verify arrival after every navigation (locate after tap sequence)
 
-### Phase 5-10 (unchanged from plan.md)
+### Phase 5-10 (unchanged from MASTER_PLAN.md)
 
-The existing `plan.md` phases 5-10 remain valid:
+The existing `MASTER_PLAN.md` phases 5-10 remain valid:
 - Phase 5: Vision-agent fallback
 - Phase 6: Workflow piloting (execute full tasks end-to-end)
 - Phase 7: Data collection + ship census

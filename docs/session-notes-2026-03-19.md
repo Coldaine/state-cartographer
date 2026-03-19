@@ -2,7 +2,7 @@
 
 ## Summary
 
-DroidCast screenshot stability fixed via ATX agent restart trick. Live piloting captured Commission, HQ, and Dispatch screens. Redesign-plan.md vs plan.md convergence confirmed — the gap at the planning level is closed.
+DroidCast screenshot stability fixed via ATX agent restart trick. Live piloting captured Commission, HQ, and Dispatch screens. Redesign-plan.md vs MASTER_PLAN.md convergence confirmed — the gap at the planning level is closed.
 
 ---
 
@@ -79,11 +79,11 @@ Item rewards:
 
 ## 3. Redesign Plan Analysis
 
-### Finding: plan.md and redesign-plan.md are CONVERGED
+### Finding: MASTER_PLAN.md and redesign-plan.md are CONVERGED
 
-`docs/redesign-plan.md` was written as a diagnosis document ("we need to redesign from navigation library → automation runtime"). However, **`plan.md` has already been updated to reflect the redesign.**
+`docs/redesign-plan.md` was written as a diagnosis document ("we need to redesign from navigation library → automation runtime"). However, **`MASTER_PLAN.md` has already been updated to reflect the redesign.**
 
-Evidence in `plan.md`:
+Evidence in `MASTER_PLAN.md`:
 - Layer 5: Agent Supervision ✓
 - Layer 4.5: Data Collection ✓
 - Layer 4: Task Scheduler ✓
@@ -249,7 +249,7 @@ All combat-related states (campaign, exercise, OS, etc.) plus: shop, dock, build
 
 ### Lower Priority
 
-- [ ] Close out `redesign-plan.md` as "superseded by plan.md" (add a header note, no content changes needed)
+- [ ] Close out `redesign-plan.md` as "superseded by MASTER_PLAN.md" (add a header note, no content changes needed)
 - [ ] Add "Daily Resource Extraction IV" as a concrete example workflow in `docs/workflows.md`
 
 ---
