@@ -1,6 +1,6 @@
 # Automation Runtime Consolidation Plan
 
-> Written 2026-03-19, updated 2026-03-19. Branch: `refactor/automation-runtime`
+> Written 2026-03-19, updated 2026-03-19. Branch: `runtime-live-backend-glue`
 
 ## Design North Star
 
@@ -33,6 +33,27 @@ scripts exist with tests, the Azur Lane task definitions exist, and all docs
 have been rewritten. But the pieces are **fragmented** — they work in isolation
 but aren't wired into a runnable system. And the agent control surface described
 above does not exist as callable code.
+
+### Progress from live exploration (2026-03-19 session)
+
+Concurrent with this plan, an exploring agent piloted the live emulator and
+generated fixes that address several gaps:
+
+- **pilot_bridge.py committed** (994ca86) — DroidCast/ATX screenshot + tap
+  bridge is now tracked and available
+- **Executor bugs 2-4 fixed** (6027561, d662791) — serial kwarg plumbed to
+  `_tap_real`/`_swipe_real`, `_locate_real` observe import fixed. Bug 1
+  (`find_path` → `pathfind`, `result["path"]` → `result["route"]`) needs
+  verification.
+- **Graph updated from live data** (6027561) — coordinate corrections for
+  dormmenu→dorm, dormmenu→meowfficer. 2 new states (page_island_planner,
+  page_project_identity), 6 new transitions. Graph: 49 states, 111 transitions.
+- **`page_dormmenu` IS the HQ hub** — no `page_hq` needed. The game calls it
+  "Headquarters" but the graph uses ALAS's name `page_dormmenu`. It has
+  transitions to dorm, meowfficer, island_planner, project_identity.
+- **pyproject.toml updated** with pilot_bridge dependencies
+- **50+ labeled screenshots** in `data/screenshots/` from commission, dorm,
+  meowfficer workflows — ready for anchor calibration
 
 ### What's Done (Phases B-E of redesign)
 

@@ -92,8 +92,9 @@ def mock_backend() -> dict[str, BackendFn]:
         "locate": mock_locate,
         "session_confirm": mock_confirm,
         "sleep": mock_sleep,
-        "_log": log,  # Expose for test assertions
     }
+    # Expose log for test assertions (not part of the formal backend interface)
+    backend["_log"] = log  # type: ignore
     return backend
 
 
