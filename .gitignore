@@ -33,4 +33,5 @@ vendor/AzurLaneAutoScript/.venv/
 data/alas-observe/
 data/screenshots/
 data/census/
+data/events/
 tmp/
