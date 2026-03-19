@@ -36,7 +36,7 @@ harvest labeled observations from it. Do not treat ALAS as the default live
 control plane for State Cartographer.
 
 The ALAS harness lives at `vendor/AzurLaneAutoScript`. It is the
-**Zuosizhu/Alas-with-Dashboard** fork (updated weekly), NOT LmeSzinc/upstream.
+**LmeSzinc/AzurLaneAutoScript** upstream repo (the canonical source).
 
 ### Clean slate before every launch (MANDATORY)
 
@@ -84,7 +84,7 @@ artifacts and should remain untracked.
 
 **Never copy PatrickCustom.json from alas_wrapped** — the schema changes between
 versions. Instead:
-1. Start from `config/template.json` (Zuosizhu's current schema)
+1. Start from `config/template.json` (upstream schema)
 2. Set emulator: `Serial=127.0.0.1:21513`, `PackageName=com.YoStarEN.AzurLane`,
    `ScreenshotMethod=uiautomator2`, `ControlMethod=MaaTouch`
 3. Enable tasks: Restart, Commission, Research, Dorm, Meowfficer, Guild, Reward,
