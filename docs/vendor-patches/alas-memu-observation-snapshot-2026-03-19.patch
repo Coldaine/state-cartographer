@@ -1,0 +1,62 @@
+diff --git a/module/device/device.py b/module/device/device.py
+index a1519df47..9512bd8e1 100644
+--- a/module/device/device.py
++++ b/module/device/device.py
+@@ -66,7 +66,7 @@ class Device(Screenshot, Control, AppControl):
+     detect_record = set()
+     click_record = collections.deque(maxlen=15)
+     stuck_timer = Timer(60, count=60).start()
+-    stuck_timer_long = Timer(180, count=180).start()
++    stuck_timer_long = Timer(900, count=900).start()
+     stuck_long_wait_list = ['BATTLE_STATUS_S', 'PAUSE', 'LOGIN_CHECK']
+ 
+     def __init__(self, *args, **kwargs):
+diff --git a/module/device/screenshot.py b/module/device/screenshot.py
+index 9940ee055..572bcf640 100644
+--- a/module/device/screenshot.py
++++ b/module/device/screenshot.py
+@@ -56,7 +56,7 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
+         self._screenshot_interval.wait()
+         self._screenshot_interval.reset()
+ 
+-        for _ in range(2):
++        for _ in range(10):
+             if self.screenshot_method_override:
+                 method = self.screenshot_method_override
+             else:
+@@ -75,6 +75,7 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
+             if self.check_screen_size() and self.check_screen_black():
+                 break
+             else:
++                time.sleep(0.1)
+                 continue
+ 
+         return self.image
+diff --git a/module/tactical/tactical_class.py b/module/tactical/tactical_class.py
+index b25f13a48..ed8414d91 100644
+--- a/module/tactical/tactical_class.py
++++ b/module/tactical/tactical_class.py
+@@ -214,6 +214,7 @@ class RewardTacticalClass(Dock):
+             out: TACTICAL_CLASS_START
+         """
+         prev = SelectedGrids([])
++        not_start_count = 0
+         for n in range(1, 16):
+             if skip_first_screenshot:
+                 skip_first_screenshot = False
+@@ -222,8 +223,13 @@ class RewardTacticalClass(Dock):
+ 
+             self.handle_info_bar()  # info_bar appears when get ship in Launch Ceremony commissions
+             if not self.appear(TACTICAL_CLASS_START, offset=(30, 30)):
+-                logger.info('Not in TACTICAL_CLASS_START anymore, exit')
+-                return False
++                not_start_count += 1
++                if not_start_count >= 2:
++                    logger.info('Not in TACTICAL_CLASS_START anymore, exit')
++                    return False
++                logger.info('TACTICAL_CLASS_START not matched, retrying...')
++                continue
++            not_start_count = 0
+ 
+             books = SelectedGrids([Book(self.device.image, button) for button in BOOKS_GRID.buttons]).select(valid=True)
+             self.books = books

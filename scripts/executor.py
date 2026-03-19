@@ -303,13 +303,25 @@ def _navigate_real(
 
     # Execute each step in the path
     route = result.get("route", [])
+    serial = _kw.get("serial", "127.0.0.1:21513")
     for step in route:
         action = step.get("action", {})
         if action.get("type") == "adb_tap":
             coords = action.get("coords")
+            if coords is None and "x" in action and "y" in action:
+                coords = [action["x"], action["y"]]
             if coords:
-                _tap_real(coords=tuple(coords))
+                _tap_real(coords=tuple(coords), serial=serial)
                 time.sleep(action.get("wait_after", 1.0))
+
+    loc_result = _locate_real(graph=graph, serial=serial)
+    arrived_state = loc_result.get("state")
+    if arrived_state != target:
+        return {
+            "success": False,
+            "error": f"Navigation ended at '{arrived_state}' instead of '{target}'",
+            "locate_result": loc_result,
+        }
 
     return {"success": True, "state": target}
 
@@ -347,16 +359,28 @@ def _swipe_real(
 
 def _locate_real(graph: dict[str, Any], **_kw: Any) -> dict[str, Any]:
     """Call locate.py to determine current state."""
+    import contextlib
     import sys
+    import tempfile
 
     sys.path.insert(0, str(Path(__file__).parent))
+    from adb_bridge import screenshot as adb_screenshot
     from locate import locate
-    from observe import build_observations
+    from observe import build_observations, extract_pixel_coords
 
-    # Build observations from graph (this is a simplified version - in practice we'd need a screenshot)
-    # For now, we'll pass empty observations and let locate work with what it can
-    obs = build_observations(Path("dummy.png"), [])  # This will be improved later
-    return locate(graph, {}, obs)
+    serial = _kw.get("serial", "127.0.0.1:21513")
+    pixel_coords = extract_pixel_coords(graph)
+
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+        screenshot_path = Path(tmp.name)
+
+    try:
+        adb_screenshot(serial, screenshot_path)
+        obs = build_observations(screenshot_path, pixel_coords)
+        return locate(graph, {}, obs)
+    finally:
+        with contextlib.suppress(OSError):
+            screenshot_path.unlink()
 
 
 def _session_confirm_real(state: str, session: dict[str, Any], **_kw: Any) -> dict[str, Any]:

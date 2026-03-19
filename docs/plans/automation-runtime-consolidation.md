@@ -311,7 +311,7 @@ the actual function is named `build_observations`. Straight `ImportError`.
   `locate()` to verify arrival**. Blind navigation.
 - MEmu uses DirectX rendering → `adb screencap -p` returns blank. The only
   working screenshot path is DroidCast via `pilot_bridge.py`.
-- `pilot_bridge.py` is untracked (`??`), has zero tests, not in pyproject.toml.
+- `pilot_bridge.py` is now committed in the first-party repo, but it still needs backend integration, dependency declaration, and real test coverage.
 
 **What's needed:**
 1. Fix all 4 bugs in `default_backend()` (or replace with PilotBridge backend)
@@ -319,7 +319,7 @@ the actual function is named `build_observations`. Straight `ImportError`.
 3. Add arrival verification: `locate()` after navigation taps
 4. Add at least one test that instantiates `default_backend()` to catch import errors
 5. Decide: fix adb_bridge backend OR replace with PilotBridge backend for MEmu
-6. Commit `pilot_bridge.py` with tests, add deps to pyproject.toml
+6. Finish integrating `pilot_bridge.py` as an executor backend, add deps to pyproject.toml, and add tests
 
 **DroidCast timing caveat:** Each screenshot via `pilot_bridge.py` takes ~3
 seconds (kill→start→port-forward→capture). The `_wait_until_state()` polling
@@ -330,20 +330,33 @@ Timeout calculations will be wrong unless this is accounted for.
 
 ---
 
-## Gap 10: Phantom References in Documentation (MINOR)
+## Gap 10: Remaining Phantoms + Graph/Task Mismatches (MINOR)
 
-**Problem:** `docs/architecture.md` references files that don't exist:
-- `references/explorer.md`, `references/consolidator.md`,
-  `references/optimizer.md` — the actual files are at `agents/*.md`
-- `references/troubleshooting.md` — doesn't exist anywhere
-- `assets/templates/graph-template.json` — neither directory nor file exists
-- `data_collector.py` — referenced but not created (acknowledged as Phase 7)
-- `examples/azur-lane/resources.json` — no resource store example exists
+**Problem:** The 2026-03-19 doc rewrite fixed most phantom references
+(removed `references/*.md` paths, `assets/templates/`, cleaned up repo
+layout section). Two phantoms remain:
 
-**What's needed:** Either create the files or update architecture.md to point
-to where things actually live.
+- `data_collector.py` — referenced in `architecture.md` line 415 dependency
+  chain but doesn't exist (acknowledged as Phase 7 / Gap 14)
+- `examples/azur-lane/resources.json` — no resource store example exists,
+  but `scheduler.py --resources` flag expects one
 
-**Estimated scope:** 30 minutes.
+**Graph/task mismatches found during live exploration (2026-03-19):**
+- `page_hq` — real screen (HQ hub with Academy/Dorm/Cat Lodge/Island Planner
+  cards) exists in game but not in `graph.json`. Agent navigates through it.
+- `page_dormevent` — referenced as `entry_state` in `tasks.json` dorm task
+  (line 95) but doesn't exist in `graph.json`. Graph has `page_dorm` and
+  `page_dormmenu`.
+- "Cat Lodge" vs `page_meowfficer` — game renamed the feature but graph
+  uses ALAS name. Functional but confusing.
+
+**What's needed:**
+- Add `page_hq` state + transitions to `graph.json`
+- Fix `tasks.json` dorm entry_state to match graph
+- Create `examples/azur-lane/resources.json` starter file
+- Remove or annotate `data_collector.py` in architecture.md dependency chain
+
+**Estimated scope:** 45 minutes.
 
 ---
 
