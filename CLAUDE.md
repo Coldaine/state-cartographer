@@ -2,19 +2,38 @@
 
 ## What this project is
 
-This repo contains a Claude Code plugin called state-cartographer. The plugin
-helps agents build queryable state graphs of external systems they're automating.
-The plugin content (skills, agents, rules, scripts, commands) lives at root level.
-Dev infrastructure lives in `docs/`, `tests/`, and `examples/`.
+This repo contains State Cartographer, a supervised automation runtime for
+external systems. It includes graph/schema definitions, navigation tooling,
+task execution tooling, supervision playbooks, and Claude-facing integration
+files. The product goal is not "agent clicks through screenshots forever"; it
+is "runtime plays the loop, agent supervises the runtime."
 
-**ALAS is the live harness.** The project's design, schema, and playbook are
+The intended control surface for an agent session is:
+
+1. **High-level runtime calls** such as `execute_task("commission")`,
+   `navigate_to("page_dorm")`, and `ensure_game_ready()`
+2. **Supervisory queries** such as `where_am_i()`,
+   `why_did_last_transition_fail()`, and `show_recent_failures()`
+3. **Escalation payloads** pushed up by the runtime with screenshot, current
+   candidates, recent actions, and proposed recovery paths
+
+The runtime/backend should own screenshot capture, low-level emulator I/O,
+state verification, and event logging. Direct screenshot tooling remains useful
+for debugging, calibration, and exploration, but it is not the normal operator
+interface.
+
+**ALAS is reference architecture and an optional observation source, not the
+runtime we are building.** The project's design, schema, and playbook are
 validated against AzurLaneAutoScript (ALAS), a 9-year-old automation framework
-that solved these problems by hand for Azur Lane. ALAS runs live as a harness
-for Phase 1 observation gathering — we siphon labeled screenshots from it to
-build the state graph dataset. State Cartographer generalizes the approach into
-a playbook any LLM agent can follow for any external system.
+that solved these problems by hand for Azur Lane. We may siphon labeled
+screenshots or compare behavior against ALAS, but the live control path moving
+forward is State Cartographer's own executor/backend stack.
 
-## ALAS harness — how to run it (READ THIS EVERY SESSION)
+## Optional ALAS observation workflow
+
+Use this only when you explicitly need to compare behavior against ALAS or
+harvest labeled observations from it. Do not treat ALAS as the default live
+control plane for State Cartographer.
 
 The ALAS harness lives at `vendor/AzurLaneAutoScript`. It is the
 **Zuosizhu/Alas-with-Dashboard** fork (updated weekly), NOT LmeSzinc/upstream.
@@ -106,7 +125,7 @@ versions. Instead:
   `rules/` are the methodology. They must be clear, opinionated, and
   follow progressive disclosure (SKILL.md under 500 lines, deeper content
   in references/).
-- Do not confuse "dev agents" (us, working on the plugin) with "plugin agents"
+- Do not confuse "dev agents" (us, working on the runtime) with "plugin agents"
   (explorer.md, consolidator.md, optimizer.md — these are the product).
 
 ## Two kinds of agents

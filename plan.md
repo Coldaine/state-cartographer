@@ -7,6 +7,14 @@ It turns "take a screenshot, reason about pixels, click something" into a
 deterministic, schedulable, self-recovering automation loop where the tooling
 plays the game and the LLM agent supervises.
 
+The intended control surface is:
+
+1. High-level runtime calls such as `execute_task("commission")`, `navigate_to("page_dorm")`, and `ensure_game_ready()`
+2. Supervisory queries such as `where_am_i()`, `why_did_last_transition_fail()`, and `show_recent_failures()`
+3. Escalation payloads pushed up by the runtime with screenshot, current candidates, recent actions, and proposed recovery paths
+
+The runtime/backend should own screenshot capture, low-level emulator I/O, arrival verification, and event recording. Direct screenshot CLI use remains valid for debugging and calibration, but it is not the normal operator model.
+
 The runtime stack:
 
 ```

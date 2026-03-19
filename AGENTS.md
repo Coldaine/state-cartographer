@@ -13,6 +13,20 @@
 | [docs/workflows.md](docs/workflows.md) | Complete Azur Lane workflow inventory (26 workflows) |
 | [docs/data-collection.md](docs/data-collection.md) | Data collection scheduler, ship census, pagination design |
 
+## Current Project Direction
+
+State Cartographer is a supervised automation runtime. The path forward is:
+
+- The runtime/backend owns screenshot capture, low-level emulator I/O, state verification, and event recording
+- The executor and daemon use those capabilities internally for `locate`, navigation verification, recovery, and logging
+- The agent operates through a higher-level control surface, not by manually requesting screenshots before every action
+
+The intended agent-facing interface has three levels:
+
+1. **High-level runtime calls** such as `execute_task("commission")`, `navigate_to("page_dorm")`, and `ensure_game_ready()`
+2. **Supervisory queries** such as `where_am_i()`, `why_did_last_transition_fail()`, and `show_recent_failures()`
+3. **Escalation payloads** pushed up by the runtime with screenshot, current candidates, recent actions, and proposed recovery paths
+
 ## Reference Case: ALAS (AzurLaneAutoScript)
 
 ALAS is the existence proof for State Cartographer. It is a 9-year-old Python automation framework for Azur Lane that has already solved — by hand — every problem this project generalizes:
@@ -23,7 +37,7 @@ ALAS is the existence proof for State Cartographer. It is a 9-year-old Python au
 - Recovery from unknown states via GOTO_MAIN fallback
 - Per-locale support (cn/en/jp/tw)
 
-**ALAS is reference data, not something to run or wrap.** Its page graph, button definitions, and navigation logic validate whether our schema, tools, and playbook are complete enough to represent a real-world system. Any agent working on this project should understand that ALAS's `module/ui/page.py` (state graph), `module/ui/assets.py` (anchor definitions), and `module/ui/ui.py` (locate + navigate) are the canonical examples of what State Cartographer produces.
+**ALAS is reference architecture and optional corpus source material, not the runtime we are shipping.** Its page graph, button definitions, and navigation logic validate whether our schema, tools, and playbook are complete enough to represent a real-world system. We may mine ALAS for examples or labeled observations, but the live control path moving forward is State Cartographer's own executor/backend stack. Any agent working on this project should understand that ALAS's `module/ui/page.py` (state graph), `module/ui/assets.py` (anchor definitions), and `module/ui/ui.py` (locate + navigate) are canonical examples of the pattern we are reproducing.
 
 | ALAS Component | State Cartographer Equivalent |
 |---|---|

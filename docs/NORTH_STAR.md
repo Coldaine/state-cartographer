@@ -43,6 +43,32 @@ State Cartographer is an **automation runtime** for external systems. It enables
 
 The end state: the tooling runs the automation loop autonomously. The agent is called when the tooling encounters something it can't handle.
 
+## Agent Control Surface
+
+The runtime should present a supervisory control surface to the agent. In normal operation, the agent should not have to manually request screenshots before every action or manually stitch together raw taps into a workflow.
+
+The intended interaction levels are:
+
+1. **High-level runtime calls**
+   `execute_task("commission")`
+   `navigate_to("page_dorm")`
+   `ensure_game_ready()`
+2. **Supervisory queries**
+   `where_am_i()`
+   `why_did_last_transition_fail()`
+   `show_recent_failures()`
+3. **Escalation payloads pushed up by the runtime**
+   screenshot attached
+   current candidates
+   last N actions
+   proposed recovery paths
+
+This implies a clear ownership boundary:
+
+- Screenshot capture belongs to the runtime/backend, not to the agent's normal control loop
+- The executor/daemon captures screenshots internally for `locate`, arrival verification, recovery, and event logging
+- Direct screenshot calls remain valid for debugging, calibration, and exploration, but they are not the steady-state operating model
+
 ## Goals
 
 ### 1. The tooling should play the game most of the time
@@ -51,7 +77,7 @@ Known task sequences (collect rewards, dispatch commissions, run dailies) execut
 
 ### 2. The agent should supervise, not operate
 
-The agent reviews the schedule, adjusts priorities, enables/disables tasks, and handles exceptions. It does NOT manually call `session.py confirm` after every tap. That happens automatically inside the executor.
+The agent reviews the schedule, adjusts priorities, enables/disables tasks, and handles exceptions. It does NOT manually call `session.py confirm` after every tap or manually ask for a screenshot before every state check. That happens automatically inside the executor/backend stack.
 
 ### 3. Navigation should be cheap and deterministic
 
@@ -84,7 +110,7 @@ The full process — from exploration through task definition, scheduling, data 
 ## What This Is Not
 
 - **Not another agent orchestration framework.** LangGraph, CrewAI, and similar tools manage the agent's own workflow. State Cartographer models and automates the *external system*.
-- **Not an ALAS fork.** ALAS is the reference implementation we learn from. State Cartographer generalizes the pattern to any external system, not just Azur Lane.
+- **Not an ALAS fork.** ALAS is the reference implementation we learn from and an optional source of labeled observations. State Cartographer generalizes the pattern to any external system, not just Azur Lane, and should not depend on ALAS as its live control plane.
 - **Not a browser/mobile automation tool.** Playwright, ADB, and Appium are action backends. They execute transitions. The runtime logic lives above them.
 
 ## Open Questions
@@ -105,7 +131,7 @@ The full process — from exploration through task definition, scheduling, data 
 
 ## Guiding Principles
 
-**The tooling does the work; the agent does the thinking.** Deterministic operations (navigation, task execution, scheduling) are handled by the runtime. LLM reasoning is reserved for planning, anomaly detection, and judgment calls.
+**The tooling does the work; the agent does the thinking.** Deterministic operations (navigation, task execution, screenshot capture, state verification, scheduling) are handled by the runtime. LLM reasoning is reserved for planning, anomaly detection, and judgment calls.
 
 **The graph is infrastructure, not the product.** The graph enables navigation, which enables task execution, which enables automation. The graph by itself is necessary but not sufficient.
 
