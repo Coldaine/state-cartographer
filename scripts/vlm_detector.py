@@ -34,9 +34,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 GRAPH_PATH = REPO_ROOT / "examples" / "azur-lane" / "graph.json"
 RAW_STREAM = REPO_ROOT / "data" / "raw_stream"
 
-# vLLM default endpoint
-DEFAULT_BASE_URL = "http://localhost:8000/v1"
-DEFAULT_MODEL = "Qwen/Qwen2.5-VL-7B-Instruct"
+# vLLM endpoint (Qwen3.5-9B-AWQ on RTX 5090, port 18900)
+DEFAULT_BASE_URL = "http://localhost:18900/v1"
+DEFAULT_MODEL = "QuantTrio/Qwen3.5-9B-AWQ"
 
 # ---------------------------------------------------------------------------
 # Page list (loaded from graph.json so it stays in sync automatically)
@@ -124,6 +124,7 @@ class VLMDetector:
             ],
             max_tokens=max_tokens,
             temperature=0.0,
+            extra_body={"chat_template_kwargs": {"enable_thinking": False}},
         )
         return response.choices[0].message.content.strip()
 
