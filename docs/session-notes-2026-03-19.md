@@ -219,6 +219,86 @@ All combat-related states (campaign, exercise, OS, etc.) plus: shop, dock, build
 | Akashi Express order page | Sub-page within meowfficer — daily free cat box ordering |
 | Item Found result modal | Transient modal after cat box purchase |
 | Cat Lodge Training popup | Sub-page within meowfficer — 4 training slots |
+
+---
+
+## Session Addendum — 2026-03-19 (Second Pass)
+
+**Branch:** `feature/preflight-canonical-entrypoint-2026-03-19`
+
+### Code Changes (Second Pass)
+
+- `executor.py` — `live_preflight()`, `execute_task_by_id()`, `build_backend()`, `_import_pilot_bridge_symbols()`, orientation recovery, `--backend`/`--serial`/`--preflight-only` CLI flags
+- `tests/test_executor.py` — `TestCanonicalEntrypoint` + `test_orients_from_unknown_state_before_navigation` (19 tests passing)
+- All operator docs updated: `README.md`, `AGENTS.md`, `CLAUDE.md`, `skills/task-automation/SKILL.md`, `docs/adb-backend-hardening.md`
+
+Live preflight proven:
+```json
+{
+  "success": true,
+  "forwards_after": [{"local":"tcp:17912"}, {"local":"tcp:53516"}],
+  "host_ports_after": {"atx": true, "droidcast": true}
+}
+```
+
+### ATX Agent Lifecycle Gap
+
+ATX agent is NOT persistent across game exits. After any game crash/exit, it must be manually restarted:
+```
+adb -s 127.0.0.1:21513 shell "/data/local/tmp/atx-agent server --nouia -d"
+```
+`pilot_bridge.connect()` assumes ATX is running. Does not auto-start it. **TODO:** Add ATX auto-start in `connect()`.
+
+### Asset Download Blocker (CONFIRMED ENVIRONMENT ISSUE)
+
+MEmu emulator game data: only 18MB present (should be ~18GB). Three mandatory popups must all be Confirmed (Cancel = exit game):
+
+1. "Download Game Assets" → select basic assets (600, 343) → Confirm (787, 476)
+2. "Download Extra Assets" → Confirm (787, 610) [Cancel exits]
+3. "Update" — "18.2GB required" → Confirm to proceed [Cancel exits]
+
+No live navigation can proceed without completing the ~18GB download. Restore snapshot or run full download.
+
+**Popup coordinates (1280×720 screen):**
+| Popup | Button | Coords |
+|-------|--------|--------|
+| Download Game Assets | Confirm | (787, 476) |
+| Download Game Assets | Exit Game (don't tap) | (493, 476) |
+| Download basic assets radio | Select | (600, 343) |
+| Download Extra Assets | Confirm | (787, 610) |
+| Update | Confirm | (787, 502) |
+
+### Blind Tap Antipattern (Observed In-Session)
+
+**Never tap when the screenshot is 100% dark.** DroidCast returns black frames during DEX transitions. Earlier this session, taps were sent into a black screen assuming a popup was present — they hit nothing/the wrong target, causing game exits. Always check `dark_fraction < 0.5` before acting.
+
+### Antipatterns Identified by Post-Mortem Audit
+
+Full audit filed by runSubagent. Critical items:
+
+| Priority | Antipattern | Location | Fix |
+|----------|-------------|----------|-----|
+| CRITICAL | Mock Moat — all tests bypass real backend; 4 known import bugs invisible | `test_executor.py` | Add `TestDefaultBackendImports` |
+| CRITICAL | `default_backend()` dead on MEmu (DirectX) | `executor.py` | Deprecate or reroute to pilot |
+| CRITICAL | `conditional` action always runs `then`, ignores condition | `executor.py:535` | Implement or raise NotImplemented |
+| HIGH | `read_resource` is silent no-op | `executor.py:532` | Add warning log at minimum |
+| HIGH | `PROGRESS.md` describes Phase 2, project is in Phase 4 | `PROGRESS.md` | Rewrite |
+| HIGH | `tasks.json` dorm uses `page_dormevent` (not in graph) | `tasks.json:95` | Fix to `page_dorm` |
+| HIGH | dormmenu→dorm coords off 30-60px | `graph.json` | Live-verify and fix |
+| MEDIUM | `_wait_until_state()` timeout wrong for 5s pilot poll | `executor.py:557` | Use elapsed wall time |
+| MEDIUM | `DEFAULT_SERIAL` defined 4 times + inline literals | Multiple | Extract to `config.py` |
+
+### Next Session Checklist
+
+1. Restore MEmu snapshot with game assets, OR run 18GB download to completion
+2. Fix `tasks.json` dorm task `page_dormevent` → `page_dorm`
+3. Fix dormmenu coordinate offsets in `graph.json`
+4. Update `PROGRESS.md` to Phase 4
+5. Add SUPERSEDED header to `redesign-plan.md`
+6. Add ATX auto-start in `pilot_bridge.connect()`
+7. Fix `_wait_until_state()` timeout to use wall time
+8. Add `TestDefaultBackendImports` test
+9. Fix `conditional` action or raise explicitly
 | Island Planner | Card visible on `page_dormmenu` but no `dormmenu_to_island_planner` transition |
 | Project Identity | Card on `page_dormmenu` but no `dormmenu_to_project_identity` transition |
 

@@ -7,8 +7,7 @@ the dynamic vision capabilities (OCR, template matching) and complex control
 flow (while-loops, dynamic scrolling) required for actual autonomous gameplay.
 It proves the architectural shape, but is not yet capable of real domain logic.
 
-The executor takes a task definition and steps through its action sequence.
-Each action is dispatched to the appropriate tool (navigate → pathfind + adb,
+The executor takes a task definition and steps through its action sequence.Each action is dispatched to the appropriate tool (navigate → pathfind + adb,
 tap → adb_bridge, wait → sleep, etc.).
 
 Session tracking is automatic — every navigation and state change is recorded

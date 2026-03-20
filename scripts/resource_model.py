@@ -6,8 +6,7 @@ to hold state (oil, coins, timers), but completely lacks the automated OCR
 and dynamic screen-reading capabilities required to actually populate these
 values from the screen during live gameplay.
 
-Resources are observable values (oil, coins, timers, dock capacity, etc.)
-that inform scheduling and task decisions. They are updated by observation
+Resources are observable values (oil, coins, timers, dock capacity, etc.)that inform scheduling and task decisions. They are updated by observation
 (reading from screenshots or API calls), not hardcoded arithmetic.
 
 The resource store persists as part of the session file.

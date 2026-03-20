@@ -6,8 +6,7 @@ While the priority queue and timestamp logic function, it relies on static
 definitions and lacks the deep game-state awareness, real-time interrupt handling,
 and complex multi-condition decision engines found in mature automation systems.
 
-The scheduler is the runtime heart. It inspects the task manifest and resource
-store, determines which tasks are ready to run, and returns them in priority
+The scheduler is the runtime heart. It inspects the task manifest and resourcestore, determines which tasks are ready to run, and returns them in priority
 order.
 
 This module provides the decision logic. The actual execution loop lives in
