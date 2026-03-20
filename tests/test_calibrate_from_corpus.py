@@ -44,6 +44,7 @@ def _make_corpus(tmp_path: Path, pages: dict[str, list[tuple[int, int, int]]]) -
                     "alas_task": "test",
                     "trigger": "test",
                     "log_line": img_num,
+                    "confidence": "arrive",
                 }
             )
 
