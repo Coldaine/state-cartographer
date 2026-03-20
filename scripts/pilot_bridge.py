@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import subprocess
+import threading
 import time
 import uuid
 from pathlib import Path
@@ -60,14 +61,41 @@ DROIDCAST_APK_LOCAL = Path("vendor/AzurLaneAutoScript/bin/DroidCast/DroidCast_ra
 DROIDCAST_APK_REMOTE = "/data/local/tmp/DroidCast_raw.apk"
 DROIDCAST_PORT_REMOTE = 53516
 ATX_AGENT_PORT = 7912
+LOCAL_ATX_PORT = 17912
+LOCAL_DROIDCAST_PORT = 53516
 EVENT_LOG_DIR = Path("data/events")
 SCREENSHOT_DIR = Path("data/screenshots")
 
 
-def _adb(*args: str, serial: str = DEFAULT_SERIAL) -> subprocess.CompletedProcess[bytes]:
+def _decode_bytes(data: bytes | str | None) -> str:
+    if data is None:
+        return ""
+    if isinstance(data, bytes):
+        return data.decode("utf-8", errors="replace")
+    return data
+
+
+def _adb(
+    *args: str,
+    serial: str = DEFAULT_SERIAL,
+    check: bool = False,
+    timeout: int = 30,
+) -> subprocess.CompletedProcess[bytes]:
     """Run an ADB command targeting *serial*."""
     cmd = ["adb", "-s", serial, *args]
-    return subprocess.run(cmd, capture_output=True, timeout=30)
+    try:
+        result = subprocess.run(cmd, capture_output=True, timeout=timeout)
+    except FileNotFoundError as exc:
+        raise RuntimeError("ADB not found on PATH. Install Android platform-tools.") from exc
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"ADB command timed out after {timeout}s: {' '.join(cmd)}") from exc
+
+    if check and result.returncode != 0:
+        stderr = _decode_bytes(result.stderr).strip()
+        stdout = _decode_bytes(result.stdout).strip()
+        detail = stderr or stdout or f"return code {result.returncode}"
+        raise RuntimeError(f"ADB command failed: {' '.join(cmd)} :: {detail}")
+    return result
 
 
 class PilotBridge:
@@ -98,6 +126,7 @@ class PilotBridge:
         self._atx_port: int = 0
         self._screenshot_serial = 0
         self._connected = False
+        self._lock = threading.RLock()
 
     # ------------------------------------------------------------------
     # Connection
@@ -105,45 +134,104 @@ class PilotBridge:
 
     def connect(self) -> None:
         """Establish ADB connection, verify ATX agent, push DroidCast APK."""
-        # 1. ADB connect
-        _adb("connect", self.serial, serial=self.serial)
-        result = _adb("devices", serial=self.serial)
-        if self.serial.encode() not in result.stdout:
-            raise RuntimeError(f"Device {self.serial} not found after connect")
+        with self._lock:
+            if self._connected:
+                return
 
-        # 2. Push DroidCast APK (idempotent)
-        apk = DROIDCAST_APK_LOCAL
-        if not apk.exists():
-            raise FileNotFoundError(f"DroidCast APK not found: {apk}")
-        _adb("push", str(apk), DROIDCAST_APK_REMOTE, serial=self.serial)
+            # 1. ADB connect
+            _adb("connect", self.serial, serial=self.serial, check=False)
+            result = _adb("devices", serial=self.serial, check=True)
+            if self.serial.encode() not in result.stdout:
+                raise RuntimeError(f"Device {self.serial} not found after connect")
 
-        # 3. Forward ATX agent port only — never remove-all (would kill ALAS's DroidCast forward)
-        _adb("forward", "--remove", "tcp:17912", serial=self.serial)
-        _adb("forward", "tcp:17912", f"tcp:{ATX_AGENT_PORT}", serial=self.serial)
-        # Only add DroidCast forward if not already present (ALAS may own it)
-        fwd_result = _adb("forward", "--list", serial=self.serial)
-        if f"tcp:{DROIDCAST_PORT_REMOTE}" not in fwd_result.stdout.decode(errors="replace"):
-            _adb("forward", f"tcp:{DROIDCAST_PORT_REMOTE}", f"tcp:{DROIDCAST_PORT_REMOTE}", serial=self.serial)
-        self._atx_port = 17912
+            # 2. Push DroidCast APK (idempotent)
+            apk = DROIDCAST_APK_LOCAL
+            if not apk.exists():
+                raise FileNotFoundError(f"DroidCast APK not found: {apk}")
+            _adb("push", str(apk), DROIDCAST_APK_REMOTE, serial=self.serial, check=True, timeout=60)
 
-        # 4. Verify ATX agent responds
+            # 3. Forward ATX agent port only — never remove-all (would kill ALAS's DroidCast forward)
+            self._ensure_forward(local_port=LOCAL_ATX_PORT, remote_port=ATX_AGENT_PORT, replace_existing=True)
+            self._ensure_forward(
+                local_port=LOCAL_DROIDCAST_PORT,
+                remote_port=DROIDCAST_PORT_REMOTE,
+                replace_existing=not self._alas_running(),
+            )
+            self._atx_port = LOCAL_ATX_PORT
+
+            # 4. Verify ATX agent responds
+            try:
+                resp = self._session.get(f"http://127.0.0.1:{self._atx_port}/info", timeout=5)
+                resp.raise_for_status()
+            except (requests.ConnectionError, requests.Timeout) as exc:
+                raise RuntimeError(
+                    "ATX agent not responding on port 7912. Ensure uiautomator2 was initialized on this device."
+                ) from exc
+
+            # 5. Verify with a test screenshot
+            img = self._restart_and_capture()
+            if img is None:
+                raise RuntimeError("DroidCast restart-and-capture failed during connect")
+
+            self._connected = True
+            self.screenshot_dir.mkdir(parents=True, exist_ok=True)
+            if self.record:
+                self.event_log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def _list_all_forwards(self) -> list[tuple[str, str, str]]:
+        """Return all adb forwards as (serial, local, remote)."""
+        result = _adb("forward", "--list", serial=self.serial, check=True)
+        forwards: list[tuple[str, str, str]] = []
+        for line in _decode_bytes(result.stdout).splitlines():
+            parts = line.strip().split()
+            if len(parts) == 3:
+                forwards.append((parts[0], parts[1], parts[2]))
+        return forwards
+
+    def _ensure_forward(self, *, local_port: int, remote_port: int, replace_existing: bool) -> None:
+        """Ensure a specific forward exists for this serial and fail on cross-device conflicts."""
+        local = f"tcp:{local_port}"
+        remote = f"tcp:{remote_port}"
+        forwards = self._list_all_forwards()
+
+        for owner_serial, owner_local, owner_remote in forwards:
+            if owner_local == local and owner_serial != self.serial:
+                raise RuntimeError(
+                    f"Local port {local_port} is already forwarded to {owner_serial} ({owner_remote}); "
+                    f"cannot safely claim it for {self.serial}."
+                )
+
+        for owner_serial, owner_local, owner_remote in forwards:
+            if owner_serial == self.serial and owner_local == local:
+                if owner_remote == remote:
+                    return
+                if not replace_existing:
+                    raise RuntimeError(
+                        f"Local port {local_port} for {self.serial} already points to {owner_remote}; "
+                        f"expected {remote}."
+                    )
+                _adb("forward", "--remove", local, serial=self.serial, check=True)
+                break
+
+        _adb("forward", local, remote, serial=self.serial, check=True)
+
+    def _capture_preview(self, dc_base: str) -> np.ndarray | None:
+        """Fetch and decode a DroidCast preview image."""
         try:
-            resp = self._session.get(f"http://127.0.0.1:{self._atx_port}/info", timeout=5)
-            resp.raise_for_status()
-        except (requests.ConnectionError, requests.Timeout) as exc:
-            raise RuntimeError(
-                "ATX agent not responding on port 7912. Ensure uiautomator2 was initialized on this device."
-            ) from exc
+            response = self._session.get(f"{dc_base}/preview", timeout=5)
+            response.raise_for_status()
+        except requests.RequestException:
+            return None
 
-        # 5. Verify with a test screenshot
-        img = self._restart_and_capture()
-        if img is None:
-            raise RuntimeError("DroidCast restart-and-capture failed during connect")
+        arr = np.frombuffer(response.content, np.uint8)
+        bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        if bgr is None or bgr.size == 0:
+            return None
+        return bgr
 
-        self._connected = True
-        self.screenshot_dir.mkdir(parents=True, exist_ok=True)
-        if self.record:
-            self.event_log_path.parent.mkdir(parents=True, exist_ok=True)
+    def _ensure_connected(self) -> None:
+        if not self._connected:
+            self.connect()
 
     # ------------------------------------------------------------------
     # Internal: restart-per-screenshot cycle
@@ -168,20 +256,14 @@ class PilotBridge:
         """
         import contextlib
 
-        dc_port = DROIDCAST_PORT_REMOTE
+        dc_port = LOCAL_DROIDCAST_PORT
         dc_base = f"http://127.0.0.1:{dc_port}"
 
         # If ALAS owns DroidCast, read from its existing endpoint — no kill/restart.
         if self._alas_running():
-            try:
-                r = self._session.get(f"{dc_base}/preview", timeout=5)
-                arr = np.frombuffer(r.content, np.uint8)
-                bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-                if bgr is not None:
-                    return bgr
-            except requests.RequestException:
-                pass
-            return None
+            shared = self._capture_preview(dc_base)
+            if shared is not None:
+                return shared
 
         atx_url = f"http://127.0.0.1:{self._atx_port}"
 
@@ -206,7 +288,7 @@ class PilotBridge:
         resp.raise_for_status()
 
         # Use fixed DroidCast local port (already forwarded in connect())
-        dc_port = DROIDCAST_PORT_REMOTE
+        dc_port = LOCAL_DROIDCAST_PORT
 
         # Wait for DroidCast to come online
         dc_base = f"http://127.0.0.1:{dc_port}"
@@ -220,13 +302,7 @@ class PilotBridge:
             time.sleep(0.25)
 
         # Capture one frame
-        try:
-            r3 = self._session.get(f"{dc_base}/preview", timeout=5)
-            arr = np.frombuffer(r3.content, np.uint8)
-            bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-            return bgr
-        except requests.RequestException:
-            return None
+        return self._capture_preview(dc_base)
 
     # ------------------------------------------------------------------
     # Screenshot
@@ -239,28 +315,28 @@ class PilotBridge:
         written to disk.  When recording is enabled, every screenshot is
         auto-saved to ``screenshot_dir``.
         """
-        if not self._connected:
-            raise RuntimeError("Not connected. Call connect() first.")
+        with self._lock:
+            self._ensure_connected()
 
-        bgr = self._restart_and_capture()
-        if bgr is None:
-            raise RuntimeError("DroidCast restart-and-capture returned no image")
+            bgr = self._restart_and_capture()
+            if bgr is None:
+                raise RuntimeError("DroidCast restart-and-capture returned no image")
 
-        rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(rgb)
+            rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(rgb)
 
-        # Auto-save when recording
-        self._screenshot_serial += 1
-        auto_path = self.screenshot_dir / f"{self.run_id}_{self._screenshot_serial:04d}.png"
-        if save_path:
-            save_path = Path(save_path)
-            save_path.parent.mkdir(parents=True, exist_ok=True)
-            img.save(save_path)
-        if self.record:
-            auto_path.parent.mkdir(parents=True, exist_ok=True)
-            img.save(auto_path)
+            # Auto-save when recording
+            self._screenshot_serial += 1
+            auto_path = self.screenshot_dir / f"{self.run_id}_{self._screenshot_serial:04d}.png"
+            if save_path:
+                save_path = Path(save_path)
+                save_path.parent.mkdir(parents=True, exist_ok=True)
+                img.save(save_path)
+            if self.record:
+                auto_path.parent.mkdir(parents=True, exist_ok=True)
+                img.save(auto_path)
 
-        return img
+            return img
 
     # ------------------------------------------------------------------
     # Actions
@@ -268,22 +344,24 @@ class PilotBridge:
 
     def tap(self, x: int, y: int, *, label: str = "") -> None:
         """Tap at (x, y) on the device screen."""
-        t0 = time.monotonic()
-        _adb("shell", "input", "tap", str(x), str(y), serial=self.serial)
-        dur = int((time.monotonic() - t0) * 1000)
+        with self._lock:
+            self._ensure_connected()
+            t0 = time.monotonic()
+            _adb("shell", "input", "tap", str(x), str(y), serial=self.serial, check=True)
+            dur = int((time.monotonic() - t0) * 1000)
 
-        if self.record and make_event and append_event:
-            evt = make_event(
-                run_id=self.run_id,
-                serial=self.serial,
-                event_type="execution",
-                ok=True,
-                semantic_action=label or f"tap({x},{y})",
-                primitive_action="tap",
-                coords=[x, y],
-                duration_ms=dur,
-            )
-            append_event(self.event_log_path, evt)
+            if self.record and make_event and append_event:
+                evt = make_event(
+                    run_id=self.run_id,
+                    serial=self.serial,
+                    event_type="execution",
+                    ok=True,
+                    semantic_action=label or f"tap({x},{y})",
+                    primitive_action="tap",
+                    coords=[x, y],
+                    duration_ms=dur,
+                )
+                append_event(self.event_log_path, evt)
 
     def swipe(
         self,
@@ -296,46 +374,51 @@ class PilotBridge:
         label: str = "",
     ) -> None:
         """Swipe from (x1,y1) to (x2,y2)."""
-        t0 = time.monotonic()
-        _adb(
-            "shell",
-            "input",
-            "swipe",
-            str(x1),
-            str(y1),
-            str(x2),
-            str(y2),
-            str(duration_ms),
-            serial=self.serial,
-        )
-        dur = int((time.monotonic() - t0) * 1000)
-
-        if self.record and make_event and append_event:
-            evt = make_event(
-                run_id=self.run_id,
+        with self._lock:
+            self._ensure_connected()
+            t0 = time.monotonic()
+            _adb(
+                "shell",
+                "input",
+                "swipe",
+                str(x1),
+                str(y1),
+                str(x2),
+                str(y2),
+                str(duration_ms),
                 serial=self.serial,
-                event_type="execution",
-                ok=True,
-                semantic_action=label or f"swipe({x1},{y1}→{x2},{y2})",
-                primitive_action="swipe",
-                gesture={"x1": x1, "y1": y1, "x2": x2, "y2": y2, "duration_ms": duration_ms},
-                duration_ms=dur,
+                check=True,
             )
-            append_event(self.event_log_path, evt)
+            dur = int((time.monotonic() - t0) * 1000)
+
+            if self.record and make_event and append_event:
+                evt = make_event(
+                    run_id=self.run_id,
+                    serial=self.serial,
+                    event_type="execution",
+                    ok=True,
+                    semantic_action=label or f"swipe({x1},{y1}→{x2},{y2})",
+                    primitive_action="swipe",
+                    gesture={"x1": x1, "y1": y1, "x2": x2, "y2": y2, "duration_ms": duration_ms},
+                    duration_ms=dur,
+                )
+                append_event(self.event_log_path, evt)
 
     def back(self) -> None:
         """Press the Android BACK key."""
-        _adb("shell", "input", "keyevent", "4", serial=self.serial)
-        if self.record and make_event and append_event:
-            evt = make_event(
-                run_id=self.run_id,
-                serial=self.serial,
-                event_type="execution",
-                ok=True,
-                semantic_action="back_button",
-                primitive_action="keyevent",
-            )
-            append_event(self.event_log_path, evt)
+        with self._lock:
+            self._ensure_connected()
+            _adb("shell", "input", "keyevent", "4", serial=self.serial, check=True)
+            if self.record and make_event and append_event:
+                evt = make_event(
+                    run_id=self.run_id,
+                    serial=self.serial,
+                    event_type="execution",
+                    ok=True,
+                    semantic_action="back_button",
+                    primitive_action="keyevent",
+                )
+                append_event(self.event_log_path, evt)
 
     def wait(self, seconds: float) -> None:
         """Sleep and record the wait."""

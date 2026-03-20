@@ -273,7 +273,13 @@ All combat-related states (campaign, exercise, OS, etc.) plus: shop, dock, build
   - `tcp:17912 -> tcp:7912` (ATX)
   - `tcp:53516 -> tcp:53516` (DroidCast)
 - `connect()` now starts from a clean slate by removing stale forwards for the device.
-- Validation run: 3 consecutive screenshots succeeded; forward list stayed at exactly 2 entries.
+- Validation run: 3 consecutive screenshots succeeded; the owned ATX/DroidCast forwards stayed stable without `tcp:0` leakage.
+
+### Backend hardening follow-up
+- Hardened `scripts/pilot_bridge.py` with checked ADB commands, per-bridge locking, explicit forward ownership checks, and lazy auto-connect for screenshot/tap/swipe/back.
+- Hardened `scripts/adb_bridge.py` with default subprocess timeouts and surfaced timeout errors.
+- Added regression tests in `tests/test_pilot_bridge.py`.
+- Wrote long-form design notes in `docs/adb-backend-hardening.md`.
 
 ### Evidence Snapshot
 - `adb -s 127.0.0.1:21513 forward --list` after validation:

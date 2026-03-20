@@ -41,12 +41,16 @@ DEFAULT_SERIAL = "127.0.0.1:21513"
 def _run(args: list[str], **kwargs) -> subprocess.CompletedProcess:
     """Run an ADB command, raising RuntimeError when ADB binary is missing."""
     try:
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = 30
         return subprocess.run(args, **kwargs)
     except FileNotFoundError as exc:
         raise RuntimeError(
             "ADB not found. Install Android SDK Platform-Tools and add to PATH.\n"
             "Download: https://developer.android.com/studio/releases/platform-tools"
         ) from exc
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"ADB command timed out after {kwargs['timeout']}s: {' '.join(args)}") from exc
 
 
 # ---------------------------------------------------------------------------
