@@ -12,7 +12,7 @@ For each ALAS-labeled page:
 
 Usage:
     uv run python scripts/calibrate_from_corpus.py \\
-      --corpus data/raw_stream \\
+      --corpus data/corpus \\
       --graph  examples/azur-lane/graph.json \\
       --min-samples 3 \\
       --top-k 5
@@ -36,7 +36,7 @@ from PIL import Image
 # Constants
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_CORPUS = PROJECT_ROOT / "data" / "raw_stream"
+DEFAULT_CORPUS = PROJECT_ROOT / "data" / "corpus"
 DEFAULT_GRAPH = PROJECT_ROOT / "examples" / "azur-lane" / "graph.json"
 
 # Grid of candidate coordinates to sample.  Assumes 1280x720 resolution.
@@ -290,7 +290,7 @@ def main() -> None:
     parser.add_argument(
         "--corpus",
         default=str(DEFAULT_CORPUS),
-        help="Path to corpus directory (default: data/raw_stream)",
+        help="Path to corpus directory (default: data/corpus)",
     )
     parser.add_argument(
         "--graph",
