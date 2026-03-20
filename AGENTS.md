@@ -151,5 +151,5 @@ The ALAS repo is available as a git submodule at `vendor/AzurLaneAutoScript/`.
 |------|---------|
 | [README.md](README.md) | Project overview for GitHub |
 | [LICENSE](LICENSE) | MIT License |
-| [.github/workflows/ci.yml](.github/workflows/ci.yml) | CI pipeline: pytest on Python 3.11/3.12/3.13 |
+| [.githooks/pre-commit](.githooks/pre-commit) | Local staged-file formatter for Python edits |
 | [docs/bootstrap.md](docs/bootstrap.md) | Original bootstrap instructions (historical reference) |
