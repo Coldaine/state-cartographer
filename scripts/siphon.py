@@ -102,15 +102,20 @@ def capture_and_classify(
     screenshot_path = SCREENSHOTS_DIR / f"{alas_label}_{ts_str}.png"
 
     # 1. Capture screenshot — prefer ALAS's existing DroidCast endpoint to avoid
-    #    ADB interference; fall back to adb_bridge screencap if ALAS isn't running.
+    #    ADB interference; fall back to pilot_bridge if ALAS isn't running.
     try:
         if _alas_running():
             ok = _droidcast_screenshot(screenshot_path)
             if not ok:
                 raise RuntimeError("DroidCast HTTP capture failed")
         else:
-            png_bytes = adb_bridge.screenshot(serial)
-            screenshot_path.write_bytes(png_bytes)
+            # MEmu uses DirectX rendering, so standard ADB screencap returns blank.
+            # We must use PilotBridge to cycle DroidCast via the ATX agent.
+            from pilot_bridge import PilotBridge
+
+            bridge = PilotBridge(serial=serial, record=False)
+            img = bridge.screenshot()
+            img.save(screenshot_path)
     except Exception as e:
         print(f"Error capturing screenshot: {e}", file=sys.stderr)
         return {}
