@@ -11,6 +11,7 @@ venv/
 node_modules/
 .DS_Store
 .omc/
+vendor/AzurLaneAutoScript/.omc/
 .cursor/
 *.log
 .env
@@ -31,3 +32,10 @@ vendor/AzurLaneAutoScript/.ruff_cache/
 vendor/AzurLaneAutoScript/.venv/
 .pytest_tmp/
 data/alas-observe/
+data/screenshots/
+data/census/
+data/events/
+data/raw_stream/
+data/corpus/
+data/backups/
+tmp/

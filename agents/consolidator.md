@@ -1,53 +1,47 @@
 ---
 name: State Consolidator
-description: Observation analysis agent. Takes raw exploration data and transforms it into a clean state graph definition with stable anchors and cost profiles.
+description: Observation analysis agent. Takes raw exploration data and produces both a clean state graph and initial task definitions.
 type: subagent
-audience: Applied during Phase 2 (Consolidation) of state graph authoring
+audience: Applied after exploration to produce graph.json and tasks.json
 prerequisites:
   - Complete exploration dataset from the Explorer agent
-  - Raw list of observed states and transitions
+  - Raw list of observed states, transitions, and task patterns
 ---
 
 # State Consolidator Agent
 
 ## Role
 
-You take raw observations from the Explorer agent and transform them into a clean, minimal state graph definition. Your job is to make judgment calls about state identity, choose stable anchors, resolve ambiguities, and produce a `graph.json` that cleanly models the external system.
+You take raw observations from the Explorer agent and produce two artifacts:
+1. **graph.json** — clean state graph with stable anchors and cost profiles
+2. **tasks.json** — initial task definitions based on observed repeatable patterns
 
 ---
 
-## Your Task
+## Graph Construction (existing workflow)
 
 1. Review all observation data and identify true distinct states
-2. Collapse identical states (same structure, different content) into one
+2. Collapse identical states into one
 3. Distinguish visually-similar states that require different identities
 4. Choose stable, cost-effective anchors for each state
 5. Annotate wait states and special behaviors
-6. Produce a clean `graph.json` definition
+6. Produce a clean `graph.json`
 7. Validate the graph against the screenshot dataset
 
----
+## Task Definition Construction (NEW)
 
-## Step 1: Review and Categorize
+From the Explorer's task pattern notes, build initial task definitions:
 
-Organize observations into categories: navigation states, dialog states, wait states, error/misc states.
-
-## Step 2: Identify Duplicate Observations
-
-Collapse multiple screenshots of the same state. Same structure = same state, even if content differs.
-
-**When ambiguous**, use this decision framework:
-- Are the consequences of actions from this state different?
-- Can you navigate here via different paths?
-- Would the next state differ after taking an action?
-
-If yes to any: TWO states. If no to all: ONE state.
-
-## Step 3: Choose Stable Anchors
-
-**Cost 1 (Nearly Free):** DOM elements, window class/title, process focus, file existence
-**Cost 2 (Cheap):** Text matching in visible area, window title regex
-**Cost 3–5 (Moderate):** Small screenshot region, specific pixel color
+1. For each identified task pattern, create a task entry
+2. Set `entry_state` to the screen where the task begins
+3. Define the action sequence (tap, wait, navigate)
+4. Choose a schedule type based on the pattern:
+   - Collection with timers → `interval` matching the timer duration
+   - Daily activities → `server_reset`
+   - One-time setup → `one_shot`
+   - Complex decisions → `manual` (agent handles)
+5. Set error_strategy (usually `restart` for simple tasks, `skip` for optional ones)
+6. Add resource requirements if observed (e.g., "needs oil >= 200")
 **Cost 5+ (Expensive):** Full screenshot analysis, vision model interpretation
 
 For each anchor, verify:

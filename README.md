@@ -1,6 +1,6 @@
 # State Cartographer
 
-A Claude Code plugin and toolkit for building, maintaining, and navigating queryable state graphs of external systems. Enables AI agents to map unfamiliar interfaces, orient themselves from observations alone, and navigate via the cheapest available path.
+An automation runtime for external systems. State Cartographer combines state graphs, deterministic navigation, task scheduling, live executor backends, and supervision playbooks so the tooling runs the loop and the agent supervises it.
 
 ## What This Is
 
@@ -9,19 +9,41 @@ When an AI agent automates an external system (web app, mobile game, desktop app
 State Cartographer provides:
 
 - **A schema** extending standard state machine formats with observation anchors, transition costs, wait state annotations, and confidence thresholds
-- **Runtime tools** (`locate`, `pathfind`, `session`) for deterministic state classification and weighted route planning
-- **A methodology/playbook** for LLM-driven graph construction from exploration
-- **Multi-agent decomposition** across graph construction and maintenance phases
+- **Runtime navigation tools** (`locate`, `pathfind`, `session`, `observe`) for deterministic state classification and route planning
+- **Task runtime components** (`executor`, `scheduler`, `resource_model`, `execution_event_log`) for autonomous task execution and recording
+- **A methodology/playbook** for LLM-driven graph construction, validation, and maintenance
 
 The state graph becomes an API for a system that never published one.
+
+## Agent Control Surface
+
+In the target architecture, the agent does not micromanage screenshots or raw taps during normal operation. The runtime owns screenshot capture, low-level emulator I/O, state verification, and event recording.
+
+The agent should usually interact at one of these levels:
+
+1. **High-level runtime calls** such as `execute_task("commission")`, `navigate_to("page_dorm")`, and `ensure_game_ready()`
+2. **Supervisory queries** such as `where_am_i()`, `why_did_last_transition_fail()`, and `show_recent_failures()`
+3. **Escalation payloads** pushed up by the runtime with screenshot, current candidates, recent actions, and proposed recovery paths
+
+Explicit screenshot tooling still matters for debugging, calibration, and exploration, but it is not the steady-state operator interface.
+
+## Current Live Entrypoint
+
+Today there is one supported live control path for MEmu/Azur Lane:
+
+- file: `scripts/executor.py`
+- callable: `execute_task_by_id(...)`
+- live backend: `pilot`
+
+For live runs, the executor now owns the preflight check for transport, port forwards, ATX, and proof-of-observation before task execution. Low-level scripts such as `scripts/pilot_bridge.py`, `scripts/adb_bridge.py`, `scripts/observe.py`, and `scripts/pathfind.py` remain useful for debugging, but they are not the canonical operator entrypoint.
 
 ## Why This Exists
 
 This project was inspired by [ALAS (AzurLaneAutoScript)](https://github.com/Zuosizhu/Alas-with-Dashboard), a 9-year-old automation framework that built a complete 43-state page graph for the mobile game Azur Lane — by hand, over years of iteration. ALAS proved the pattern: color-based state detection, BFS pathfinding, deterministic navigation, and recovery from unknown states.
 
-State Cartographer generalizes that approach into a **methodology and toolkit** that any LLM agent can follow to build an equivalent state graph for *any* external system. The playbook replaces years of manual iteration with systematic, agent-driven graph construction.
+State Cartographer generalizes that approach into a **runtime and methodology** that an LLM agent can supervise for *any* external system. The playbook replaces years of manual iteration with systematic graph construction and task runtime design.
 
-ALAS's page definitions, button coordinates, and navigation logic serve as the primary reference case for validating that our schema and tools are expressive enough to represent real-world systems.
+ALAS's page definitions, button coordinates, and navigation logic serve as the primary reference case for validating that our schema and tools are expressive enough to represent real-world systems. ALAS is reference architecture and corpus source material, not the runtime control plane of this project.
 
 ## Quick Start
 
@@ -38,6 +60,12 @@ uv sync --extra dev,vision
 
 # Run tests
 uv run pytest tests/ -v
+
+# Canonical live preflight for MEmu/Azur Lane
+uv run python scripts/executor.py --backend pilot --serial 127.0.0.1:21513 --preflight-only --task commission --tasks examples/azur-lane/tasks.json --graph examples/azur-lane/graph.json
+
+# Canonical live task execution
+uv run python scripts/executor.py --backend pilot --serial 127.0.0.1:21513 --task commission --tasks examples/azur-lane/tasks.json --graph examples/azur-lane/graph.json
 
 # Lint
 uv run ruff check scripts/ tests/ hooks/ --fix
@@ -73,7 +101,7 @@ state-cartographer/
 
 ## Documentation
 
-See [docs/NORTH_STAR.md](docs/NORTH_STAR.md) for the vision and goals.
+See [MASTER_PLAN.md](MASTER_PLAN.md) for the current work program and [docs/NORTH_STAR.md](docs/NORTH_STAR.md) for the vision and goals.
 
 | Document | Purpose |
 |----------|---------|

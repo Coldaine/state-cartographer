@@ -111,9 +111,11 @@ pytest tests/test_locate.py -v
 pytest tests/ --cov=scripts --cov-report=html
 ```
 
-### CI integration
+### Optional CI integration
 
-Standard GitHub Actions workflow:
+The repo currently does not enforce GitHub Actions CI. If CI is reintroduced
+later, start with a narrow smoke workflow instead of treating this as the
+current source of truth:
 
 ```yaml
 # .github/workflows/test.yml

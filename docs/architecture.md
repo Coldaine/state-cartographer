@@ -1,5 +1,35 @@
 # Architecture: Capability-to-Layer Mapping
 
+State Cartographer is an automation runtime with seven layers. Layers 0-2 handle navigation (the original scope). Layers 3-5 handle task automation (the runtime engine). Layer 4.5 handles data collection (ship census, stat recording).
+
+```
+Layer 5:   Agent Supervision       (LLM reasoning for planning + anomaly handling)
+Layer 4.5: Data Collection         (ship census, pagination, stat recording)
+Layer 4:   Task Scheduler + Daemon (what runs when, priority queue)
+Layer 3:   Task Engine + Resources (task definitions, resource model, executor)
+───────── automation boundary ─────────
+Layer 2:   Runtime Navigation Tools (locate, pathfind, session, observe, calibrate, adb_bridge)
+Layer 1:   Schema + Graph          (graph.json, tasks.json, anchors, costs, transitions)
+Layer 0:   Libraries               (pytransitions, Pillow, imagehash, ADB)
+```
+
+## Runtime Control Surface
+
+The runtime should hide low-level screenshot plumbing from the agent during normal operation.
+
+The intended agent-facing interface has three layers:
+
+1. **High-level runtime calls** such as `execute_task("commission")`, `navigate_to("page_dorm")`, and `ensure_game_ready()`
+2. **Supervisory queries** such as `where_am_i()`, `why_did_last_transition_fail()`, and `show_recent_failures()`
+3. **Escalation payloads** pushed up by the runtime with screenshot, current candidates, recent actions, and proposed recovery paths
+
+That control surface implies a strict ownership boundary:
+
+- Backend providers own screenshot capture and low-level emulator I/O
+- The executor and daemon call `observe`, `locate`, and verification logic internally
+- Event logging happens inside the runtime, not as a manual afterthought
+- Direct CLI use of `locate.py`, `observe.py`, or screenshot helpers remains useful for debugging, calibration, and exploration, but it is not the normal operator model
+
 ## Layer 0: Don't Build (Use Existing)
 
 These are solved problems. Pick an implementation, don't reinvent.
@@ -10,9 +40,7 @@ These are solved problems. Pick an implementation, don't reinvent.
 - **Visualization**: render the graph for human review → XState's Stately Studio, pytransitions' Mermaid/graphviz export
 - **Action execution**: actually clicking buttons, navigating URLs, tapping ADB coordinates → Playwright (web), Appium (mobile), ADB (Android), accessibility APIs (desktop), subprocess (CLI)
 
-**Decision needed**: Python or TypeScript as primary runtime? Python has the richer ML/automation ecosystem. TypeScript has XState which is the most complete statechart implementation. The skill itself is language-agnostic (it's methodology + scripts), but the runtime tools need a language.
-
-Recommendation: **Python with pytransitions as the graph engine.** Rationale: most AI agent tooling is Python; pytransitions has the richest introspection API in Python; the action execution layer (ADB, Playwright Python bindings, subprocess) is overwhelmingly Python. XState's JSON format can still be used as the canonical definition format and loaded into pytransitions.
+**Primary runtime choice: Python with pytransitions as the graph engine.** Rationale: most AI agent tooling in this repo is Python, the action execution layer (ADB, Playwright Python bindings, subprocess) is overwhelmingly Python, and the live runtime scripts already exist in Python. Use `uv` for dependency management.
 
 ---
 
@@ -108,11 +136,11 @@ Comprehensive spec for all extension fields. Loaded on demand when the agent is 
 
 ## Layer 2: Runtime Tools (Python scripts in scripts/)
 
-Deterministic tooling the agent calls. These are the hard tools that do real work.
+Deterministic tooling used by the executor, daemon, and debugging workflows. These are the hard tools that do real work.
 
 ### 2a. `locate.py` — Passive State Classifier
 
-The core tool. Called by the agent as `python scripts/locate.py --graph graph.json --session session.json --observations obs.json`.
+The core classifier. In steady-state runtime operation it is called by the executor/daemon after the backend captures a screenshot and `observe.py` builds observations. The CLI entry point remains useful for debugging and calibration: `python scripts/locate.py --graph graph.json --session session.json --observations obs.json`.
 
 Input:
 - The state graph definition (with anchors)
@@ -155,7 +183,7 @@ Maintains the running record of confirmed states and transitions for the current
 
 ### 2d. `screenshot_mock.py` — Screenshot Mock Manager
 
-Manages the offline development dataset.
+Manages the offline development dataset. This is a debug and validation tool, not the normal live control interface.
 
 - `python scripts/screenshot_mock.py capture --state main_menu --file screenshot.png` → associates screenshot with state
 - `python scripts/screenshot_mock.py validate --graph graph.json` → runs all anchors against all captured screenshots, reports which states have good coverage and which anchors fail
@@ -178,103 +206,186 @@ Thin wrapper, but saves the agent from having to write pytransitions boilerplate
 
 ---
 
-## Layer 3: The SKILL.md Itself (the playbook)
+## Methodology Documents (supporting material, not runtime layers)
 
-This is the methodology layer. ~500 lines. Always loaded when the skill triggers. Tells the agent **how** to do the work, not what the tools are (that's in references/).
+The repo also contains playbooks and agent-role definitions under `skills/`, `agents/`, and `rules/`. Those documents describe how humans and LLM agents should build, maintain, and supervise the runtime, but they are not numbered runtime layers.
 
-### Structure:
+Examples:
 
-```
-SKILL.md
-├── Frontmatter (name, description, triggers)
-├── Overview: what this skill does and when to use it
-├── Quick orientation: "where are you in the process?"
-│   Decision tree for whether to explore, consolidate, optimize, or maintain
-├── Phase 1: Exploration
-│   - How to navigate systematically
-│   - What to record at each state (screenshot, DOM dump, observation notes)
-│   - How to detect "new state" vs "same state, different content"
-│   - When to use the mock capture tool
-│   - How to build the initial graph definition
-├── Phase 2: Consolidation
-│   - How to identify stable anchors vs transient content
-│   - How to merge states that are "the same"
-│   - How to split states that look the same but aren't
-│   - When to ask the human for input
-│   - How to validate anchors using screenshot_mock.py
-├── Phase 3: Transition Replacement
-│   - How to identify candidates for deterministic replacement
-│   - Common patterns (back button, menu button, confirm dialog)
-│   - How to test a replaced transition
-│   - How to annotate costs
-├── Phase 4: Wait State Identification
-│   - Signals that a state is a wait state
-│   - How to determine polling interval and exit signals
-│   - How to set timeout behavior
-├── Phase 5: Orientation Layer
-│   - How to design anchor hierarchies (cheap first)
-│   - How to use locate.py
-│   - How to use session.py
-│   - How to handle disambiguation results
-├── Phase 6: Maintenance
-│   - How to detect graph drift
-│   - How to update anchors when the external system changes
-│   - How to add new states discovered during operation
-├── Tool reference (brief, pointers to scripts/)
-└── Pointers to references/ for deeper docs
-```
+- `skills/state-graph-authoring/SKILL.md` — how to explore, consolidate, optimize, and maintain a graph
+- `agents/explorer.md`, `agents/consolidator.md`, `agents/optimizer.md` — role-specific instructions for graph-building work
+- `rules/orientation.md`, `rules/safety.md`, `rules/graph-maintenance.md` — always-on operating constraints
 
-**Novel capability #12 (the playbook).**
+Those materials should reinforce the runtime control surface described above: tooling handles low-level capture and execution, while the agent supervises, investigates, and updates the system when deterministic handling falls short.
 
 ---
 
-## Layer 4: Agent Role Definitions (references/)
-
-Progressive disclosure: only loaded when the agent is doing that specific role's work.
-
-### `references/schema.md`
-Full specification of all schema extensions (anchors, costs, wait states, confidence thresholds). The canonical reference for the data format.
-
-### `references/explorer.md`
-Instructions for the exploration phase. How to systematically navigate an unknown system, what to capture at each state, how to handle errors during exploration, how to structure exploration for maximum coverage with minimum redundancy.
-
-### `references/consolidator.md`
-Instructions for the consolidation phase. Decision criteria for merging/splitting states. How to identify stable anchors. How to use screenshot_mock.py validate. Specific patterns to watch for (rotating content, context-dependent dialogs, loading states that masquerade as real states).
-
-### `references/optimizer.md`
-Instructions for the transition replacement pass. How to analyze each transition for replacement candidates. How to write and test deterministic action implementations. How to annotate costs. How to verify that the replaced transition reliably reaches the expected target state.
-
-### `references/troubleshooting.md`
-Common problems: locate() always returns ambiguous, graph drift after app update, transition that worked yesterday fails today, session desync. Diagnostic steps and fixes.
-
-**Novel capability #13 (multi-agent decomposition).**
-
----
-
-## What This Looks Like on Disk
+## Repository Layout
 
 ```
 state-cartographer/
-├── SKILL.md                    (~500 lines, the playbook)
-├── scripts/
-│   ├── locate.py               (passive state classifier)
-│   ├── pathfind.py             (weighted route planner)
-│   ├── session.py              (session manager)
-│   ├── screenshot_mock.py      (screenshot mock manager)
-│   ├── graph_utils.py          (pytransitions wrapper)
-│   ├── adb_bridge.py           (ADB provider and screenshot bridge)
-│   ├── observe.py              (observation extraction)
-│   └── calibrate.py            (anchor calibration)
-├── references/
-│   ├── schema.md               (full schema extension spec)
-│   ├── explorer.md             (exploration phase instructions)
-│   ├── consolidator.md         (consolidation phase instructions)
-│   ├── optimizer.md            (transition replacement instructions)
-│   └── troubleshooting.md      (common problems and fixes)
-└── assets/
-    └── templates/
-        └── graph-template.json (starter graph definition)
+├── skills/                 (playbooks and methodology)
+├── agents/                 (subagent definitions)
+├── rules/                  (always-on operating rules)
+├── scripts/                (runtime tools and backends)
+├── docs/                   (vision, architecture, plans, design notes)
+├── tests/                  (pytest suite)
+├── examples/               (reference graphs and task manifests)
+└── vendor/                 (reference code such as ALAS)
 ```
+
+---
+
+## Layer 3: Task Definitions + Resource Model (`scripts/task_model.py`, `scripts/resource_model.py`, `scripts/executor.py`)
+
+The task layer turns navigation into automation. Instead of "navigate to commission screen," the question becomes "run the commission task: navigate there, collect rewards, dispatch new commissions, update resource state, schedule the next run."
+
+### 3a. Task Model (`scripts/task_model.py`)
+
+A task is a named, schedulable unit of work:
+
+```json
+{
+  "commission": {
+    "entry_state": "page_commission",
+    "enabled": true,
+    "schedule": { "type": "interval", "minutes": 60 },
+    "actions": [
+      { "action": "tap", "x": 600, "y": 400, "description": "Collect all" },
+      { "action": "wait", "seconds": 2 },
+      { "action": "tap", "x": 600, "y": 500, "description": "Dispatch" }
+    ],
+    "error_strategy": "restart"
+  }
+}
+```
+
+Functions:
+- `load_tasks(path)` — load and validate tasks.json
+- `validate_task_manifest(manifest)` — check required keys, schedule types, action types
+- `get_task()`, `is_task_enabled()`, `get_next_run()`, `set_next_run()`
+
+Schedule types: `interval` (every N minutes), `server_reset` (daily at server reset time), `one_shot` (run once then disable), `manual` (agent-triggered only).
+
+Action types: `navigate`, `tap`, `swipe`, `wait`, `wait_until`, `assert_state`, `read_resource`, `conditional`, `repeat`.
+
+### 3b. Resource Model (`scripts/resource_model.py`)
+
+A resource store tracks game state values between tasks:
+
+```python
+store = create_store()
+set_resource(store, "oil", 8500, source="ocr")
+set_resource(store, "coins", 42000, source="ocr")
+set_timer(store, "commission_1", expires_at)
+
+check_threshold(store, "oil", min_value=200)  # → True
+is_timer_expired(store, "commission_1")        # → False
+```
+
+Resources are updated by observation (OCR, pixel check) after each task, not by arithmetic. The model is a cache of last-observed values.
+
+Functions:
+- `create_store()`, `set_resource()`, `get_resource()`, `get_value()`
+- `check_threshold(store, name, min_value, max_value)` — for scheduler gating
+- `set_timer()`, `is_timer_expired()` — for commission/research completion tracking
+- `save_store()`, `load_store()` — JSON persistence
+
+### 3c. Task Executor (`scripts/executor.py`)
+
+Runs a task's action sequence with automatic state tracking:
+
+```python
+result = execute_task(task_def, graph, session, backend)
+# → navigates to entry_state (calls pathfind + adb_bridge)
+# → executes each action in sequence
+# → calls session.confirm automatically after state changes
+# → returns {"success": True, "actions_completed": 5}
+```
+
+Backend injection pattern for testability:
+- `mock_backend()` — logs all actions, returns success (for tests)
+- `default_backend()` — wires to real pathfind.py, backend capture/action functions, observe.py, and locate.py
+
+In the target runtime, the backend owns screenshot capture. `_navigate_real()` should execute actions, capture internally when needed, and verify arrival with `locate()` instead of expecting the supervising agent to manually fetch screenshots between steps.
+
+---
+
+## Layer 4: Task Scheduler (`scripts/scheduler.py`)
+
+The scheduler is the runtime heart. It decides what runs when.
+
+```python
+ready = get_ready_tasks(manifest, now, resources)    # enabled + due + resources met
+task = pick_next(manifest, now, resources)            # highest priority ready task
+next_run = compute_next_run(task_def, now)            # when to run again
+wakeup = next_wakeup(manifest, now)                   # when to check again
+```
+
+**Priority order** (configurable, default):
+restart > login > reward > commission > research > dorm > meowfficer > guild > daily > hard > exercise > event > campaign > retire > shop
+
+**Resource gating**: A task can declare resource requirements (`"requires": {"oil": {"min": 200}}`). The scheduler checks these before marking the task as ready.
+
+**Schedule computation**:
+- `interval` → now + N minutes
+- `server_reset` → next server reset time (configurable timezone + hour)
+- `one_shot` → datetime.max (run once, never again)
+- `manual` → None (only runs when agent explicitly triggers)
+
+CLI: `python scripts/scheduler.py --tasks tasks.json --resources store.json --dry-run`
+
+---
+
+## Layer 4.5: Data Collection Scheduler
+
+A second scheduling loop dedicated to **read-heavy, pagination-driven** data
+gathering. Sits between the task scheduler and agent supervision because it
+uses navigation tools (Layer 2) but produces data for agent decisions (Layer 5).
+
+**Why separate from Layer 4?**
+- Pagination workflows (dock census, depot scan) are fundamentally different from
+  fire-and-forget tasks (collect commissions, feed dorm)
+- Data collection is interruptible and resumable (save page index, restart later)
+- Must yield to the primary scheduler when urgent tasks become ready
+
+**Jobs:**
+- `ship_census` — page through dock, read rarity/level/name per card (7×2 grid, 25-40 pages)
+- `ship_detail` — tap each ship, read stats/equipment/skills from detail pages
+- `formation_audit` — record all fleet compositions
+- `resource_scan` — read oil/coins/gems from main screen + depot
+- `dorm_status` — comfort, food level, assigned ships, mood
+- `guild_roster` — page through guild member list
+- `opsi_map` — record zone exploration/completion status
+
+**Pagination engine:** Generic `screenshot → extract → scroll → repeat` loop with
+end-of-list detection (card count vs header, scroll position, duplicate frame).
+
+**Preemption:** When primary scheduler has a task ready, data collection pauses
+(saves checkpoint), defers to primary task, then resumes from checkpoint.
+
+See: `docs/data-collection.md` for full design.
+
+---
+
+## Layer 5: Agent Supervision
+
+The agent is NOT the loop. The agent is the supervisor.
+
+The primary agent-facing interface should be:
+
+1. High-level runtime calls: `execute_task(...)`, `navigate_to(...)`, `ensure_game_ready()`
+2. Supervisory queries: `where_am_i()`, `why_did_last_transition_fail()`, `show_recent_failures()`
+3. Escalation payloads from the runtime: screenshot, candidate states, recent actions, and proposed recovery paths
+
+- **Before the loop**: Review task list, adjust priorities, enable/disable tasks
+- **During the loop**: Called ONLY when tooling can't handle something (unknown state, new popup, resource decision needing judgment)
+- **Vision fallback**: When deterministic navigation fails, the vision agent analyzes the screenshot and suggests recovery. Patterns that repeat 3+ times get promoted to deterministic graph entries.
+- **Between sessions**: Review logs, update graph, add new tasks discovered during play
+- **Planning**: "Commission finishes in 42 minutes, Research in 15 — queue Research collection first"
+- **Census review**: Analyze ship stats to recommend fleet compositions, equipment swaps, skill training priorities
+
+The agent does NOT manually call `session.py confirm` after every tap or manually request screenshots between routine state checks. The executor/backend stack does that automatically.
 
 ---
 
@@ -282,21 +393,31 @@ state-cartographer/
 
 ```
 Layer 0 (existing libs)
-  └── pytransitions, Playwright/ADB/etc., SCXML semantics
+  └── pytransitions, Playwright/ADB/etc., Pillow, imagehash
        │
-Layer 1 (schema extensions)
-  └── Extends graph definition format with anchors, costs, wait states, thresholds
+Layer 1 (schema + data)
+  └── graph.json (states, transitions, anchors, costs)
+  └── tasks.json (task definitions, schedules, actions)
        │
-Layer 2 (runtime tools)
-  └── locate.py, pathfind.py, session.py, screenshot_mock.py, adb_bridge.py, observe.py, calibrate.py
-  └── These consume Layer 1 schema, call Layer 0 for graph introspection
+Layer 2 (navigation tools)
+  └── locate.py, pathfind.py, session.py, observe.py, calibrate.py, adb_bridge.py, graph_utils.py
+  └── Backend captures screenshots and exposes observations to higher layers
        │
-Layer 3 (SKILL.md playbook)
-  └── Tells the agent how and when to use Layer 2 tools
-  └── Progressive disclosure to Layer 4
+Layer 3 (task engine)
+  └── task_model.py, resource_model.py, executor.py
+  └── Uses Layer 2 for navigation, verification, and logging
        │
-Layer 4 (agent role references)
-  └── Deep instructions per phase, loaded on demand
+Layer 4 (scheduler)
+  └── scheduler.py — picks tasks, checks resources, computes next runs
+  └── Calls Layer 3 executor to run tasks
+       │
+Layer 4.5 (data collection)
+  └── data_collector.py — pagination jobs, census, stat recording
+  └── Uses Layer 2 for navigation, produces data for Layer 5
+  └── Yields to Layer 4 when primary tasks are due
+       │
+Layer 5 (agent supervision)
+  └── LLM agent reviews schedule, handles unknowns, answers supervisory queries
+  └── Called by Layer 4 on escalation with runtime-provided context
+  └── Analyzes Layer 4.5 census data for planning
 ```
-
-The agent reads SKILL.md (Layer 3), which tells it to call scripts (Layer 2), which operate on the extended graph format (Layer 1), which is built on top of existing state machine libraries (Layer 0).

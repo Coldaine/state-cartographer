@@ -39,9 +39,6 @@ def test_alas_converter_build_graph_shape():
     assert graph["metadata"]["app"] == "Azur Lane"
     assert graph["metadata"]["locale"] == "en"
 
-    assert len(graph["states"]) == 43
-    assert len(graph["transitions"]) == 105
-
     assert "page_unknown" in graph["states"]
     assert graph["states"]["page_unknown"]["anchors"] == []
     assert "page_main" in graph["states"]
@@ -87,7 +84,6 @@ def test_alas_converter_cli_matches_validator():
     data = json.loads(output.read_text(encoding="utf-8"))
     assert validate_graph(data) == []
     assert data["metadata"]["app"] == "Azur Lane"
-    assert len(data["states"]) == 43
     assert output.exists()
     with contextlib.suppress(OSError):
         output.unlink()

@@ -2,7 +2,7 @@
 
 > Historical bootstrap reference. This document preserves early scaffolding and
 > pre-refactor examples. For the current repo layout and active contributor
-> workflow, treat `AGENTS.md`, `CLAUDE.md`, and `plan.md` as the source of truth.
+> workflow, treat `AGENTS.md`, `CLAUDE.md`, and `MASTER_PLAN.md` as the source of truth.
 
 ## What This Project Is
 

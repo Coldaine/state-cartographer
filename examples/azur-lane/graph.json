@@ -986,6 +986,44 @@
         }
       ],
       "confidence_threshold": 0.7
+    },
+    "page_island_planner": {
+      "description": "Island Planner page (Azur Lane)",
+      "anchors": [
+        {
+          "type": "pixel_color",
+          "x": 190,
+          "y": 27,
+          "expected_rgb": [
+            115,
+            130,
+            168
+          ],
+          "cost": 1,
+          "label": "ISLAND_PLANNER_CHECK",
+          "note": "unverified \u2014 estimated from layout pattern"
+        }
+      ],
+      "confidence_threshold": 0.7
+    },
+    "page_project_identity": {
+      "description": "Project Identity page (Azur Lane)",
+      "anchors": [
+        {
+          "type": "pixel_color",
+          "x": 190,
+          "y": 27,
+          "expected_rgb": [
+            120,
+            133,
+            172
+          ],
+          "cost": 1,
+          "label": "PROJECT_IDENTITY_CHECK",
+          "note": "unverified \u2014 estimated from layout pattern"
+        }
+      ],
+      "confidence_threshold": 0.7
     }
   },
   "transitions": {
@@ -1766,8 +1804,9 @@
       "cost": 10,
       "action": {
         "type": "adb_tap",
-        "x": 564,
-        "y": 691
+        "x": 601,
+        "y": 681,
+        "note": "corrected 2026-03-19 from live tap data"
       }
     },
     "main_white_to_dormmenu": {
@@ -1788,8 +1827,9 @@
       "cost": 10,
       "action": {
         "type": "adb_tap",
-        "x": 474,
-        "y": 540
+        "x": 429,
+        "y": 480,
+        "note": "corrected 2026-03-19 from live tap data"
       }
     },
     "dorm_to_main": {
@@ -1810,8 +1850,9 @@
       "cost": 10,
       "action": {
         "type": "adb_tap",
-        "x": 691,
-        "y": 540
+        "x": 660,
+        "y": 480,
+        "note": "corrected 2026-03-19 from live tap data"
       }
     },
     "meowfficer_to_main": {
@@ -1832,8 +1873,9 @@
       "cost": 10,
       "action": {
         "type": "adb_tap",
-        "x": 297,
-        "y": 537
+        "x": 242,
+        "y": 480,
+        "note": "live-confirmed 2026-03-19 — Academy card on dormmenu"
       }
     },
     "academy_to_main": {
@@ -1843,8 +1885,9 @@
       "cost": 10,
       "action": {
         "type": "adb_tap",
-        "x": 1229,
-        "y": 33
+        "x": 50,
+        "y": 42,
+        "note": "live-confirmed 2026-03-19 — back button from Academy"
       }
     },
     "dormmenu_to_private_quarters": {
@@ -2142,6 +2185,78 @@
         "type": "adb_tap",
         "x": 755,
         "y": 222
+      }
+    },
+    "dormmenu_to_island_planner": {
+      "source": "page_dormmenu",
+      "dest": "page_island_planner",
+      "method": "deterministic",
+      "cost": 10,
+      "action": {
+        "type": "adb_tap",
+        "x": 857,
+        "y": 480,
+        "note": "live-confirmed 2026-03-19 — Island Planner card on dormmenu"
+      }
+    },
+    "island_planner_to_main": {
+      "source": "page_island_planner",
+      "dest": "page_main",
+      "method": "deterministic",
+      "cost": 10,
+      "action": {
+        "type": "adb_tap",
+        "x": 1229,
+        "y": 33,
+        "note": "unverified \u2014 estimated from layout pattern"
+      }
+    },
+    "dormmenu_to_project_identity": {
+      "source": "page_dormmenu",
+      "dest": "page_project_identity",
+      "method": "deterministic",
+      "cost": 10,
+      "action": {
+        "type": "adb_tap",
+        "x": 1075,
+        "y": 380,
+        "note": "unverified \u2014 estimated from layout pattern"
+      }
+    },
+    "project_identity_to_main": {
+      "source": "page_project_identity",
+      "dest": "page_main",
+      "method": "deterministic",
+      "cost": 10,
+      "action": {
+        "type": "adb_tap",
+        "x": 1229,
+        "y": 33,
+        "note": "unverified \u2014 estimated from layout pattern"
+      }
+    },
+    "announcement_to_event_list": {
+      "source": "page_announcement",
+      "dest": "page_event_list",
+      "method": "deterministic",
+      "cost": 5,
+      "action": {
+        "type": "adb_tap",
+        "x": 1203,
+        "y": 91,
+        "note": "live-confirmed 2026-03-19"
+      }
+    },
+    "meowfficer_to_dormmenu": {
+      "source": "page_meowfficer",
+      "dest": "page_dormmenu",
+      "method": "deterministic",
+      "cost": 5,
+      "action": {
+        "type": "adb_tap",
+        "x": 36,
+        "y": 26,
+        "note": "live-confirmed 2026-03-19"
       }
     }
   }

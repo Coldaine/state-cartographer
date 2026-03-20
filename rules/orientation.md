@@ -1,12 +1,18 @@
 ---
 name: Orientation & State Confirmation
-description: Always-on rule governing how the agent confirms its current state, handles ambiguity, and recovers when lost.
+description: Rule governing how state is confirmed. The executor handles orientation automatically during task execution; the agent follows this rule during supervision and ad-hoc navigation.
 type: rule
 applies_to: all_phases
 priority: high
 ---
 
 # Orientation & State Confirmation
+
+## Automatic vs. Manual Orientation
+
+**During task execution:** The executor (`scripts/executor.py`) handles orientation automatically. It calls `locate()` and `session.confirm()` after every navigation step. You do NOT need to manually track state during task execution.
+
+**During agent supervision:** When you're investigating a problem, exploring, or debugging, you follow this rule manually.
 
 ## The Orientation Workflow
 

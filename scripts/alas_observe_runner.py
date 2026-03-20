@@ -32,8 +32,7 @@ sys.path.insert(0, str(ALAS_ROOT))
 from execution_event_log import append_event, make_event
 
 from locate import load_json as load_graph_json
-from locate import locate
-from observe import build_observations, extract_pixel_coords
+from observe import extract_pixel_coords
 from session import confirm_state, init_session, record_transition, save_json
 
 
@@ -225,20 +224,14 @@ class ObservationRuntime:
             image_to_save = Image.fromarray(image)
         image_to_save.save(screenshot_path)
 
-        obs = build_observations(screenshot_path, self.pixel_coords)
-        result = locate(self.graph, self.session, obs)
-        matched_state = result.get("state")
-
-        if matched_state and matched_state != "unknown":
-            self.session = confirm_state(self.session, matched_state)
-            self._persist_session()
+        # Removed broken locate() call here.
+        # ALAS is the source of truth, we don't need to double-check it with uncalibrated anchors.
 
         self._write_observation_record(
             {
                 "timestamp": datetime.now(UTC).isoformat(),
                 "assignment": self.current_assignment,
                 "screenshot": str(screenshot_path),
-                "locate_result": result,
                 "current_state": self.session.get("current_state"),
             }
         )

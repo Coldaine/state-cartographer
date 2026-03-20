@@ -101,8 +101,12 @@ def _translate_windows_drive_path(value: str) -> str:
     """Translate a Windows drive path (e.g. D:\\foo\\bar) into a WSL path if possible.
 
     Observation artifacts may be produced by Windows Python and embedded as raw
-    Windows paths, even when analysis is running under WSL.
+    Windows paths, even when analysis is running under WSL.  This translation is
+    only applied on Linux so that native Windows paths are left intact when
+    running the analysis on Windows.
     """
+    if sys.platform != "linux":
+        return value
 
     if len(value) < 3:
         return value

@@ -11,6 +11,14 @@ vision = [
     "transitions>=0.9.0",
     "Pillow>=10.0.0",
     "imagehash>=4.3.0",
+    "openai>=1.68.0",
+]
+piloting = [
+    "Pillow>=10.0.0",
+    "numpy>=1.26.0",
+    "opencv-python-headless>=4.10.0.84",
+    "openai>=1.68.0",
+    "requests>=2.32.0",
 ]
 dev = [
     "pytest>=8.0",
@@ -30,6 +38,7 @@ target-version = "py311"
 line-length = 120
 fix = true
 extend-exclude = ["vendor"]
+force-exclude = true
 
 [tool.ruff.lint]
 select = [
