@@ -113,9 +113,24 @@ def take_screenshot(session, port, idx, endpoint="/preview"):
         return None, False
 
 
+def alas_running() -> bool:
+    """Return True if ALAS web server is on port 22267 — unsafe to kill DroidCast."""
+    import socket
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.5)
+        return s.connect_ex(("127.0.0.1", 22267)) == 0
+
+
 def test_stability():
     """Main test: start DroidCast and take multiple screenshots."""
     print("=== DroidCast Stability Test ===")
+
+    if alas_running():
+        print("\nERROR: ALAS is running (port 22267 is active).")
+        print("This script kills DroidCast and removes port forwards, which will break ALAS.")
+        print("Stop ALAS first before running this test.")
+        return
 
     print("\n1. Killing existing DroidCast...")
     kill_droidcast()

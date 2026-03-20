@@ -68,6 +68,9 @@ class TestCaptureAndClassify:
         (tmp_path / "screenshots").mkdir()
         monkeypatch.setattr(siphon, "DATA_DIR", tmp_path)
 
+        # Force ADB path — tests should not depend on whether ALAS is live
+        monkeypatch.setattr(siphon, "_alas_running", lambda: False)
+
         mock_screenshot = MagicMock(return_value=b"\x89PNG\r\n\x1a\n" + b"\x00" * 100)
         monkeypatch.setattr(siphon.adb_bridge, "screenshot", mock_screenshot)
 

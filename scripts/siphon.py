@@ -63,6 +63,32 @@ def get_latest_log_file(log_dir_arg: Path | None = None) -> Path:
     return log_files[0]
 
 
+def _droidcast_screenshot(png_path: Path, droidcast_url: str = "http://127.0.0.1:53516/preview") -> bool:
+    """Capture from ALAS's existing DroidCast endpoint. Returns True on success."""
+    import io
+
+    import requests
+    from PIL import Image
+
+    try:
+        r = requests.get(droidcast_url, timeout=5)
+        r.raise_for_status()
+        # DroidCast /preview returns raw JPEG or RGB565; try PIL decode
+        img = Image.open(io.BytesIO(r.content))
+        img.save(png_path)
+        return True
+    except Exception:
+        return False
+
+
+def _alas_running() -> bool:
+    import socket
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.5)
+        return s.connect_ex(("127.0.0.1", 22267)) == 0
+
+
 def capture_and_classify(
     serial: str,
     alas_label: str,
@@ -75,10 +101,16 @@ def capture_and_classify(
     ts_str = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:19]
     screenshot_path = SCREENSHOTS_DIR / f"{alas_label}_{ts_str}.png"
 
-    # 1. Capture screenshot via ADB
+    # 1. Capture screenshot — prefer ALAS's existing DroidCast endpoint to avoid
+    #    ADB interference; fall back to adb_bridge screencap if ALAS isn't running.
     try:
-        png_bytes = adb_bridge.screenshot(serial)
-        screenshot_path.write_bytes(png_bytes)
+        if _alas_running():
+            ok = _droidcast_screenshot(screenshot_path)
+            if not ok:
+                raise RuntimeError("DroidCast HTTP capture failed")
+        else:
+            png_bytes = adb_bridge.screenshot(serial)
+            screenshot_path.write_bytes(png_bytes)
     except Exception as e:
         print(f"Error capturing screenshot: {e}", file=sys.stderr)
         return {}
@@ -150,13 +182,16 @@ def main():
         print(f"Error loading graph: {e}", file=sys.stderr)
         return 1
 
-    # Verify ADB connection
-    try:
-        if not adb_bridge.connect(args.serial):
-            print(f"Warning: Could not connect to {args.serial}", file=sys.stderr)
-    except Exception as e:
-        print(f"ADB Error: {e}", file=sys.stderr)
-        return 1
+    # Verify connectivity — use DroidCast if ALAS is running, else verify ADB
+    if _alas_running():
+        print("ALAS detected on port 22267 — using DroidCast HTTP endpoint for screenshots.")
+    else:
+        try:
+            if not adb_bridge.connect(args.serial):
+                print(f"Warning: Could not connect to {args.serial}", file=sys.stderr)
+        except Exception as e:
+            print(f"ADB Error: {e}", file=sys.stderr)
+            return 1
 
     # Find log file
     log_dir_arg = Path(args.log_dir) if args.log_dir else None

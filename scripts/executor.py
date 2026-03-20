@@ -98,6 +98,135 @@ def mock_backend() -> dict[str, BackendFn]:
     return backend
 
 
+def pilot_backend(serial: str = "127.0.0.1:21513") -> dict[str, BackendFn]:
+    """Return a backend dict using PilotBridge (DroidCast) for MEmu interaction.
+
+    This wires up to the PilotBridge class:
+    - navigate: pathfind.py + pilot_bridge
+    - tap: pilot_bridge.tap
+    - swipe: pilot_bridge.swipe
+    - locate: pilot_bridge.screenshot + locate.py
+    - session_confirm: session.py confirm
+    - sleep: time.sleep
+    """
+    from scripts.pilot_bridge import PilotBridge
+
+    # Create a single PilotBridge instance to reuse
+    bridge = PilotBridge(serial=serial)
+
+    def _navigate_pilot(
+        graph: dict[str, Any],
+        current: str | None,
+        target: str,
+        **_kw: Any,
+    ) -> dict[str, Any]:
+        """Navigate from current to target using pathfind + pilot bridge."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent))
+        from pathfind import pathfind
+
+        if current is None:
+            return {"success": False, "error": "Current state unknown"}
+
+        result = pathfind(graph, current, target)
+        if "error" in result:
+            return {"success": False, "error": result["error"]}
+
+        # Execute each step in the path
+        route = result.get("route", [])
+        for step in route:
+            action = step.get("action", {})
+            if action.get("type") == "adb_tap":
+                coords = action.get("coords")
+                if coords is None and "x" in action and "y" in action:
+                    coords = [action["x"], action["y"]]
+                if coords:
+                    bridge.tap(coords[0], coords[1])
+                    time.sleep(action.get("wait_after", 1.0))
+
+        # Verify arrival
+        loc_result = _locate_pilot(graph=graph, serial=serial)
+        arrived_state = loc_result.get("state")
+        if arrived_state != target:
+            return {
+                "success": False,
+                "error": f"Navigation ended at '{arrived_state}' instead of '{target}'",
+                "locate_result": loc_result,
+            }
+
+        return {"success": True, "state": target}
+
+    def _tap_pilot(coords: tuple[int, int], **_kw: Any) -> dict[str, Any]:
+        """Execute a tap using PilotBridge."""
+        bridge.tap(coords[0], coords[1])
+        return {"success": True}
+
+    def _swipe_pilot(
+        start: tuple[int, int],
+        end: tuple[int, int],
+        duration: int = 300,
+        **_kw: Any,
+    ) -> dict[str, Any]:
+        """Execute a swipe using PilotBridge."""
+        bridge.swipe(start[0], start[1], end[0], end[1], duration)
+        return {"success": True}
+
+    def _locate_pilot(graph: dict[str, Any], **_kw: Any) -> dict[str, Any]:
+        """Locate using PilotBridge screenshot."""
+        import contextlib
+        import sys
+        import tempfile
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent))
+        from locate import locate
+        from observe import build_observations, extract_pixel_coords
+
+        # Extract pixel coordinates from graph
+        pixel_coords = extract_pixel_coords(graph)
+
+        # Capture screenshot using PilotBridge
+        try:
+            img = bridge.screenshot()
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                screenshot_path = Path(tmp.name)
+                img.save(screenshot_path)
+
+            try:
+                obs = build_observations(screenshot_path, pixel_coords)
+                return locate(graph, {}, obs)
+            finally:
+                with contextlib.suppress(OSError):
+                    screenshot_path.unlink()
+        except Exception as e:
+            return {"state": "unknown", "confidence": 0.0, "error": str(e)}
+
+    def _session_confirm_pilot(state: str, session: dict[str, Any], **_kw: Any) -> dict[str, Any]:
+        """Confirm state in the session."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent))
+        from session import confirm_state
+
+        return confirm_state(session, state)
+
+    def _sleep_pilot(seconds: float) -> None:
+        """Sleep."""
+        time.sleep(seconds)
+
+    return {
+        "navigate": _navigate_pilot,
+        "tap": _tap_pilot,
+        "swipe": _swipe_pilot,
+        "locate": _locate_pilot,
+        "session_confirm": _session_confirm_pilot,
+        "sleep": _sleep_pilot,
+    }
+
+
 def execute_task(
     task_def: dict[str, Any],
     graph: dict[str, Any],

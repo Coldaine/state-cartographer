@@ -940,8 +940,8 @@ def find_latest_log() -> Path | None:
     if not log_dir.exists():
         return None
 
-    # Find all alas_*.txt files
-    log_files = list(log_dir.glob("*_alas.txt"))
+    # Find all ALAS log files (pattern: YYYY-MM-DD_CONFIGNAME.txt)
+    log_files = [p for p in log_dir.glob("*.txt") if p.is_file()]
 
     if not log_files:
         return None

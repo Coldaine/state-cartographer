@@ -15,7 +15,7 @@ DroidCast screenshot stability fixed via ATX agent restart trick. Live piloting 
 **Fix:** Restart DroidCast via the ATX agent HTTP endpoint before each screenshot capture.
 
 - ATX agent exposes `POST /shell/background` on port 7912
-- Port is forwarded locally via `adb forward tcp:0 tcp:7912` (ephemeral local port)
+- Port forwarding is now **fixed** (stable): `tcp:17912 -> tcp:7912` and `tcp:53516 -> tcp:53516`
 - 3-second restart cycle, 100% reliable
 
 **Files changed:**
@@ -25,11 +25,14 @@ DroidCast screenshot stability fixed via ATX agent restart trick. Live piloting 
 **ATX agent connection details:**
 - Protocol: HTTP
 - Device port: 7912
-- Forwarded via: `adb forward tcp:0 tcp:7912` (returns the ephemeral local port)
+- Forwarded via: fixed local port `17912` (`adb forward tcp:17912 tcp:7912`)
+- DroidCast forwarded via fixed local port `53516` (`adb forward tcp:53516 tcp:53516`)
 - `pilot_bridge.connect()` now:
-  1. Verifies ATX agent is alive (GET `/`)
-  2. Performs a test capture
-  3. Raises a meaningful `RuntimeError` with recovery instructions if ATX is not responding
+  1. Clears stale forwards for this device (`adb forward --remove-all`)
+  2. Re-establishes exactly two fixed forwards (ATX and DroidCast)
+  3. Verifies ATX agent is alive (GET `/info`)
+  4. Performs a test capture
+  5. Raises a meaningful `RuntimeError` with recovery instructions if ATX is not responding
 
 ---
 
@@ -254,12 +257,36 @@ All combat-related states (campaign, exercise, OS, etc.) plus: shop, dock, build
 
 ---
 
+## 8. New Discovery — ADB Forward Saturation (Why screenshots went black intermittently)
+
+### Symptom
+- Emulator visibly showed the game/login menu.
+- Captures sometimes came back black in both pilot flow and ad-hoc checks.
+
+### Root Cause
+- `pilot_bridge` previously requested **ephemeral local forwards** on each connect/capture (`adb forward tcp:0 ...`).
+- Over time this accumulated dozens of stale forward entries (44 observed in one run).
+- Multiple stale forwards did not always break ATX itself, but introduced inconsistent routing/state across repeated capture attempts.
+
+### Confirmed Fix
+- Switched to a stable two-forward model:
+  - `tcp:17912 -> tcp:7912` (ATX)
+  - `tcp:53516 -> tcp:53516` (DroidCast)
+- `connect()` now starts from a clean slate by removing stale forwards for the device.
+- Validation run: 3 consecutive screenshots succeeded; forward list stayed at exactly 2 entries.
+
+### Evidence Snapshot
+- `adb -s 127.0.0.1:21513 forward --list` after validation:
+  - `127.0.0.1:21513 tcp:17912 tcp:7912`
+  - `127.0.0.1:21513 tcp:53516 tcp:53516`
+
 ## Session Environment
 
 | Item | Value |
 |------|-------|
 | Emulator | MEmu, `127.0.0.1:21513` |
 | Game | Azur Lane EN (`com.YoStarEN.AzurLane`) |
-| ATX agent port | 7912 (forwarded via `adb forward`) |
+| ATX agent port | 7912 (forwarded locally as `tcp:17912`) |
+| DroidCast local forward | `tcp:53516` |
 | DroidCast restart cycle | ~3 seconds |
 | ALAS config | `PatrickCustom` |

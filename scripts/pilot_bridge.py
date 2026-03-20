@@ -117,9 +117,14 @@ class PilotBridge:
             raise FileNotFoundError(f"DroidCast APK not found: {apk}")
         _adb("push", str(apk), DROIDCAST_APK_REMOTE, serial=self.serial)
 
-        # 3. Forward ATX agent port
-        r = _adb("forward", "tcp:0", f"tcp:{ATX_AGENT_PORT}", serial=self.serial)
-        self._atx_port = int(r.stdout.decode().strip())
+        # 3. Forward ATX agent port only — never remove-all (would kill ALAS's DroidCast forward)
+        _adb("forward", "--remove", "tcp:17912", serial=self.serial)
+        _adb("forward", "tcp:17912", f"tcp:{ATX_AGENT_PORT}", serial=self.serial)
+        # Only add DroidCast forward if not already present (ALAS may own it)
+        fwd_result = _adb("forward", "--list", serial=self.serial)
+        if f"tcp:{DROIDCAST_PORT_REMOTE}" not in fwd_result.stdout.decode(errors="replace"):
+            _adb("forward", f"tcp:{DROIDCAST_PORT_REMOTE}", f"tcp:{DROIDCAST_PORT_REMOTE}", serial=self.serial)
+        self._atx_port = 17912
 
         # 4. Verify ATX agent responds
         try:
@@ -144,16 +149,43 @@ class PilotBridge:
     # Internal: restart-per-screenshot cycle
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _alas_running() -> bool:
+        """Return True if ALAS web server is listening on port 22267."""
+        import socket
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.5)
+            return s.connect_ex(("127.0.0.1", 22267)) == 0
+
     def _restart_and_capture(self) -> np.ndarray | None:
         """Kill DroidCast, restart via ATX, capture ONE frame.
 
+        If ALAS is running, skip the kill/restart cycle and read directly from
+        ALAS's existing DroidCast forward (port 53516) to avoid disrupting it.
+
         Returns a BGR numpy array, or None on failure.
         """
+        import contextlib
+
+        dc_port = DROIDCAST_PORT_REMOTE
+        dc_base = f"http://127.0.0.1:{dc_port}"
+
+        # If ALAS owns DroidCast, read from its existing endpoint — no kill/restart.
+        if self._alas_running():
+            try:
+                r = self._session.get(f"{dc_base}/preview", timeout=5)
+                arr = np.frombuffer(r.content, np.uint8)
+                bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+                if bgr is not None:
+                    return bgr
+            except requests.RequestException:
+                pass
+            return None
+
         atx_url = f"http://127.0.0.1:{self._atx_port}"
 
         # Kill existing DroidCast (ignore failures — process may not be running)
-        import contextlib
-
         with contextlib.suppress(requests.RequestException):
             self._session.post(
                 f"{atx_url}/shell",
@@ -173,9 +205,8 @@ class PilotBridge:
         )
         resp.raise_for_status()
 
-        # Forward DroidCast port (dynamic local port)
-        r = _adb("forward", "tcp:0", f"tcp:{DROIDCAST_PORT_REMOTE}", serial=self.serial)
-        dc_port = int(r.stdout.decode().strip())
+        # Use fixed DroidCast local port (already forwarded in connect())
+        dc_port = DROIDCAST_PORT_REMOTE
 
         # Wait for DroidCast to come online
         dc_base = f"http://127.0.0.1:{dc_port}"

@@ -1873,8 +1873,9 @@
       "cost": 10,
       "action": {
         "type": "adb_tap",
-        "x": 297,
-        "y": 537
+        "x": 242,
+        "y": 480,
+        "note": "live-confirmed 2026-03-19 — Academy card on dormmenu"
       }
     },
     "academy_to_main": {
@@ -1884,8 +1885,9 @@
       "cost": 10,
       "action": {
         "type": "adb_tap",
-        "x": 1229,
-        "y": 33
+        "x": 50,
+        "y": 42,
+        "note": "live-confirmed 2026-03-19 — back button from Academy"
       }
     },
     "dormmenu_to_private_quarters": {
@@ -2192,9 +2194,9 @@
       "cost": 10,
       "action": {
         "type": "adb_tap",
-        "x": 880,
+        "x": 857,
         "y": 480,
-        "note": "unverified \u2014 estimated from layout pattern"
+        "note": "live-confirmed 2026-03-19 — Island Planner card on dormmenu"
       }
     },
     "island_planner_to_main": {
