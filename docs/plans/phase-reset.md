@@ -73,45 +73,48 @@ taps buttons, and navigates. Every single one of those actions is observable.
 
 That's the entire thesis of the project: "build state graphs from observation."
 
-### Architecture: The Sidecar
+### Architecture: Log-Correlated Raw Stream Labeling
 
 ```
-Terminal 1: ALAS (user launches)       Terminal 2: Sidecar (agent launches)
-  |                                      |
-  |-- logs "Page switch: X -> Y"         |-- tails ALAS log file
-  |-- logs "Start task: Commission"      |-- tracks current page + task
-  |-- runs for hours                     |-- captures screenshots via PilotBridge
-  |                                      |-- writes labeled JSONL index
-  |                                      |-- on exit: prints corpus summary
+Terminal 1: ALAS (user launches)
+  |
+  |-- captures screenshots to data/raw_stream/
+  |-- writes page transitions to vendor/AzurLaneAutoScript/log/*_alas.txt
+  |-- runs for hours
+
+Post-hoc labeling step:
+  |
+  |-- label_raw_stream.py parses the ALAS log
+  |-- correlates frame timestamps to the latest preceding page event
+  |-- writes data/raw_stream/index.jsonl
 ```
 
-The sidecar does NOT call `locate()`. It does NOT try to classify screenshots.
+The labeler does NOT call `locate()`. It does NOT try to classify screenshots.
 It uses ALAS's OWN log output as ground truth labels. That's the whole point --
-ALAS already knows what page it's on. We just record its answers alongside our
-screenshots.
+ALAS already knows what page it's on. We use its answers to label the
+screenshots it already captured.
 
-### What the sidecar produces
+### What the labeler produces
 
 ```
-data/corpus/
+data/raw_stream/
   index.jsonl           # one record per capture
-  000001.png            # screenshot at capture time
-  000002.png
+  20260320_002242_724.png
+  20260320_002244_145.png
   ...
 ```
 
 Each JSONL record:
 ```json
 {
-  "ts": "2026-03-20T14:23:01Z",
-  "path": "data/corpus/000001.png",
+  "ts": "20260320_002242_724",
+  "path": "20260320_002242_724.png",
   "alas_page": "page_main",
-  "alas_task": "Commission",
-  "log_line": 4821
+  "confidence": "arrive"
 }
 ```
 
-### What happens after the sidecar run
+### What happens after ALAS run + labeling
 
 1. **calibrate_from_corpus.py** -- groups screenshots by `alas_page`, samples
    pixel RGB at grid coordinates across each group, finds pixels that are
@@ -132,24 +135,25 @@ Each JSONL record:
 
 ## Execution Order
 
-### Step 1: Build `scripts/alas_sidecar.py` (NOW)
+### Step 1: Run ALAS and produce `data/raw_stream/`
 
-The observation tool. Must exist before anything else matters.
+ALAS is already capturing the raw stream and writing task/page logs. The
+immediate requirement is not another live sidecar; it is to preserve the run
+artifacts and use them.
 
-- Tail ALAS log file (poll-based, handles file not yet existing)
-- Parse "Page switch: X -> Y" to track current page
-- Parse "Start task: `X`" / "End task: `X`" to track current task  
-- Capture screenshot every N seconds via PilotBridge (or ADB fallback)
-- Write to `data/corpus/index.jsonl` + save screenshots
-- Print summary on CTRL+C (N captures, M unique pages, top pages by count)
+Expected artifacts:
 
-Dependencies: `alas_log_parser.py` (NavigationAnalyzer, TaskAnalyzer),
-`pilot_bridge.py` (PilotBridge). No dependency on `locate.py`.
+- timestamped PNGs in `data/raw_stream/`
+- ALAS logs in `vendor/AzurLaneAutoScript/log/`
 
-### Step 2: Run ALAS + sidecar for >=30 minutes (USER ACTION)
+### Step 2: Label the raw stream
 
-User launches ALAS in their terminal. Agent launches sidecar in a second
-terminal. ALAS runs its normal task loop. Sidecar captures labeled screenshots.
+```bash
+uv run python scripts/label_raw_stream.py
+```
+
+This correlates raw frame timestamps with ALAS page transitions and emits
+`data/raw_stream/index.jsonl`.
 
 Goal: >=200 labeled screenshots covering >=10 unique pages.
 
@@ -167,7 +171,7 @@ Consumes the JSONL corpus. For each page:
 
 ```bash
 uv run python scripts/locate.py --graph examples/azur-lane/graph.json \
-  --screenshot data/corpus/000042.png
+  --screenshot data/raw_stream/20260320_002242_724.png
 ```
 
 Run locate against every screenshot in the corpus. Compare location result
@@ -209,6 +213,5 @@ Only after the graph is grounded in observed data:
 
 | Item | Status | Action |
 |------|--------|--------|
-| PR #14 (canonical entrypoint) | OPEN | Merge for pilot_bridge and preflight improvements. The executor improvements are real even if the underlying graph isn't. |
-| PR #13 (runtime glue) | OPEN | Keep open as integration branch. Don't merge until graph is observation-grounded. |
-| Issue #1 (env contract) | OPEN | Still valid. The contract should specify sidecar observation as the integration method, not monkeypatching. |
+| PR #14 | ACTIVE | Current merge vehicle for the observation-first pivot and corpus tooling. |
+| Issue #1 (env contract) | OPEN | Still valid. The contract should specify artifact harvesting and log-correlated labeling as the integration method, not monkeypatching. |

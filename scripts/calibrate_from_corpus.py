@@ -12,7 +12,7 @@ For each ALAS-labeled page:
 
 Usage:
     uv run python scripts/calibrate_from_corpus.py \\
-      --corpus data/corpus \\
+      --corpus data/raw_stream \\
       --graph  examples/azur-lane/graph.json \\
       --min-samples 3 \\
       --top-k 5
@@ -36,7 +36,7 @@ from PIL import Image
 # Constants
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_CORPUS = PROJECT_ROOT / "data" / "corpus"
+DEFAULT_CORPUS = PROJECT_ROOT / "data" / "raw_stream"
 DEFAULT_GRAPH = PROJECT_ROOT / "examples" / "azur-lane" / "graph.json"
 
 # Grid of candidate coordinates to sample.  Assumes 1280x720 resolution.
@@ -58,11 +58,22 @@ COLOR_TOLERANCE = 30  # tolerance for anchor matching (written to graph)
 # ---------------------------------------------------------------------------
 
 
-def load_corpus(corpus_dir: Path, min_samples: int = 3) -> dict[str, list[Path]]:
+def load_corpus(
+    corpus_dir: Path,
+    min_samples: int = 3,
+    min_confidence: str | None = "arrive",
+) -> dict[str, list[Path]]:
     """Load the JSONL index and group screenshot paths by alas_page.
 
     Only returns pages with at least *min_samples* screenshots.
+
+    min_confidence: only include records whose ``confidence`` field is at
+    least this good. Confidence order: arrive > ui > switch > none.
+    Pass None to include all records regardless of confidence.
     """
+    _CONF_RANK = {"arrive": 0, "ui": 1, "switch": 2, "none": 3}
+    min_rank = _CONF_RANK.get(min_confidence, 99) if min_confidence else 99
+
     index_path = corpus_dir / "index.jsonl"
     if not index_path.exists():
         raise FileNotFoundError(f"Corpus index not found: {index_path}")
@@ -71,7 +82,12 @@ def load_corpus(corpus_dir: Path, min_samples: int = 3) -> dict[str, list[Path]]
 
     for line in index_path.read_text(encoding="utf-8").strip().splitlines():
         rec = json.loads(line)
+        conf = rec.get("confidence", "none")
+        if _CONF_RANK.get(conf, 99) > min_rank:
+            continue
         page = rec.get("alas_page", "unknown")
+        if page == "unknown":
+            continue
         rel_path = rec.get("path", "")
         img_path = corpus_dir / rel_path
         if img_path.exists():
@@ -274,7 +290,7 @@ def main() -> None:
     parser.add_argument(
         "--corpus",
         default=str(DEFAULT_CORPUS),
-        help="Path to corpus directory (default: data/corpus)",
+        help="Path to corpus directory (default: data/raw_stream)",
     )
     parser.add_argument(
         "--graph",
