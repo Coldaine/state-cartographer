@@ -27,6 +27,16 @@ The agent should usually interact at one of these levels:
 
 Explicit screenshot tooling still matters for debugging, calibration, and exploration, but it is not the steady-state operator interface.
 
+## Current Live Entrypoint
+
+Today there is one supported live control path for MEmu/Azur Lane:
+
+- file: `scripts/executor.py`
+- callable: `execute_task_by_id(...)`
+- live backend: `pilot`
+
+For live runs, the executor now owns the preflight check for transport, port forwards, ATX, and proof-of-observation before task execution. Low-level scripts such as `scripts/pilot_bridge.py`, `scripts/adb_bridge.py`, `scripts/observe.py`, and `scripts/pathfind.py` remain useful for debugging, but they are not the canonical operator entrypoint.
+
 ## Why This Exists
 
 This project was inspired by [ALAS (AzurLaneAutoScript)](https://github.com/Zuosizhu/Alas-with-Dashboard), a 9-year-old automation framework that built a complete 43-state page graph for the mobile game Azur Lane — by hand, over years of iteration. ALAS proved the pattern: color-based state detection, BFS pathfinding, deterministic navigation, and recovery from unknown states.
@@ -50,6 +60,12 @@ uv sync --extra dev,vision
 
 # Run tests
 uv run pytest tests/ -v
+
+# Canonical live preflight for MEmu/Azur Lane
+uv run python scripts/executor.py --backend pilot --serial 127.0.0.1:21513 --preflight-only --task commission --tasks examples/azur-lane/tasks.json --graph examples/azur-lane/graph.json
+
+# Canonical live task execution
+uv run python scripts/executor.py --backend pilot --serial 127.0.0.1:21513 --task commission --tasks examples/azur-lane/tasks.json --graph examples/azur-lane/graph.json
 
 # Lint
 uv run ruff check scripts/ tests/ hooks/ --fix

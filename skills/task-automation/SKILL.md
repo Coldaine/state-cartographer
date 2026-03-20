@@ -14,6 +14,10 @@ This skill covers the full automation lifecycle: defining tasks, scheduling them
 - A validated state graph (`graph.json`) for the target system
 - A live connection (ADB, Playwright, etc.) or mock backend for testing
 
+## Canonical live entrypoint
+
+For live MEmu/Azur Lane execution, the single supported operator entrypoint is `scripts/executor.py` with backend `pilot`. Run preflight there first; do not substitute ad-hoc `pilot_bridge.py` or raw `adb_bridge.py` commands as the top-level workflow.
+
 ## The Automation Loop
 
 ```
@@ -54,9 +58,9 @@ Each task needs:
     "enabled": true,
     "schedule": { "type": "interval", "minutes": 60 },
     "actions": [
-      { "action": "tap", "x": 600, "y": 400, "description": "Collect all" },
-      { "action": "wait", "seconds": 2 },
-      { "action": "tap", "x": 600, "y": 500, "description": "Dispatch" }
+      { "type": "tap", "coords": [600, 400] },
+      { "type": "wait", "seconds": 2 },
+      { "type": "tap", "coords": [600, 500] }
     ],
     "error_strategy": "restart"
   }
@@ -67,12 +71,12 @@ Each task needs:
 
 | Action | Required fields | Description |
 |--------|----------------|-------------|
-| `navigate` | `target` | Navigate to a state via pathfind |
-| `tap` | `x`, `y` | Tap screen coordinates |
-| `swipe` | `x1`, `y1`, `x2`, `y2`, `duration` | Swipe gesture |
+| `navigate` | `target_state` | Navigate to a state via pathfind |
+| `tap` | `coords` | Tap screen coordinates |
+| `swipe` | `start`, `end`, `duration_ms` | Swipe gesture |
 | `wait` | `seconds` | Sleep for duration |
 | `wait_until` | `target_state`, `timeout` | Poll locate() until state reached |
-| `assert_state` | `expected` | Verify current state matches |
+| `assert_state` | `expected_state` | Verify current state matches |
 | `read_resource` | `name`, `region` | Read a value from screen |
 | `conditional` | `condition`, `then`, `else` | Branching logic |
 | `repeat` | `count`, `body` | Loop a sub-sequence N times |
@@ -121,6 +125,8 @@ Adjust by editing tasks.json: change `enabled`, `schedule`, or priority ordering
 
 ### Single task (testing/debugging):
 ```bash
+python scripts/executor.py --backend pilot --serial 127.0.0.1:21513 --preflight-only --task commission --graph graph.json --tasks tasks.json
+python scripts/executor.py --backend pilot --serial 127.0.0.1:21513 --task commission --graph graph.json --tasks tasks.json
 python scripts/executor.py --task commission --graph graph.json --tasks tasks.json --mock
 ```
 

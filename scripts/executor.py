@@ -1,5 +1,12 @@
 """Executor — runs a task's action sequence against a live or mock system.
 
+[!] STATUS: MVP PLACEHOLDER PROTOTYPE
+This file is currently a structural placeholder for Layer 3 (Task Execution).
+It naively executes static JSON step sequences (open-loop macros) and lacks
+the dynamic vision capabilities (OCR, template matching) and complex control
+flow (while-loops, dynamic scrolling) required for actual autonomous gameplay.
+It proves the architectural shape, but is not yet capable of real domain logic.
+
 The executor takes a task definition and steps through its action sequence.
 Each action is dispatched to the appropriate tool (navigate → pathfind + adb,
 tap → adb_bridge, wait → sleep, etc.).
@@ -16,12 +23,25 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import socket
+import subprocess
 import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+DEFAULT_SERIAL = "127.0.0.1:21513"
+
+
+def _import_pilot_bridge_symbols() -> tuple[type[Any], int, int]:
+    """Import PilotBridge symbols whether executor runs as module or script."""
+    try:
+        from scripts.pilot_bridge import LOCAL_ATX_PORT, LOCAL_DROIDCAST_PORT, PilotBridge
+    except ImportError:
+        from pilot_bridge import LOCAL_ATX_PORT, LOCAL_DROIDCAST_PORT, PilotBridge
+
+    return PilotBridge, LOCAL_ATX_PORT, LOCAL_DROIDCAST_PORT
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -37,7 +57,7 @@ def load_json(path: Path) -> dict[str, Any]:
 BackendFn = Callable[..., Any]
 
 
-def default_backend() -> dict[str, BackendFn]:
+def default_backend(serial: str = DEFAULT_SERIAL) -> dict[str, BackendFn]:
     """Return a backend dict with real implementations.
 
     This wires up to the actual scripts in this repo:
@@ -47,11 +67,28 @@ def default_backend() -> dict[str, BackendFn]:
     - session_confirm: session.py confirm
     - sleep: time.sleep
     """
+
+    def navigate(graph: dict[str, Any], current: str | None, target: str, **kw: Any) -> dict[str, Any]:
+        kw.setdefault("serial", serial)
+        return _navigate_real(graph=graph, current=current, target=target, **kw)
+
+    def tap(coords: tuple[int, int], **kw: Any) -> dict[str, Any]:
+        kw.setdefault("serial", serial)
+        return _tap_real(coords=coords, **kw)
+
+    def swipe(start: tuple[int, int], end: tuple[int, int], duration: int = 300, **kw: Any) -> dict[str, Any]:
+        kw.setdefault("serial", serial)
+        return _swipe_real(start=start, end=end, duration=duration, **kw)
+
+    def locate(graph: dict[str, Any], **kw: Any) -> dict[str, Any]:
+        kw.setdefault("serial", serial)
+        return _locate_real(graph=graph, **kw)
+
     return {
-        "navigate": _navigate_real,
-        "tap": _tap_real,
-        "swipe": _swipe_real,
-        "locate": _locate_real,
+        "navigate": navigate,
+        "tap": tap,
+        "swipe": swipe,
+        "locate": locate,
         "session_confirm": _session_confirm_real,
         "sleep": time.sleep,
     }
@@ -98,7 +135,7 @@ def mock_backend() -> dict[str, BackendFn]:
     return backend
 
 
-def pilot_backend(serial: str = "127.0.0.1:21513") -> dict[str, BackendFn]:
+def pilot_backend(serial: str = DEFAULT_SERIAL) -> dict[str, BackendFn]:
     """Return a backend dict using PilotBridge (DroidCast) for MEmu interaction.
 
     This wires up to the PilotBridge class:
@@ -109,7 +146,7 @@ def pilot_backend(serial: str = "127.0.0.1:21513") -> dict[str, BackendFn]:
     - session_confirm: session.py confirm
     - sleep: time.sleep
     """
-    from scripts.pilot_bridge import PilotBridge
+    PilotBridge, _, _ = _import_pilot_bridge_symbols()
 
     # Create a single PilotBridge instance to reuse
     bridge = PilotBridge(serial=serial)
@@ -227,6 +264,137 @@ def pilot_backend(serial: str = "127.0.0.1:21513") -> dict[str, BackendFn]:
     }
 
 
+def build_backend(backend_name: str, serial: str = DEFAULT_SERIAL) -> dict[str, BackendFn]:
+    """Build a backend by name.
+
+    Canonical live backend for MEmu/Azur Lane is ``pilot``.
+    ``adb`` remains available for non-MEmu or debug scenarios.
+    """
+    if backend_name == "mock":
+        return mock_backend()
+    if backend_name == "pilot":
+        return pilot_backend(serial=serial)
+    if backend_name == "adb":
+        return default_backend(serial=serial)
+    raise ValueError(f"Unknown backend: {backend_name}")
+
+
+def _port_open(host: str, port: int, timeout: float = 0.5) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.settimeout(timeout)
+        return sock.connect_ex((host, port)) == 0
+
+
+def _run_text(*args: str, timeout: int = 10) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+
+
+def live_preflight(serial: str = DEFAULT_SERIAL) -> dict[str, Any]:
+    """Run explicit live preflight checks for the canonical PilotBridge path.
+
+    This is intentionally not a background heartbeat. It is an explicit
+    proof-of-readiness check at the single supported live entrypoint.
+    A connection is considered ready only if transport, ATX, forwards,
+    and screenshot observation are all proven.
+    """
+    PilotBridge, LOCAL_ATX_PORT, LOCAL_DROIDCAST_PORT = _import_pilot_bridge_symbols()
+
+    report: dict[str, Any] = {
+        "entrypoint": "scripts/executor.py",
+        "backend": "pilot",
+        "serial": serial,
+        "alas_running": PilotBridge._alas_running(),
+        "host_ports_before": {
+            "atx": _port_open("127.0.0.1", LOCAL_ATX_PORT),
+            "droidcast": _port_open("127.0.0.1", LOCAL_DROIDCAST_PORT),
+            "alas": _port_open("127.0.0.1", 22267),
+        },
+    }
+
+    adb_connect = _run_text("adb", "connect", serial)
+    adb_state = _run_text("adb", "-s", serial, "get-state")
+    focus = _run_text("adb", "-s", serial, "shell", "dumpsys", "window", "windows")
+    report["adb_connect"] = (adb_connect.stdout or adb_connect.stderr).strip()
+    report["adb_state"] = (adb_state.stdout or adb_state.stderr).strip()
+    report["focus"] = [
+        line.strip() for line in focus.stdout.splitlines() if "mCurrentFocus=" in line or "mFocusedApp=" in line
+    ]
+
+    if adb_state.returncode != 0 or report["adb_state"] != "device":
+        report["success"] = False
+        report["error"] = f"ADB transport not ready for {serial}: {report['adb_state']}"
+        return report
+
+    try:
+        bridge = PilotBridge(serial=serial, record=False)
+        bridge.connect()
+        report["forwards_after"] = [
+            {"serial": owner, "local": local, "remote": remote}
+            for owner, local, remote in bridge._list_all_forwards()
+            if owner == serial
+        ]
+        report["host_ports_after"] = {
+            "atx": _port_open("127.0.0.1", LOCAL_ATX_PORT),
+            "droidcast": _port_open("127.0.0.1", LOCAL_DROIDCAST_PORT),
+            "alas": _port_open("127.0.0.1", 22267),
+        }
+        report["observation"] = {
+            "ok": True,
+            "method": "PilotBridge.connect() proof-of-observation",
+        }
+        report["success"] = True
+        return report
+    except Exception as exc:
+        report["success"] = False
+        report["error"] = str(exc)
+        return report
+
+
+def execute_task_by_id(
+    task_id: str,
+    tasks_path: Path,
+    graph_path: Path,
+    *,
+    backend_name: str = "pilot",
+    serial: str = DEFAULT_SERIAL,
+    preflight: bool | None = None,
+    session: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Canonical live/task entrypoint for this repo.
+
+    For MEmu/Azur Lane, call this with ``backend_name='pilot'``.
+    """
+    manifest = load_json(tasks_path)
+    graph = load_json(graph_path)
+    session = session or {"current_state": None, "history": []}
+
+    task_def = manifest.get("tasks", {}).get(task_id)
+    if not task_def:
+        return {"success": False, "error": f"Task '{task_id}' not found"}
+
+    if preflight is None:
+        preflight = backend_name == "pilot"
+
+    preflight_report: dict[str, Any] | None = None
+    if preflight and backend_name == "pilot":
+        preflight_report = live_preflight(serial=serial)
+        if not preflight_report.get("success"):
+            return {
+                "success": False,
+                "error": "Live preflight failed",
+                "preflight": preflight_report,
+            }
+
+    backend = build_backend(backend_name, serial=serial)
+    result = execute_task(task_def, graph, session, backend)
+    result["entrypoint"] = "scripts/executor.py"
+    result["backend"] = backend_name
+    result["serial"] = serial
+    if preflight_report is not None:
+        result["preflight"] = preflight_report
+    return result
+
+
 def execute_task(
     task_def: dict[str, Any],
     graph: dict[str, Any],
@@ -254,6 +422,15 @@ def execute_task(
     actions = task_def.get("actions", [])
     entry_state = task_def.get("entry_state")
     current_state = session.get("current_state")
+
+    # Step 0: Orient if the current state is unknown.
+    if current_state is None:
+        logger.info("Session state unknown; locating current state before execution")
+        loc_result = backend["locate"](graph=graph)
+        located_state = loc_result.get("state")
+        if located_state and located_state != "unknown":
+            session = backend["session_confirm"](state=located_state, session=session)
+            current_state = located_state
 
     # Step 1: Navigate to entry state if needed
     if entry_state and current_state != entry_state:
@@ -529,24 +706,44 @@ def main() -> None:
     parser.add_argument("--task", required=True, help="Task ID to execute")
     parser.add_argument("--tasks", required=True, help="Path to tasks.json")
     parser.add_argument("--graph", required=True, help="Path to graph.json")
-    parser.add_argument("--mock", action="store_true", help="Use mock backend (no real ADB)")
+    parser.add_argument(
+        "--backend",
+        choices=["pilot", "adb", "mock"],
+        default="pilot",
+        help="Backend to use. 'pilot' is the canonical live entrypoint for MEmu/Azur Lane.",
+    )
+    parser.add_argument("--serial", default=DEFAULT_SERIAL, help="ADB serial for live backends")
+    parser.add_argument("--mock", action="store_true", help="Deprecated alias for --backend mock")
+    parser.add_argument("--preflight", action="store_true", help="Force a live preflight before execution")
+    parser.add_argument("--preflight-only", action="store_true", help="Run preflight and exit")
 
     args = parser.parse_args()
 
-    manifest = load_json(Path(args.tasks))
-    graph = load_json(Path(args.graph))
-    session: dict[str, Any] = {
-        "current_state": None,
-        "history": [],
-    }
-
-    task_def = manifest.get("tasks", {}).get(args.task)
-    if not task_def:
-        print(json.dumps({"error": f"Task '{args.task}' not found"}))
+    backend_name = "mock" if args.mock else args.backend
+    if args.preflight_only:
+        if backend_name != "pilot":
+            print(
+                json.dumps(
+                    {
+                        "success": False,
+                        "error": "--preflight-only is only supported for the pilot backend",
+                        "backend": backend_name,
+                    },
+                    indent=2,
+                )
+            )
+            return
+        print(json.dumps(live_preflight(serial=args.serial), indent=2, default=str))
         return
 
-    backend = mock_backend() if args.mock else default_backend()
-    result = execute_task(task_def, graph, session, backend)
+    result = execute_task_by_id(
+        args.task,
+        Path(args.tasks),
+        Path(args.graph),
+        backend_name=backend_name,
+        serial=args.serial,
+        preflight=args.preflight or backend_name == "pilot",
+    )
     print(json.dumps(result, indent=2, default=str))
 
 

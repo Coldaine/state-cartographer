@@ -22,6 +22,16 @@ state verification, and event logging. Direct screenshot tooling remains useful
 for debugging, calibration, and exploration, but it is not the normal operator
 interface.
 
+## Current canonical live entrypoint
+
+For live MEmu/Azur Lane control, the single supported entrypoint today is:
+
+- `scripts/executor.py`
+- `execute_task_by_id(...)`
+- backend `pilot`
+
+Use `python scripts/executor.py --backend pilot --serial 127.0.0.1:21513 ...` for live execution, and `--preflight-only` when you need an explicit readiness proof. Do not treat `pilot_bridge.py`, raw `adb_bridge.py`, or direct vendor ALAS launch as interchangeable control-plane entrypoints.
+
 **ALAS is reference architecture and an optional observation source, not the
 runtime we are building.** The project's design, schema, and playbook are
 validated against AzurLaneAutoScript (ALAS), a 9-year-old automation framework

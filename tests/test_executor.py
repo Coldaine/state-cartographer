@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
-from executor import execute_task, mock_backend
+from executor import execute_task, execute_task_by_id, mock_backend
 
 # --- Fixtures ---
 
@@ -144,6 +145,27 @@ class TestExecuteTask:
         assert swipes[0]["start"] == (100, 500)
         assert swipes[0]["end"] == (100, 200)
 
+    def test_orients_from_unknown_state_before_navigation(self):
+        task = {
+            "entry_state": "page_commission",
+            "actions": [],
+        }
+        backend = mock_backend()
+        session = make_session(None)
+
+        def locate_main(**_kw):
+            return {"state": "page_main", "confidence": 0.95}
+
+        backend["locate"] = locate_main
+        result = execute_task(task, make_graph(), session, backend)
+
+        assert result["success"]
+        log = backend["_log"]
+        confirms = [a for a in log if a["action"] == "session_confirm"]
+        navs = [a for a in log if a["action"] == "navigate"]
+        assert confirms[0]["state"] == "page_main"
+        assert navs[0]["from"] == "page_main"
+
 
 # --- Error handling ---
 
@@ -244,3 +266,53 @@ class TestAutoSessionTracking:
         assert len(confirms) == 2  # Once for entry nav, once for action nav
         assert confirms[0]["state"] == "page_commission"
         assert confirms[1]["state"] == "page_reward"
+
+
+class TestCanonicalEntrypoint:
+    def test_execute_task_by_id_uses_mock_backend_without_preflight(self, tmp_path):
+        tasks_path = tmp_path / "tasks.json"
+        graph_path = tmp_path / "graph.json"
+
+        tasks_path.write_text(
+            json.dumps(
+                {
+                    "tasks": {
+                        "commission": {
+                            "entry_state": "page_main",
+                            "actions": [{"type": "tap", "coords": [640, 360]}],
+                        }
+                    }
+                }
+            )
+        )
+        graph_path.write_text(json.dumps(make_graph()))
+
+        result = execute_task_by_id(
+            "commission",
+            tasks_path,
+            graph_path,
+            backend_name="mock",
+            preflight=False,
+        )
+
+        assert result["success"]
+        assert result["entrypoint"] == "scripts/executor.py"
+        assert result["backend"] == "mock"
+
+    def test_execute_task_by_id_returns_error_for_unknown_task(self, tmp_path):
+        tasks_path = tmp_path / "tasks.json"
+        graph_path = tmp_path / "graph.json"
+
+        tasks_path.write_text(json.dumps({"tasks": {}}))
+        graph_path.write_text(json.dumps(make_graph()))
+
+        result = execute_task_by_id(
+            "missing",
+            tasks_path,
+            graph_path,
+            backend_name="mock",
+            preflight=False,
+        )
+
+        assert not result["success"]
+        assert "not found" in result["error"]

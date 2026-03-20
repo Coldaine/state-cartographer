@@ -1,5 +1,10 @@
 """Task model — data structures for schedulable automation tasks.
 
+[!] STATUS: MVP PLACEHOLDER PROTOTYPE
+This file is currently a structural placeholder. The task definitions it
+validates are rigid and static, lacking support for complex control flows
+(loops, conditionals) or dynamic visual targets necessary for real gameplay.
+
 A Task is a named, schedulable unit of work with an entry state (which screen
 to navigate to), an action sequence (what to do once there), an exit condition,
 scheduling rules, and an error strategy.

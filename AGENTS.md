@@ -27,6 +27,17 @@ The intended agent-facing interface has three levels:
 2. **Supervisory queries** such as `where_am_i()`, `why_did_last_transition_fail()`, and `show_recent_failures()`
 3. **Escalation payloads** pushed up by the runtime with screenshot, current candidates, recent actions, and proposed recovery paths
 
+## Current Canonical Live Entrypoint
+
+Until a daemon/runtime API ships, treat this as the single supported live entrypoint for MEmu/Azur Lane:
+
+- `scripts/executor.py`
+- backend: `pilot`
+- callable surface: `execute_task_by_id(...)`
+- CLI surface: `python scripts/executor.py --backend pilot --serial 127.0.0.1:21513 ...`
+
+Required live preflight is owned by this entrypoint. Do **not** treat `scripts/pilot_bridge.py`, `scripts/adb_bridge.py`, vendor ALAS launchers, or ad-hoc `observe.py` / `locate.py` invocations as equivalent top-level ways into the system. Those are debug or observation tools.
+
 ## Reference Case: ALAS (AzurLaneAutoScript)
 
 ALAS is the existence proof for State Cartographer. It is a 9-year-old Python automation framework for Azur Lane that has already solved — by hand — every problem this project generalizes:

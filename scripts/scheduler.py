@@ -1,5 +1,11 @@
 """Scheduler — picks the next task to run based on priority, time, and resources.
 
+[!] STATUS: MVP PLACEHOLDER PROTOTYPE
+This file is currently a structural placeholder for Layer 4 (Task Scheduling).
+While the priority queue and timestamp logic function, it relies on static
+definitions and lacks the deep game-state awareness, real-time interrupt handling,
+and complex multi-condition decision engines found in mature automation systems.
+
 The scheduler is the runtime heart. It inspects the task manifest and resource
 store, determines which tasks are ready to run, and returns them in priority
 order.

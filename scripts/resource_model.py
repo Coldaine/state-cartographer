@@ -1,5 +1,11 @@
 """Resource model — tracks game/system state beyond screen navigation.
 
+[!] STATUS: MVP PLACEHOLDER PROTOTYPE
+This file is currently a structural placeholder. It provides a data model
+to hold state (oil, coins, timers), but completely lacks the automated OCR
+and dynamic screen-reading capabilities required to actually populate these
+values from the screen during live gameplay.
+
 Resources are observable values (oil, coins, timers, dock capacity, etc.)
 that inform scheduling and task decisions. They are updated by observation
 (reading from screenshots or API calls), not hardcoded arithmetic.

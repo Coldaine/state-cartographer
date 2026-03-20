@@ -82,6 +82,24 @@ Recover narrowly, not dramatically:
 
 ## Current implementation status
 
+## Canonical operator entrypoint
+
+For live MEmu/Azur Lane control, the single supported top-level entrypoint is now:
+
+- `scripts/executor.py`
+- backend: `pilot`
+- preflight: `live_preflight()` / CLI `--preflight-only`
+
+`scripts/pilot_bridge.py` remains the serial-scoped backend owner, but it is support infrastructure rather than the operator-facing control-plane entrypoint.
+
+## Why there is no background heartbeat
+
+This repo currently uses an explicit **preflight + proof-of-observation** model rather than a long-running heartbeat daemon.
+
+- A heartbeat is useful once a daemon owns the loop continuously.
+- Today, the safer invariant is: before a live run, the canonical entrypoint proves transport, forwards, ATX, and screenshot observation in one place.
+- That avoids a false sense of health from a green socket probe that never proves a real frame can be captured.
+
 Implemented in `scripts/pilot_bridge.py`:
 
 - checked ADB commands with timeouts and surfaced failures
