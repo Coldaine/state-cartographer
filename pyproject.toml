@@ -4,7 +4,9 @@ version = "1.0.0"
 description = "Claude Code plugin for building queryable state graphs of external systems"
 requires-python = ">=3.11"
 license = "MIT"
-dependencies = []
+dependencies = [
+    "openai>=2.29.0",
+]
 
 [project.optional-dependencies]
 vision = [
