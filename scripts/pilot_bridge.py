@@ -32,16 +32,20 @@ Usage (CLI):
 from __future__ import annotations
 
 import argparse
+import logging
 import subprocess
 import threading
 import time
 import uuid
 from pathlib import Path
+from typing import ClassVar
 
 import cv2
 import numpy as np
 import requests
 from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Optional import: event logging
@@ -56,7 +60,7 @@ except ImportError:
         make_event = None  # type: ignore[assignment]
 
 
-DEFAULT_SERIAL = "127.0.0.1:21513"
+DEFAULT_SERIAL = "127.0.0.1:21513"  # MEmu Index 1 (32.87 GB, the only valid instance)
 DROIDCAST_APK_LOCAL = Path("vendor/AzurLaneAutoScript/bin/DroidCast/DroidCast_raw-release-1.0.apk")
 DROIDCAST_APK_REMOTE = "/data/local/tmp/DroidCast_raw.apk"
 DROIDCAST_PORT_REMOTE = 53516
@@ -308,8 +312,43 @@ class PilotBridge:
     # Screenshot
     # ------------------------------------------------------------------
 
+    def screenshot_via_atx(self) -> np.ndarray | None:
+        """Capture screenshot via ATX agent HTTP endpoint (uiautomator2 path).
+
+        Calls ``GET /screenshot`` on the ATX agent — no DroidCast kill/restart
+        cycle needed.  On MEmu with DirectX rendering this *may* return a blank
+        (all-black) frame because Android's screencap layer is bypassed by the
+        host GPU.  Callers must check :func:`_is_blank_frame` and fall back to
+        :meth:`_restart_and_capture` when blank.
+
+        Returns a BGR ``np.ndarray``, or ``None`` on any error.
+        """
+        try:
+            resp = self._session.get(
+                f"http://127.0.0.1:{self._atx_port}/screenshot",
+                timeout=10,
+            )
+            resp.raise_for_status()
+            arr = np.frombuffer(resp.content, np.uint8)
+            img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+            if img is not None and img.size > 0:
+                return img
+        except Exception:
+            pass
+        return None
+
+    @staticmethod
+    def _is_blank_frame(bgr: np.ndarray) -> bool:
+        """Return True if the frame is effectively blank (all-black / near-zero)."""
+        return float(bgr.mean()) < 5.0
+
     def screenshot(self, save_path: str | Path | None = None) -> Image.Image:
-        """Capture a screenshot via DroidCast (restart-per-capture).
+        """Capture a screenshot.
+
+        Tries the fast ATX agent path first (~100 ms).  If it returns a blank
+        frame — which happens on MEmu with DirectX rendering because the Android
+        compositor is bypassed — falls back to the DroidCast restart-per-frame
+        cycle (~3 s but reliable).
 
         Returns a PIL Image.  If *save_path* is given, the PNG is also
         written to disk.  When recording is enabled, every screenshot is
@@ -318,9 +357,16 @@ class PilotBridge:
         with self._lock:
             self._ensure_connected()
 
-            bgr = self._restart_and_capture()
+            bgr = self.screenshot_via_atx()
+            if bgr is not None and not self._is_blank_frame(bgr):
+                logger.debug("Screenshot via ATX agent (%dx%d)", bgr.shape[1], bgr.shape[0])
+            else:
+                if bgr is not None:
+                    logger.debug("ATX screenshot returned blank frame; falling back to DroidCast")
+                bgr = self._restart_and_capture()
+
             if bgr is None:
-                raise RuntimeError("DroidCast restart-and-capture returned no image")
+                raise RuntimeError("Both ATX agent and DroidCast screenshot paths failed")
 
             rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
             img = Image.fromarray(rgb)
@@ -337,6 +383,43 @@ class PilotBridge:
                 img.save(auto_path)
 
             return img
+
+    # ------------------------------------------------------------------
+    # Startup popup handling
+    # ------------------------------------------------------------------
+
+    #: One round of Confirm taps for all known Azur Lane startup popups.
+    #: Game coords for 1280x720 screen.  Always CONFIRM - never Cancel
+    #: (Cancel exits the game entirely).
+    #:
+    #: Popup 1 "Download Game Assets": select Basic radio (600,343), Confirm (787,476)
+    #: Popup 2 "Download Extra Assets": Confirm (787,610)
+    #: Popup 3 Game update:             Confirm (787,502)
+    STARTUP_POPUP_TAP_SEQUENCE: ClassVar[list[tuple[int, int]]] = [
+        (600, 343),  # popup 1 — select "Basic" download type radio button
+        (787, 476),  # popup 1 — Confirm
+        (787, 610),  # popup 2 — Confirm Extra Assets
+        (787, 502),  # popup 3 — Confirm game update
+    ]
+
+    def handle_startup_popups(self) -> None:
+        """Execute one round of Azur Lane startup popup dismissal.
+
+        Taps all known popup Confirm buttons in sequence with short delays.
+        Each individual tap is a no-op when its dialog is not showing, so
+        calling this when no popup is present is safe as long as the taps
+        land on inactive screen areas.
+
+        The caller (executor.py Step 0) is responsible for the outer retry
+        loop — it calls ``locate()`` between rounds and stops early when the
+        game state is recognised.
+
+        Rule: ALWAYS press Confirm.  Never press Cancel — Cancel exits the game.
+        """
+        for x, y in self.STARTUP_POPUP_TAP_SEQUENCE:
+            _adb("shell", "input", "tap", str(x), str(y), serial=self.serial)
+            time.sleep(0.4)
+        time.sleep(2.0)  # let any dialog dismiss animation complete
 
     # ------------------------------------------------------------------
     # Actions

@@ -27,7 +27,12 @@ def test_infer_target_name_prefers_named_objects():
     assert infer_target_name((), {}) is None
 
 
-def test_observation_runtime_records_classified_screenshot(tmp_path: Path):
+def test_observation_runtime_records_screenshot(tmp_path: Path):
+    """record_screenshot saves the image and emits an event.
+
+    NOTE: record_screenshot no longer auto-classifies state via locate().
+    ALAS is the source of truth for state; the observer just records.
+    """
     PIL = pytest.importorskip("PIL.Image")
     graph = {
         "states": {
@@ -52,14 +57,15 @@ def test_observation_runtime_records_classified_screenshot(tmp_path: Path):
     image = PIL.open(io.BytesIO(png_bytes)).convert("RGB")
     runtime.record_screenshot(serial="127.0.0.1:21513", image=image)
 
-    assert runtime.session["current_state"] == "page_main"
+    # State is NOT auto-updated from screenshots; ALAS owns state transitions.
+    assert runtime.session["current_state"] is None
     assert runtime.events_path.exists()
     assert runtime.observations_path.exists()
     assert runtime.session_path.exists()
 
     events = load_events(runtime.events_path)
     assert events[-1]["state_before"] is None
-    assert events[-1]["state_after"] == "page_main"
+    assert events[-1]["state_after"] is None  # locate removed — ALAS is source of truth
 
 
 def test_record_action_clears_current_state_after_successful_transition(tmp_path: Path):

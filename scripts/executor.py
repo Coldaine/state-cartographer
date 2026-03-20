@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
-DEFAULT_SERIAL = "127.0.0.1:21513"
+DEFAULT_SERIAL = "127.0.0.1:21513"  # MEmu Index 1 (32.87 GB) — the only supported instance
 
 
 def _import_pilot_bridge_symbols() -> tuple[type[Any], int, int]:
@@ -94,6 +94,9 @@ def default_backend(serial: str = DEFAULT_SERIAL) -> dict[str, BackendFn]:
 
 
 def mock_backend() -> dict[str, BackendFn]:
+    # TEST-ONLY: returns no-op stubs for all backend operations.
+    # Nothing here touches the device.  Import and call only from tests.
+    # In live execution, use build_backend("pilot") instead.
     """Return a backend dict with no-op mocks for testing."""
     log: list[dict[str, Any]] = []
 
@@ -253,6 +256,11 @@ def pilot_backend(serial: str = DEFAULT_SERIAL) -> dict[str, BackendFn]:
         """Sleep."""
         time.sleep(seconds)
 
+    def _handle_startup_popups_pilot(**_kw: Any) -> dict[str, Any]:
+        """Execute one round of startup popup dismissal via PilotBridge."""
+        bridge.handle_startup_popups()
+        return {"success": True}
+
     return {
         "navigate": _navigate_pilot,
         "tap": _tap_pilot,
@@ -260,6 +268,7 @@ def pilot_backend(serial: str = DEFAULT_SERIAL) -> dict[str, BackendFn]:
         "locate": _locate_pilot,
         "session_confirm": _session_confirm_pilot,
         "sleep": _sleep_pilot,
+        "handle_startup_popups": _handle_startup_popups_pilot,
     }
 
 
@@ -267,13 +276,19 @@ def build_backend(backend_name: str, serial: str = DEFAULT_SERIAL) -> dict[str, 
     """Build a backend by name.
 
     Canonical live backend for MEmu/Azur Lane is ``pilot``.
-    ``adb`` remains available for non-MEmu or debug scenarios.
+    ``adb`` remains available for non-MEmu or debug scenarios but returns
+    BLANK FRAMES on MEmu with DirectX rendering — do not use it for live work.
+    ``mock`` is a TEST-ONLY no-op backend; never use it in live execution.
     """
     if backend_name == "mock":
         return mock_backend()
     if backend_name == "pilot":
         return pilot_backend(serial=serial)
     if backend_name == "adb":
+        logger.warning(
+            "'adb' backend uses raw 'adb screencap' which returns BLANK FRAMES on MEmu "
+            "with DirectX rendering. Use backend='pilot' for live execution on MEmu."
+        )
         return default_backend(serial=serial)
     raise ValueError(f"Unknown backend: {backend_name}")
 
@@ -430,6 +445,23 @@ def execute_task(
         if located_state and located_state != "unknown":
             session = backend["session_confirm"](state=located_state, session=session)
             current_state = located_state
+
+        # If state is still unknown, try clearing Azur Lane startup popups.
+        # These popups appear at game launch and block all navigation.
+        # ALWAYS Confirm — never Cancel (Cancel exits the game).
+        if (not current_state or current_state == "unknown") and "handle_startup_popups" in backend:
+            logger.info("State unknown after locate; attempting startup popup dismissal")
+            for popup_round in range(5):
+                backend["handle_startup_popups"]()
+                loc_result = backend["locate"](graph=graph)
+                located_state = loc_result.get("state")
+                if located_state and located_state != "unknown":
+                    logger.info("State resolved to '%s' after popup round %d", located_state, popup_round + 1)
+                    session = backend["session_confirm"](state=located_state, session=session)
+                    current_state = located_state
+                    break
+            else:
+                logger.warning("State still unknown after 5 popup dismissal rounds")
 
     # Step 1: Navigate to entry state if needed
     if entry_state and current_state != entry_state:
@@ -719,6 +751,29 @@ def main() -> None:
     args = parser.parse_args()
 
     backend_name = "mock" if args.mock else args.backend
+    if args.mock:
+        import sys as _sys
+
+        print(
+            "WARNING: --mock is a deprecated alias for --backend mock. Use --backend mock explicitly.",
+            file=_sys.stderr,
+        )
+    if backend_name == "mock":
+        import sys as _sys
+
+        print(
+            "WARNING: Running with the 'mock' backend — no real device interactions occur. "
+            "All actions are no-ops. Use --backend pilot for live execution.",
+            file=_sys.stderr,
+        )
+    if backend_name == "adb":
+        import sys as _sys
+
+        print(
+            "WARNING: The 'adb' backend uses raw 'adb screencap' which returns BLANK FRAMES "
+            "on MEmu with DirectX rendering. Use --backend pilot for live execution on MEmu.",
+            file=_sys.stderr,
+        )
     if args.preflight_only:
         if backend_name != "pilot":
             print(
