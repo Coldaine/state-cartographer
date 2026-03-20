@@ -1,6 +1,6 @@
 """calibrate_from_corpus.py — Learn real pixel anchors from a labeled corpus.
 
-Consumes the JSONL index produced by ``alas_sidecar.py`` and generates
+Consumes the JSONL index produced by ``label_raw_stream.py`` and generates
 real pixel-color anchors for ``graph.json``.
 
 For each ALAS-labeled page:

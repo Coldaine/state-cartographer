@@ -35,4 +35,7 @@ data/alas-observe/
 data/screenshots/
 data/census/
 data/events/
+data/raw_stream/
+data/corpus/
+data/backups/
 tmp/
