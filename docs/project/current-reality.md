@@ -24,15 +24,14 @@ As of 2026-03-24:
 
 The currently trusted active script surface is small:
 
-- `scripts/label_raw_stream.py`
-- `scripts/screenshot_dedupe.py`
-- `scripts/delete_black_frames.py`
+- `scripts/corpus_cleanup.py`
+- `scripts/kimi_review.py`
 - `scripts/vlm_detector.py`
 
 These support:
 
-- ALAS log alignment
-- corpus hygiene
+- corpus hygiene, including dedupe and black-frame cleanup
+- cheap visible-first screenshot review and disagreement surfacing
 - offline VLM-assisted labeling and review
 
 ## Preserved Findings From Earlier Live Work

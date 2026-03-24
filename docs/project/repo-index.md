@@ -34,8 +34,6 @@ See also:
   - retained but unsupported material
 - `scripts/`
   - current active script surface
-- `tests/`
-  - active automated checks
 - `vendor/`
   - external reference code, including ALAS
 
@@ -47,7 +45,6 @@ These exist in the worktree but are not primary project knowledge or product sur
 - `.github/`
 - `.githooks/`
 - `.omc/`
-- `.pytest_cache/`
 - `.ruff_cache/`
 - `.venv/`
 - `state_cartographer.egg-info/`
@@ -67,9 +64,14 @@ These exist in the worktree but are not primary project knowledge or product sur
 - `docs/architecture-overview.md`
   - architecture and organizing logic
 - `docs/project/`
-  - current reality, north star, repo indexing, testing posture
+  - current reality, north star, repo indexing, validation posture
+  - includes `documentation-playbook.md` for docs workflow rules
+- `docs/memory/`
+  - dated lessons learned and preserved findings
 - `docs/workflows/`
   - workflow/task inventory
+- `docs/agentPrompts/`
+  - code-linked rationale docs for prompt-bearing LLM code
 - `docs/prework/`
   - corpus/data preparation procedures
 - `docs/runtime/`
@@ -85,12 +87,10 @@ These exist in the worktree but are not primary project knowledge or product sur
 
 ## Active Code Surface
 
-- `scripts/label_raw_stream.py`
-  - aligns screenshot streams with ALAS log timing and labels
-- `scripts/screenshot_dedupe.py`
-  - corpus hygiene: duplicate screenshot detection/removal
-- `scripts/delete_black_frames.py`
-  - corpus hygiene: black-frame cleanup
+- `scripts/corpus_cleanup.py`
+  - corpus hygiene: duplicate clustering and black-frame cleanup
+- `scripts/kimi_review.py`
+  - cheap Kimi-backed visible-first screenshot review
 - `scripts/vlm_detector.py`
   - VLM-backed offline detection and labeling tool
 
@@ -111,12 +111,13 @@ These exist in the worktree but are not primary project knowledge or product sur
   - unsupported retained material from earlier directions
   - treat contents as reference only unless explicitly re-earned
 
-## Test Surface
+## Validation Surface
 
-- `tests/`
-  - tests for the currently active surface only
+- there are currently no committed automated checks in the repo
+- validation is presently script execution, corpus inspection, and documentation consistency checks
 
 ## Practical Rule
 
 If you need short orientation, use root `AGENTS.md`.
 If you need the exhaustive high-level map, use this file.
+If you need the rules for adding or updating docs, use `docs/project/documentation-playbook.md`.

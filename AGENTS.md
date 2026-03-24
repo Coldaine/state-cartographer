@@ -13,6 +13,7 @@ Its job is repo-level indexing, not explanation. Use it to find the right projec
 | [architecture-overview.md](/mnt/d/_projects/MasterStateMachine/docs/architecture-overview.md) | How the repo is organized: domains, knowledge buckets, and implementation axes. |
 | [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md) | Current tactical plan and near-term rebuild priorities. |
 | [north-star.md](/mnt/d/_projects/MasterStateMachine/docs/project/north-star.md) | Long-horizon goals and desired end-state behavior. |
+| [documentation-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/project/documentation-playbook.md) | How documentation is organized and what must be updated when docs change. |
 
 ## Documentation Domains
 
@@ -40,7 +41,6 @@ This is the minimal filesystem map you should keep in mind:
 | `docs/` | Agent knowledge layer |
 | `scripts/` | Current active script-shaped tooling |
 | `quarantine/` | Unsupported retained material, if any remains |
-| `tests/` | Current automated checks |
 | `examples/` | Reference/example artifacts |
 
 For the expanded version, read [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/project/repo-index.md).
@@ -55,6 +55,7 @@ For the expanded version, read [repo-index.md](/mnt/d/_projects/MasterStateMachi
 | [observation-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/observation-contracts.md) | Observation-side contracts and what is still only design guidance |
 | [azur-lane-workflows.md](/mnt/d/_projects/MasterStateMachine/docs/workflows/azur-lane-workflows.md) | Workflow/task inventory and substate complexity |
 | [alas-build-plan.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-build-plan.md) | Operational program for deriving artifacts from ALAS |
+| [2026-03-24-corpus-review-lessons.md](/mnt/d/_projects/MasterStateMachine/docs/memory/2026-03-24-corpus-review-lessons.md) | Compact lessons learned from the corpus review reset and first direct adjudication pass |
 | [master-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/master-plan.md) | Archived long-horizon plan context still worth knowing |
 
 ## Examples and Meta
