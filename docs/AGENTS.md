@@ -33,7 +33,7 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
 - `RES-research/`
   - durable research notes, synthesis, and analysis
 - `project/`
-  - current reality, north star, repo index, testing posture
+  - current reality, north star, repo index, validation posture
 - `prework/`
   - corpus alignment, cleanup, and ALAS-derived artifact building
 - `runtime/`

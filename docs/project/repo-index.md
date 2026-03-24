@@ -45,7 +45,6 @@ These exist in the worktree but are not primary project knowledge or product sur
 - `.github/`
 - `.githooks/`
 - `.omc/`
-- `.pytest_cache/`
 - `.ruff_cache/`
 - `.venv/`
 - `state_cartographer.egg-info/`
@@ -65,7 +64,7 @@ These exist in the worktree but are not primary project knowledge or product sur
 - `docs/architecture-overview.md`
   - architecture and organizing logic
 - `docs/project/`
-  - current reality, north star, repo indexing, testing posture
+  - current reality, north star, repo indexing, validation posture
 - `docs/workflows/`
   - workflow/task inventory
 - `docs/prework/`
@@ -111,7 +110,7 @@ These exist in the worktree but are not primary project knowledge or product sur
 
 ## Validation Surface
 
-- there is currently no committed automated test suite in the repo
+- there are currently no committed automated checks in the repo
 - validation is presently script execution, corpus inspection, and documentation consistency checks
 
 ## Practical Rule
