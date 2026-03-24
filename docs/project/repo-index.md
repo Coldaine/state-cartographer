@@ -65,6 +65,8 @@ These exist in the worktree but are not primary project knowledge or product sur
   - architecture and organizing logic
 - `docs/project/`
   - current reality, north star, repo indexing, validation posture
+- `docs/memory/`
+  - dated lessons learned and preserved findings
 - `docs/workflows/`
   - workflow/task inventory
 - `docs/prework/`

@@ -37,6 +37,7 @@ Everything else in `docs/` is a knowledge bucket rather than a domain.
 | Bucket | Purpose |
 |---|---|
 | `project/` | current reality, north star, repo indexing, validation posture |
+| `memory/` | dated lessons learned, salvage notes, and findings worth preserving |
 | `architecture-overview.md` | organizing principles and architectural map |
 | `workflows/` | assignment and workflow knowledge |
 | `prework/` | corpus alignment, cleanup, extraction, and data-gathering programs |
