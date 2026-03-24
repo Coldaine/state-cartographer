@@ -83,6 +83,7 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - `prework/corpus-review-playbook.md`
 - `What recent lessons should we not relearn?`
   - `memory/2026-03-24-corpus-review-lessons.md`
+  - `memory/2026-03-24-memu-fb0-capture-proof.md`
 - `What workflows exist?`
   - `workflows/azur-lane-workflows.md`
 - `Where is the fuller repo map?`

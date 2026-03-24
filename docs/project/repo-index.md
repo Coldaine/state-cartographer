@@ -66,6 +66,7 @@ These exist in the worktree but are not primary project knowledge or product sur
   - includes `documentation-playbook.md` for docs workflow rules
 - `docs/memory/`
   - dated lessons learned and preserved findings
+  - includes preserved capture findings such as the 2026-03-24 MEmu `fb0` proof
 - `docs/workflows/`
   - workflow/task inventory
 - `docs/agentPrompts/`
