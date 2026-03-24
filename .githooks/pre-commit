@@ -7,7 +7,7 @@ set -e
 STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.pyi?$' || true)
 [ -z "$STAGED" ] && exit 0
 
-uv run ruff check --fix $STAGED
-uv run ruff format $STAGED
+uv run --extra dev ruff check --fix $STAGED
+uv run --extra dev ruff format $STAGED
 
 git add $STAGED
