@@ -2,29 +2,44 @@
 
 > Historical note: moved from `docs/execution/EXE-workflows.md` and previously filed under the `EXE` domain.
 
+## Status Framing
 
-> This document enumerates every workflow State Cartographer must automate,
-> what data each workflow reads, what decisions it makes, and what data it
-> produces. This is the ground truth for task definitions and scheduler design.
+This document is a workflow inventory and complexity map.
+
+It does **not** mean every workflow below is currently implemented, trusted, or runnable. Unless a workflow is explicitly marked otherwise elsewhere, treat the entries here as design and planning knowledge.
+
+## Current Interpretation
+
+Use this file to answer:
+- what workflows exist?
+- what each workflow reads and decides on?
+- what substates and failure modes make the workflow difficult?
+
+Do not use this file alone as evidence that the repo can execute the workflow today.
+
+See also:
+- [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
+- [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md)
+- [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
 
 ## Workflow Categories
 
-| Category | Workflows | Frequency |
-|----------|-----------|-----------|
-| Lifecycle | Restart, Login | On-demand / error recovery |
-| Rewards | Reward collect, Mail collect | Every 15-30 min |
-| Commissions | Collect + dispatch | Every 60 min |
-| Research | Collect + select project | Every 60-480 min |
-| Dorm | Feed ships, collect love/coins | Every 4-8 hours |
-| Private Quarters | Buy roses/cakes, interact | Daily |
-| Guild | Logistics, tech, operations | Daily |
-| Daily Missions | Daily Hard/Normal stages | Daily |
-| Exercise | PvP battles | 3x daily (reset windows) |
-| Meowfficer | Buy, fort chores, train, enhance | Daily + intervals |
-| Shops | Frequent shop, one-time shop | Daily / weekly |
-| Retire | Dock cleanup by rarity | When dock full |
-| Operations Siren | 10+ sub-workflows | Daily / weekly / monthly |
-| Data Collection | Ship census, stats, equipment | On-demand |
+| Category | Workflows | Frequency | Current status |
+|----------|-----------|-----------|----------------|
+| Lifecycle | Restart, Login | On-demand / error recovery | design inventory |
+| Rewards | Reward collect, Mail collect | Every 15-30 min | design inventory |
+| Commissions | Collect + dispatch | Every 60 min | design inventory |
+| Research | Collect + select project | Every 60-480 min | design inventory |
+| Dorm | Feed ships, collect love/coins | Every 4-8 hours | design inventory |
+| Private Quarters | Buy roses/cakes, interact | Daily | design inventory |
+| Guild | Logistics, tech, operations | Daily | design inventory |
+| Daily Missions | Daily Hard/Normal stages | Daily | design inventory |
+| Exercise | PvP battles | 3x daily (reset windows) | design inventory |
+| Meowfficer | Buy, fort chores, train, enhance | Daily + intervals | design inventory |
+| Shops | Frequent shop, one-time shop | Daily / weekly | design inventory |
+| Retire | Dock cleanup by rarity | When dock full | design inventory |
+| Operations Siren | 10+ sub-workflows | Daily / weekly / monthly | design inventory |
+| Data Collection | Ship census, stats, equipment | On-demand | design inventory |
 
 ---
 
@@ -199,349 +214,3 @@
 - Comfort level
 
 **Timers set:** `dorm_next_feed` = now + configured interval (4-8 hours)
-
----
-
-## 6. Private Quarters
-
-**Purpose:** Build intimacy with selected ships via daily interactions.
-
-**Entry state:** `page_private_quarters`
-**Navigation:** `page_main` → `page_private_quarters`
-
-**Sequence:**
-1. Navigate to private quarters
-2. **Shop phase:**
-   a. Open PQ shop
-   b. Check rose/cake inventory (OCR per-locale)
-   c. Buy roses if gold > 24,000 threshold
-   d. Buy cakes if gems > 210 threshold
-   e. Close shop
-3. **Interaction phase:**
-   a. Select target ship (configured per slot, 6 slots: Beach + Loft rooms)
-   b. Read daily intimacy count (OCR with retry — fast PCs need 3x retries for UI lag)
-   c. If interactions remaining:
-      - Tap gift button
-      - Select rose/cake gift
-      - Confirm gift
-      - Repeat until daily limit reached
-   d. Move to next target ship
-4. Return to `page_main`
-
-**Data read:**
-- Rose/cake inventory counts (OCR, locale-dependent letter colors)
-- Daily interaction counter (OCR with retry)
-- Intimacy level per ship
-- Shop prices
-
-**Decision logic:**
-- Gift priority: roses (cheaper) before cakes (gems)
-- Ship priority: highest-intimacy ships first (approaching oath/affinity milestones)
-- Server support: TW server unsupported for some PQ features
-
-**Data produced:**
-- Intimacy gains per ship per day
-- Rose/cake inventory changes
-- Gift log
-
-**Timers set:** `private_quarters_next` = next server reset
-
----
-
-## 7. Guild Workflow
-
-**Purpose:** Collect guild rewards, run logistics, contribute to tech, run guild operations.
-
-**Entry state:** `page_guild`
-**Navigation:** `page_main` → `page_guild`
-
-**Sub-pages:** Lobby, Members, Logistics, Tech, Operations (+ Apply if leader)
-
-**Sequence:**
-1. Navigate to guild
-2. **Logistics:**
-   a. Check mission completion status (color inspection on button)
-   b. Collect finished missions
-   c. Accept new missions
-   d. Exchange guild supplies
-3. **Tech:**
-   a. Donate to guild tech projects
-   b. Claim tech rewards
-4. **Operations:**
-   a. Check guild operation status
-   b. Run available operations
-   c. Collect operation rewards
-5. Determine guild role (leader vs member) via navbar button count
-6. If leader: handle apply/member management
-7. Return to `page_main`
-
-**Data read:**
-- Mission completion buttons (color: green=complete, gray=pending)
-- Contribution points (OCR)
-- Supply exchange availability
-- Navbar button count (determines role)
-
-**Decision logic:**
-- Role detection: leader has extra nav buttons
-- Logistics: always collect, always accept next
-- Tech: donate to cheapest incomplete project
-- Operations: run if available, skip if already running
-
-**Data produced:**
-- Guild contribution totals
-- Mission rewards collected
-- Supply exchange log
-
----
-
-## 8. Daily Missions
-
-**Purpose:** Complete daily combat missions for rewards.
-
-**Entry state:** `page_daily`
-**Navigation:** `page_main` → `page_campaign` → `page_daily`
-
-**Sequence:**
-1. Navigate to daily mission screen
-2. Read available daily stages (3-7 depending on day + events)
-3. For each configured stage:
-   a. Check if stage is active (`is_active()` — brightness > 30)
-   b. Read remaining attempts (OCR)
-   c. If attempts > 0:
-      - Select stage
-      - Choose fleet (configurable fleet index)
-      - Start battle
-      - Wait for battle completion
-      - Collect rewards
-4. Return to `page_main`
-
-**Data read:**
-- Stage active status (average brightness of DAILY_ACTIVE area)
-- Remaining attempt count (OCR)
-- Fleet index for each stage (OCR)
-- Battle result (victory/defeat)
-
-**Decision logic:**
-- Stage selection: configured per day-of-week
-- Fleet assignment: mapped per stage type
-- Skip conditions: no remaining attempts, stage not active
-
----
-
-## 9. Exercise (PvP)
-
-**Purpose:** Complete PvP exercise battles.
-
-**Entry state:** `page_exercise`
-**Navigation:** `page_main` → `page_exercise`
-
-**Sequence:**
-1. Navigate to exercise page
-2. Read exercise attempt count (resets 3x daily)
-3. For each available attempt:
-   a. Select opponent (usually weakest available)
-   b. Choose fleet
-   c. Start battle
-   d. Handle battle (auto or manual fleet selection)
-   e. Record win/loss
-4. Return to `page_main`
-
-**Data read:**
-- Exercise attempt count
-- Opponent fleet power
-- Win/loss result
-
----
-
-## 10. Meowfficer Workflow
-
-**Purpose:** Manage Meowfficer training, purchases, and fort chores.
-
-**Entry state:** `page_meowfficer`
-**Navigation:** `page_main` → `page_meowfficer`
-
-**Sequence (ordered):**
-1. **Buy phase:**
-   a. Open Meowfficer shop
-   b. Purchase available Meowfficer boxes (configured count)
-   c. Close shop
-2. **Fort chores:**
-   a. Navigate to fort
-   b. Collect completed chore rewards
-   c. Assign new chores
-3. **Training:**
-   a. Check training status
-   b. If complete: collect trained Meowfficer
-   c. Start new training if slots available
-   d. Record training completion timer
-4. **Enhance (Sunday only):**
-   a. Merge surplus Meowfficers into priority ones
-   b. Select enhance targets based on rarity + skills
-
-**Data read:**
-- Meowfficer count
-- Training completion timer
-- Rarity distribution (color-based)
-- Fort chore status
-
-**Decision logic:**
-- Buy count: configurable (0-3 per day)
-- Training priority: highest rarity first
-- Enhance: only on Sundays (game restriction)
-- Wait for training: scheduler delays 2.5-3.5 hours
-
-**Timers set:** `meowfficer_training_complete`
-
----
-
-## 11. Shop Workflows
-
-**Purpose:** Purchase daily/weekly items from shops.
-
-### Frequent Shop (daily)
-- Buy food, plates, and T3 skill books
-- Read prices (OCR), check gold budget
-- Buy in priority order
-
-### One-Time Shop (weekly reset)
-- Buy cubes, gold boxes, T4 books
-- More expensive items, tighter budget logic
-
-**Data read:** Item prices, inventory counts, gold/gem balance
-**Timers set:** `shop_frequent_next` = daily reset, `shop_once_next` = weekly reset
-
----
-
-## 12. Retire / Dock Cleanup
-
-**Purpose:** Retire low-rarity ships to free dock space.
-
-**Entry state:** `page_retire`
-**Navigation:** `page_main` → `page_dock` → `page_retire`
-
-**Sequence:**
-1. Open dock in retire mode
-2. Apply rarity filter (select N/R based on config)
-3. Grid layout: 7×2 = 14 ships per page
-4. Scan each ship card:
-   a. Read rarity via color sampling (gray=N, blue=R, purple=SR, gold=SSR)
-   b. Match against configured retirement rarity
-5. Select ships for retirement (up to batch limit)
-6. Confirm retirement (multi-step confirmation screen)
-7. Record resource gains (coins, oil, retrofit items)
-8. Repeat if more ships remain
-9. Return to `page_main`
-
-**Data read:**
-- Ship rarity colors (RGB threshold ±15)
-- Ship count in dock
-- Resource gains from retirement
-
-**Decision logic:**
-- Rarity filter: N always, R optional, SR/SSR never (configurable)
-- GemsFarming protection: don't retire CVs if GemsFarming enabled
-- Batch size: game limits per retirement batch
-
----
-
-## 13. Operations Siren (Full Scope)
-
-OpSi is the most complex workflow family. It operates on a separate world map
-with zones, ports, bosses, and monthly resets.
-
-### 13a. OpsiDaily
-- Complete 8 daily missions from OpSi mission board
-- Read mission targets (zone coordinates, mission type)
-- Navigate to zones, complete objectives, return to port
-
-### 13b. OpsiAshBeacon + OpsiAshAssist
-- Collect Ash beacons from a storage system
-- Assist other players' Ash fights
-- Coordinate collection timing
-
-### 13c. OpsiObscure
-- Find and clear obscure/secret zones
-- Zone coordinates stored between sessions
-- Combat with boss encounters
-
-### 13d. OpsiAbyssal
-- Engage abyssal boss encounters
-- Multi-fleet retry logic (switch fleets on failure)
-- Track defeat patterns
-
-### 13e. OpsiArchive
-- Purchase weekly logger archive entries
-- Resets on Wednesdays
-- Resource cost evaluation
-
-### 13f. OpsiStronghold
-- Locate and attack Siren stronghold bosses
-- Multi-fleet combat with adaptability scoring
-- Zone searching + navigation
-
-### 13g. OpsiMonthBoss
-- Monthly endgame boss with Normal and Hard modes
-- Requires adaptability threshold checks
-- Fleets must meet minimum power requirements
-
-### 13h. OpsiMeowfficerFarming
-- Grind Hazard 1-5 zones for Meowfficer drops
-- Smart zone selection (prefer cheapest oil cost)
-- Long-running farming loop
-
-### 13i. OpsiExplore
-- Month-start exploration of all dangerous zones
-- Resumable (tracks explored zones across sessions)
-- Systematic coverage of world map
-
-### 13j. OpsiCrossMonth
-- Handle monthly reset synchronization
-- Waits for server reset with 60s polling within 10-minute window
-- Ensures clean monthly transition
-
-**Data read (OpSi common):**
-- Zone coordinates, mission markers on globe
-- Fleet power + adaptability scores
-- Resource costs (oil, action points)
-- Boss HP bars and completion status
-- Port daily mission list
-
----
-
-## Missing Workflows (Not Yet in tasks.json)
-
-These workflows exist in ALAS but are not yet represented in our task definitions:
-
-| Workflow | ALAS Module | Priority |
-|----------|-------------|----------|
-| Private Quarters | `module/private_quarters/` | HIGH |
-| OpsiDaily | `module/os/` | HIGH |
-| OpsiAshBeacon | `module/os/` | MEDIUM |
-| OpsiExplore | `module/os/` | MEDIUM |
-| OpsiMeowfficerFarming | `module/os/` | LOW |
-| ShopFrequent | `module/shop/` | MEDIUM |
-| ShopOnce | `module/shop/` | LOW |
-| Shipyard | `module/` | LOW |
-| Freebies | `module/` | MEDIUM |
-| Awaken | `module/` | LOW |
-| Campaign stages | `module/campaign/` | LOW |
-| Event stages | `module/campaign/event_*/` | EVENT |
-
----
-
-## Data Flow Summary
-
-Every workflow follows the same fundamental pattern:
-
-```
-Screenshot → Crop Region → OCR/Color/Template → Parse → Filter/Decision → Tap → Next
-```
-
-The runtime must support:
-1. **Screenshot capture** — via ADB (`adb_bridge.py`)
-2. **Region extraction** — crop to known coordinates
-3. **Recognition** — OCR (text), color sampling (status), template matching (icons)
-4. **Decision** — config-driven rules applied to extracted data
-5. **Action** — tap, swipe, long-press at computed coordinates
-6. **State verify** — screenshot again, confirm expected state reached
-7. **Record** — log the event, update resources, set timers

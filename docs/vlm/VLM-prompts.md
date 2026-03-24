@@ -4,74 +4,73 @@
 
 ## Purpose
 
-This document captures prompt policy for the multimodal pipeline.
+This document captures prompt-layer guidance only.
 
-The prompts are part of the system, but they are not the whole system.
+Prompts are the natural-language instruction layer sitting on top of model profiles and task contracts. They should stay minimal.
 
-## What Prompts Should Do
+See also:
+- [VLM-overview.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-overview.md)
+- [VLM-model-profiles.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-model-profiles.md)
+- [VLM-task-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-task-contracts.md)
 
-Prompts should provide only the irreducible natural-language instruction required for the task.
+## What Prompt Text Should Do
 
-They should not carry responsibilities that belong elsewhere.
+Prompt text should provide only the irreducible task instruction required for the current call.
 
-## What Belongs Outside Prompt Text
+It should help the model:
 
-Do not rely on prompt wording for things the stack can enforce directly:
+- attend to the right evidence
+- use the provided task context
+- respect the candidate set or target description
+- prefer uncertainty over fabrication
 
-- structured output mode
-- JSON/schema enforcement
-- reasoning policy
+## What Prompt Text Should Not Own
+
+Do not put these responsibilities into prompts when the stack can define them elsewhere:
+
 - backend selection
+- structured output mode
+- schema enforcement
+- reasoning mode
 - image packing policy
-- retry/adjudication policy
+- retry policy
+- adjudication policy
+- output field definitions
 
-Those belong in model profiles, task contracts, and pipeline logic.
+Those belong in profiles, task contracts, or pipeline logic.
 
-## Shared Prompt Assumptions
+## Prompt Families
 
-Across tasks, prompt text should:
+### Classification
 
-- stay grounded in the supplied evidence
-- prefer uncertainty over fabricated certainty
-- use task context when provided
-- avoid broad hidden assumptions about the application state
-
-## Classification Prompt Family
-
-Use for choosing among candidate labels or substates.
+Use for candidate-based substate selection.
 
 Prompt text should focus on:
 
 - the task context
-- the candidate set
+- the candidate labels
 - any sequence context that matters
 
-Avoid telling the model to invent a global taxonomy.
+### Grounding
 
-## Grounding Prompt Family
-
-Use for locating visible elements.
+Use for finding visible UI targets or cues.
 
 Prompt text should focus on:
 
 - the target description
 - relevant task context
-- the desired form of grounding result
+- the desired grounding form
 
-Avoid pretending a point estimate is always enough when the task really needs a region or uncertainty.
+### Comparison / Adjudication
 
-## Comparison / Adjudication Prompt Family
-
-Use when comparing frames or resolving disagreements.
+Use for frame-to-frame comparison or conflict resolution.
 
 Prompt text should focus on:
 
 - what is being compared
-- what decision must be made
+- what decision is required
 - what evidence should break the tie
 
-## Current Operational Direction
+## Operational Rule
 
-- use multi-image context when a single frame is insufficient
-- keep prompt text minimal
-- move more behavior into profiles and task contracts over time
+If a prompt starts carrying configuration, schema, or backend policy, that content is in the wrong file.

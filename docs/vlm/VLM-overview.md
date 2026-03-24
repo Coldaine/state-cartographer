@@ -4,42 +4,56 @@
 
 ## Purpose
 
-`docs/vlm/` is where the repo defines how it uses multimodal models.
+`docs/vlm/` defines how this repo uses multimodal models.
 
-This bucket owns:
+This bucket is for capability framing and contract boundaries, not for pretending a live runtime already exists.
 
-- model profiles
-- task contracts
-- context-packing policy
-- structured-output expectations
-- prompt policy
-- local/remote adjudication patterns
+See also:
+- [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md)
+- [observation-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/observation-contracts.md)
+- [VLM-model-profiles.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-model-profiles.md)
+- [VLM-task-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-task-contracts.md)
+- [VLM-prompts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-prompts.md)
 
-## Current Role
+## What VLM Is For Here
 
-VLM is a first-class capability area.
-
-It is not just a helper for page classification. In this repo it potentially supports:
+VLM support is used for tasks such as:
 
 - substate classification
 - OCR-heavy extraction
-- element grounding
+- UI element grounding
 - frame comparison
 - disagreement adjudication
-- workflow-context reasoning
+- workflow-context reasoning when deterministic logic is not enough
 
-## Current Code Reality
+## Current Reality
 
-The surviving active code is still script-shaped and limited:
+The active code surface is still limited.
 
-- `scripts/vlm_detector.py` is an offline tool
-- structured contract design is still being clarified
-- the repo is not yet using a fully re-earned runtime observation pipeline
+- `scripts/vlm_detector.py` is an offline labeling/adjudication tool
+- the repo does not yet have a fully re-earned live VLM runtime path
+- model/task boundaries are being made explicit in docs before they are trusted in runtime code
 
 ## Design Direction
 
-- local multimodal models should do the cheap, frequent work
-- stronger remote models should handle difficult adjudication and harder reasoning
-- multi-image context should be normal when ambiguity demands it
-- task schemas and model profiles should be explicit
-- prompts should be thin compared to the rest of the inference stack
+The intended split is:
+
+- local multimodal models for frequent, cheap, context-rich work
+- stronger remote models for adjudication and harder reasoning
+
+The intended defaults are:
+
+- multi-image context when ambiguity requires it
+- explicit task contracts
+- explicit model profiles
+- thin prompt text
+- policy in config/contracts rather than in prose
+
+## Document Map
+
+- [VLM-model-profiles.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-model-profiles.md)
+  - backend/model capability configuration
+- [VLM-task-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-task-contracts.md)
+  - task schemas, expected inputs, and outputs
+- [VLM-prompts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-prompts.md)
+  - prompt-layer guidance only

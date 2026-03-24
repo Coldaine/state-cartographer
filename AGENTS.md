@@ -2,64 +2,65 @@
 
 This file is the mandatory starting point.
 
-## Docs Are the Agent Knowledge Layer
+Its job is repo-level indexing, not explanation. Use it to find the right project knowledge quickly.
 
-The `docs/` tree is project memory for the agent. It is not primarily end-user documentation. It exists to preserve architecture, constraints, operating assumptions, historical context, and open questions in a form that can be retrieved reliably across sessions.
+## Required Reading
 
-## Read This First
+| Document | What It Covers |
+|---|---|
+| [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md) | Where the project actually stands right now. |
+| [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/project/repo-index.md) | Exhaustive high-level map of code, docs, data, and retained artifacts. |
+| [architecture-overview.md](/mnt/d/_projects/MasterStateMachine/docs/architecture-overview.md) | How the repo is organized: domains, knowledge buckets, and implementation axes. |
+| [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md) | Current tactical plan and near-term rebuild priorities. |
+| [north-star.md](/mnt/d/_projects/MasterStateMachine/docs/project/north-star.md) | Long-horizon goals and desired end-state behavior. |
 
-1. [CLAUDE.md](CLAUDE.md)
-2. [repo-status.md](docs/project/repo-status.md)
-3. [architecture-overview.md](docs/architecture/architecture-overview.md)
-4. [rebuild-interview.md](docs/plans/rebuild-interview.md)
-5. [north-star.md](docs/project/north-star.md)
+## Documentation Domains
 
-## Retained Domains
+Only these remain explicit domains in the docs tree:
 
-Only two documentation domains remain explicit:
+- `ALS` — ALAS as reference system, corpus source, and comparison point
+- `RES` — research, synthesis, hypotheses, and technical investigations
 
-- `ALS` — ALAS as reference system, corpus source, and operational comparison point
-- `RES` — research, investigations, synthesis, and technical hypotheses
+These live under:
 
-Everything else in `docs/` is organized as a knowledge bucket rather than a domain.
+- [ALS-overview.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-overview.md)
+- [RES-founding-synthesis.md](/mnt/d/_projects/MasterStateMachine/docs/RES-research/RES-founding-synthesis.md)
 
-## Knowledge Buckets
 
-- `project/` — repo status, north star, testing posture
-- `architecture/` — architecture map and organizing principles
-- `workflows/` — assignment and workflow inventories
-- `prework/` — corpus work, labeling, extraction, and data gathering before a live runtime
-- `runtime/` — future live-system contracts and retained runtime design knowledge
-- `vlm/` — model profiles, task contracts, prompt policy, and multimodal design
-- `plans/` — active and historical planning documents
-- `decisions/` — ADRs and project decisions
+For the docs-only map, read [docs/AGENTS.md](/mnt/d/_projects/MasterStateMachine/docs/AGENTS.md).
 
-## Current Working Reality
+## High-Level Repo Map
 
-As of 2026-03-24:
+This is the minimal filesystem map you should keep in mind:
 
-- active code is still narrow and data-first
-- the ALAS log plus screenshot corpus workflow remains real and important
-- `scripts/vlm_detector.py` is an offline labeling and analysis tool, not live runtime truth
-- `quarantine/` holds code retained for possible salvage, not supported operation
-- historical `OBS/NAV/EXE/AUT` naming is preserved only as context inside migrated docs
+| Path | Purpose |
+|---|---|
+| `vendor/` | External reference code, especially ALAS |
+| `data/` | Corpora, logs, screenshots, labels, and other truth artifacts |
+| `docs/` | Agent knowledge layer |
+| `scripts/` | Current active script-shaped tooling |
+| `quarantine/` | Unsupported retained material, if any remains |
+| `tests/` | Current automated checks |
+| `examples/` | Reference/example artifacts |
 
-## Active Code Surface
+For the expanded version, read [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/project/repo-index.md).
 
-- `scripts/label_raw_stream.py`
-- `scripts/screenshot_dedupe.py`
-- `scripts/delete_black_frames.py`
-- `scripts/vlm_detector.py`
+## Key Documentation Entry Points
 
-## Vendor Stance
+| Document | Why It Matters |
+|---|---|
+| [ALS-overview.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-overview.md) | Why ALAS matters and how to use it correctly as reference material |
+| [VLM-overview.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-overview.md) | What multimodal models are expected to do in this project |
+| [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md) | What the eventual live runtime is supposed to own |
+| [observation-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/observation-contracts.md) | Observation-side contracts and what is still only design guidance |
+| [azur-lane-workflows.md](/mnt/d/_projects/MasterStateMachine/docs/workflows/azur-lane-workflows.md) | Workflow/task inventory and substate complexity |
+| [alas-build-plan.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-build-plan.md) | Operational program for deriving artifacts from ALAS |
+| [master-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/master-plan.md) | Archived long-horizon plan context still worth knowing |
 
-`vendor/AzurLaneAutoScript/` remains intact.
+## Examples and Meta
 
-ALAS is used as:
-
-- reference architecture
-- corpus source material
-- evidence of workflow complexity
-- a comparison point for what a mature automation system actually has to solve
-
-ALAS is not the repo's shipped runtime.
+| Path | Purpose |
+|---|---|
+| `examples/azur-lane/` | Current Azur Lane example/reference artifacts |
+| `README.md` | GitHub-facing project overview |
+| `.githooks/pre-commit` | Local formatting hook used by the repo |

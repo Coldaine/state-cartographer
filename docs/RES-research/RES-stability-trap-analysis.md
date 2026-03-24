@@ -1,50 +1,69 @@
-# Technical Hypothesis: The "Stability Trap" (UI Paralysis)
+# Technical Hypothesis: The Stability Trap
 
 > Historical note: moved from `docs/research/RES-stability-trap-analysis.md` during the 2026 documentation realignment.
 
+## Status
 
-## 1. Problem Statement
-The bot frequently enters a state where it "does nothing" for several minutes, eventually triggering a `GameStuckError` and a full app restart. This occurs even when the game is clearly on the correct screen and the bot is successfully capturing at least some valid (non-black) frames.
+This document records a durable failure hypothesis from ALAS-era live investigation.
 
-## 2. Theoretical Basis: The ALAS Stability Timer
-ALAS (AzurLaneAutoScript) uses a `Timer(count=N)` class to handle UI transitions. 
+It is a hypothesis supported by observed evidence. It is not a closed proof.
 
-### The Algorithm:
-1. The bot searches for a specific UI element (e.g., `MAIN_GOTO_CAMPAIGN`).
-2. If it finds the element, it increments a **consecutive success counter**.
-3. If it **fails** to find the element (or sees a black frame), the counter is **immediately reset to 0**.
-4. The bot will **only** take an action (click or transition) when the counter reaches `N` (usually `count=3` or `count=5`).
+See also:
+- [ALS-live-ops.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-live-ops.md)
+- [backend-hardening.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/backend-hardening.md)
+- [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
 
-### The Mathematical Conflict:
-On the current Win32 MEmu + DirectX harness, the screenshot pipeline (DroidCast/ADB) is producing valid frames at a low success rate (~10-20%), with "Black Frames" filling the gaps.
+## Problem Statement
 
-* **Probability of 1 valid frame:** $P \approx 0.2$
-* **Probability of 3 consecutive valid frames:** $P^3 \approx (0.2)^3 = 0.008$ (less than 1%)
+A recurring failure mode was: the bot appeared to do nothing for long periods, then eventually hit `GameStuckError` and restarted, even though occasional valid frames were still visible.
 
-**Result:** The bot is "blinking" so frequently that it can almost never achieve a streak of 3 valid frames. Even if it sees the correct button at $T=0$, a black frame at $T+1$ wipes its "memory," causing it to wait indefinitely for a stability streak that is statistically impossible.
+## Main Hypothesis
 
-## 3. Empirical Evidence (From `data/raw_stream`)
-Looking at the harvest from **2026-03-20 02:20**:
+The most plausible explanation was an interaction between:
 
-| Timestamp | Frame Hash/Size | Status | Bot Memory (Counter) |
-|-----------|-----------------|--------|----------------------|
-| 02:20:40 | 2.7 KB | **BLACK** | 0 |
-| 02:20:41 | 1.1 MB | **VALID** | 1 |
-| 02:20:42 | 2.7 KB | **BLACK** | **RESET TO 0** |
-| 02:20:43 | 2.7 KB | **BLACK** | 0 |
-| 02:20:44 | 2.7 KB | **BLACK** | 0 |
-| 02:20:45 | 65.5 KB | **PARTIAL** | 0 |
+- unstable screenshot capture
+- ALAS-style consecutive-frame stability checks
+- a requirement for multiple consecutive successful detections before acting
 
-**Conclusion:** The bot saw a perfect frame at `02:20:41`, but it could not act on it because the very next frame was black. To the bot's logic, the UI "disappeared," so it aborted the click and stayed "idle."
+If valid frames arrive too sparsely, the controller repeatedly loses its detection streak and never takes the transition it is waiting for.
 
-## 4. Proposed Mitigation
-We have begun relaxing the `count` requirement in high-traffic modules:
-* `module/research/research.py`: `count=3 -> count=1`
-* `module/guild/lobby.py`: `count=3 -> count=1`
-* `module/freebies/supply_pack.py`: `count=3 -> count=1`
+## Observed Evidence
 
-**Goal:** Allow the bot to "punch through" on a single valid frame without requiring a streak.
+The evidence that motivated this hypothesis was:
 
-## 5. Alternative Explanations (Not yet ruled out)
-* **MaaTouch vs. ADB Control:** It's possible the click commands are being sent but the emulator isn't processing them due to the same rendering hang that causes black frames.
-* **UI Overlays:** Transparent "Loading" or "Connecting" spinners might be present but invisible to the bot's current assets, causing it to wait for a "clear" screen that never comes.
+- intermittent valid frames mixed with many black or partial frames
+- repeated long waits on screens that visually appeared correct
+- recovery/restart behavior after prolonged inactivity
+- logs and raw-frame captures consistent with sparse valid-frame windows
+
+## What This Suggests
+
+If the upstream controller requires several consecutive confirmations before acting, a noisy provider can create a false "stability" requirement that is statistically hard to satisfy.
+
+The practical result is paralysis:
+- the screen is sometimes visible
+- the target may really be present
+- but the controller almost never reaches its action threshold
+
+## Mitigation Direction
+
+The mitigation direction suggested by this hypothesis is:
+
+- reduce dependence on long consecutive-success streaks where appropriate
+- improve screenshot/provider stability first
+- distinguish provider instability from true UI ambiguity
+- prefer measurement over intuition when evaluating wait logic
+
+## What Is Not Yet Proven
+
+These alternatives were not fully ruled out:
+
+- control commands were sent but not processed by the emulator
+- invisible overlays or wait states were blocking action
+- a different provider/control-path bug was the primary cause
+
+## Practical Use
+
+Use this document as preserved failure analysis.
+
+Do not treat the numeric estimates from the original investigation as current truth unless they are re-measured on the current stack.

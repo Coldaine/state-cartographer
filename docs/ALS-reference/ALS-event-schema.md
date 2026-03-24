@@ -2,9 +2,9 @@
 
 > Historical note: moved from `docs/alas/ALS-event-schema.md` during the 2026 documentation realignment.
 
+This document defines a schema worth preserving for ALAS-derived execution recording and later runtime analysis.
 
-This document defines the event log format for recording real ALAS-driven
-actions through the emulator.
+It is a schema/reference document. It is **not** evidence that the currently active repo code emits this event stream today.
 
 The purpose is to bridge:
 
@@ -13,6 +13,10 @@ The purpose is to bridge:
 - semantic UI actions
 - page/state observations
 - takeover-runtime replay and analysis
+
+See also:
+- [ALS-overview.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-overview.md)
+- [ALS-live-ops.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-live-ops.md)
 
 ## Design Rules
 
@@ -217,35 +221,3 @@ Examples:
   "duration_ms": 1380
 }
 ```
-
-## First Instrumentation Targets
-
-The first hook points should be:
-
-- `vendor/AzurLaneAutoScript/module/device/control.py`
-- `vendor/AzurLaneAutoScript/module/device/app_control.py`
-- `vendor/AzurLaneAutoScript/module/device/screenshot.py`
-- `vendor/AzurLaneAutoScript/module/ui/ui.py`
-
-Secondary semantic handlers:
-
-- `vendor/AzurLaneAutoScript/module/handler/login.py`
-- `vendor/AzurLaneAutoScript/module/handler/info_handler.py`
-- `vendor/AzurLaneAutoScript/module/handler/fast_forward.py`
-
-## Immediate Implementation Rule
-
-When instrumenting:
-
-- emit one event before execution when useful
-- emit one event after execution with outcome
-- do not silently drop failures
-- keep the file format line-oriented and append-safe
-
-## Done Criteria
-
-This schema is doing its job when:
-
-- a real ALAS assignment produces a parseable event stream
-- each event can be tied back to assignment, action, and state
-- failures and recoveries are visible without reading raw logs

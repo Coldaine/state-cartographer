@@ -2,48 +2,76 @@
 
 > Historical note: moved from `docs/alas/ALS-overview.md` during the 2026 documentation realignment.
 
+**Status: Active reference system and corpus source, not the shipped runtime**
 
-**Status: Running, actively used for observation harvesting (March 2026)**
+ALAS (AzurLaneAutoScript) is a long-lived automation framework for Azur Lane. In this repo it is not the runtime being built. It is a reference implementation, an operational evidence base, and a source of screenshots, logs, patches, and learned failure cases.
 
-ALAS (AzurLaneAutoScript) is a 9-year-old automation framework for Azur Lane. It is **not our runtime** — it is a reference implementation we learn from and a source of labeled observations.
+See also:
+- [ALS-live-ops.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-live-ops.md)
+- [ALS-event-schema.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-event-schema.md)
+- [alas-build-plan.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-build-plan.md)
 
 ## Role in State Cartographer
 
-- **Observation source**: ALAS runs the game → monkeypatch captures every screenshot → corpus feeds VLM classification and anchor calibration
-- **Ground truth for page names**: ALAS's internal page detection provides labels (but these are task-context labels, not visual labels — "page_reward" means the Reward task is running, not that a reward screen is visible)
-- **Reference architecture**: ALAS solved every problem State Cartographer addresses — state detection, navigation, scheduling, error recovery — by hand for one game. We study its patterns.
-- **NOT the live control plane**: State Cartographer's own harness will replace ALAS for live control
+- **Reference implementation**: ALAS already solved page detection, deterministic navigation, scheduling, and recovery for one concrete game.
+- **Corpus source**: ALAS runs can produce screenshots and logs that remain useful for offline analysis and labeling.
+- **Operational prior art**: ALAS exposes real workflow complexity, real failure handling, and real naming conventions.
+- **Not the live control plane**: this repo should not pretend that using ALAS is equivalent to shipping State Cartographer runtime behavior.
 
-## What exists today
+## Why ALAS Matters
 
-- `vendor/AzurLaneAutoScript/` — upstream LmeSzinc/AzurLaneAutoScript repo
-- Monkeypatch in `vendor/.../module/device/screenshot.py:76-85` — saves every screenshot to `data/raw_stream/`
-- `scripts/alas_observe_runner.py` — in-process monkeypatch of ALAS classes for full observation recording
-- `scripts/alas_log_parser.py` — structured parser for ALAS log files (page events, actions, errors)
-- `scripts/alas_converter.py` — converts ALAS button/page definitions to graph.json format
-- `scripts/alas_action_inventory.py` — catalogs ALAS action patterns
-- `scripts/alas_command_inventory.py` — catalogs ALAS module commands
-- `scripts/alas_event_instrumentation.py` — event extraction from ALAS
-- `scripts/alas_corpus_summarize.py` — corpus statistics
+ALAS matters because it proves the problem is real and tractable.
 
-## Key findings (March 2026)
+It gives the repo:
+- mature operational prior art
+- real workflow complexity
+- real recovery patterns
+- a concrete target for comparison
+- evidence about what breaks in live automation, not just what looks clean on paper
 
-- **Black frames on restart**: atx-agent race condition. STOP hard-kills the process (no cleanup), START reconnects to a half-dead atx-agent. Recovery is reactive, not proactive.
-- **ALAS labels are task-context, not visual**: "page_reward" means Reward task is active, screen may show Commission list. VLM labels are visually accurate. Don't use ALAS labels as visual ground truth.
-- **Screenshot method**: uiautomator2 works. DroidCast produces excessive black frames on MEmu. DroidCast was the original cause of "bot does nothing" paralysis.
-- **Meowfficer Fort**: consistently causes GameStuckError — the game screen goes to black frames during fort interaction, not a UI matching problem.
+## Conceptual Mapping
 
-## Operational notes
+The mapping from ALAS concepts into repo concepts is still useful, but it is conceptual only.
 
-- Config: `vendor/AzurLaneAutoScript/config/alas.json` (the active config, uses uiautomator2)
-- Logs: `vendor/AzurLaneAutoScript/log/YYYY-MM-DD_alas.txt`
-- Launch: via `gui.py`, select `alas` config in web UI at localhost:22267
-- Clean slate before launch is mandatory — see CLAUDE.md for the PowerShell cleanup commands
+| ALAS Component | Repo Concept |
+|---|---|
+| `module/ui/page.py` | explicit page/state knowledge |
+| `module/ui/assets.py` | anchors, regions, and UI cues |
+| `module/ui/ui.py` | locate + goto patterns |
+| scheduler commands/tasks | assignment/workflow inventory |
+| device control and screenshot layers | operator/runtime backend requirements |
 
-## Key scripts
+This table is a reasoning aid. It is not a claim that equivalent repo code currently exists or is trustworthy.
 
-| Script | Lines | What it does |
-|--------|-------|-------------|
-| alas_observe_runner.py | ~450 | Monkeypatch ALAS for full observation recording |
-| alas_log_parser.py | ~1100 | Structured parser for ALAS log files |
-| alas_converter.py | ~350 | Convert ALAS definitions to graph.json |
+## What Exists Today
+
+The durable ALAS surfaces in this repo are:
+- `vendor/AzurLaneAutoScript/`
+- ALAS logs under `vendor/AzurLaneAutoScript/log/`
+- local vendor patches described in `ALS-live-ops.md`
+- screenshot/corpus artifacts under `data/` when collection has been run
+- ALS reference docs in this folder
+
+Do not assume older repo-side ALAS helper scripts still exist just because older docs or plans mention them. Most of that script surface has been deliberately removed.
+
+## Key Findings Preserved From ALAS Work
+
+- **ALAS labels are task-context labels, not pure visual labels**: a task/page name in ALAS does not necessarily mean the visible frame matches that label in a visually strict sense.
+- **Black-frame behavior is operationally important**: black frames often point to screenshot/provider churn or recovery issues rather than simple page-classification failure.
+- **Screenshot transport matters**: different screenshot methods materially change whether the system appears stable or inert.
+- **Some failures are domain-specific and recurring**: certain Azur Lane flows repeatedly trigger distinct failure classes that are worth remembering as named problems.
+
+## Operational Pointers
+
+- active config is typically under `vendor/AzurLaneAutoScript/config/`
+- logs are under `vendor/AzurLaneAutoScript/log/`
+- live-run handling rules are in `ALS-live-ops.md`
+- schema guidance for ALAS-derived event recording is in `ALS-event-schema.md`
+
+## How To Use ALAS Correctly
+
+- Use it as reference architecture.
+- Use it as a corpus and operational truth source.
+- Use it to understand workflow complexity and failure modes.
+- Do not treat its internal task/page names as automatically valid visual labels.
+- Do not treat wrapping or launching ALAS as equivalent to the runtime this repo intends to build.

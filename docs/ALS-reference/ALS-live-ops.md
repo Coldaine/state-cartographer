@@ -2,8 +2,12 @@
 
 > Historical note: moved from `docs/alas/ALS-live-ops.md` during the 2026 documentation realignment.
 
-
 These are the non-negotiable rules for live ALAS runs in this repo.
+
+See also:
+- [ALS-overview.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-overview.md)
+- [ALS-event-schema.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-event-schema.md)
+- [backend-hardening.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/backend-hardening.md)
 
 ## Hard Rules
 
@@ -29,10 +33,11 @@ These are the non-negotiable rules for live ALAS runs in this repo.
    - Monitoring must flag appended-log `Request human takeover` immediately.
    - Monitoring must record the last successful task and the last terminal recovery path.
 
-## Current Repo Enforcement
+## Current Repo Reality
 
-- No automated enforcement of duplicate-controller detection or takeover-exit is currently implemented
-  (the runner that did this was deleted as over-engineering). Monitor ALAS logs manually.
+- No automated enforcement of duplicate-controller detection or takeover-exit is currently implemented in the active repo surface.
+- Do not assume older wrappers or runners still exist just because earlier docs mention them.
+- Treat live ALAS operation here as manual/supervised unless and until that automation is re-earned.
 
 ## Vendor Patches (applied directly in `vendor/AzurLaneAutoScript/`)
 

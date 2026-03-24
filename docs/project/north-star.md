@@ -2,33 +2,56 @@
 
 > Historical note: moved from `docs/NORTH_STAR.md` during the 2026 documentation realignment.
 
+This document describes the desired end state of the project.
 
-State Cartographer automates Azur Lane daily operations. These are the goals for the finished system.
+It is strategic target material, not a statement of current capability.
+
+For current truth and near-term movement, read:
+- [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
+- [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md)
+
+## Desired End State
+
+State Cartographer automates Azur Lane daily operations with a supervised runtime that is reliable, inspectable, and incrementally improvable.
 
 ## Goals
 
-1. **Automate daily tasks** — commissions, research, dorm, meowfficer, guild, dailies, exercise, shop, shipyard, OpSi. The system runs the full daily loop without human involvement.
+1. **Automate daily tasks**
+   - commissions, research, dorm, meowfficer, guild, dailies, exercise, shop, shipyard, OpSi
+   - the mature system can run the daily loop without routine human intervention
 
-2. **Navigation is cheap and deterministic** — given the state graph, move between any two screens without vision reasoning. Known routes execute as tap sequences, not LLM calls.
+2. **Navigation is cheap and deterministic where earned**
+   - known routes should execute as trusted action sequences rather than repeated high-cost model calls
 
-3. **State detection is reliable** — the system always knows what screen it's on. Rendering glitches, black frames, and UI variations don't cause it to lose track.
+3. **State detection is reliable**
+   - the system should maintain trustworthy orientation across rendering glitches, black frames, and UI variation
 
-4. **Recovery is automatic for known errors** — unexpected popups, loading screens, black frame floods, app crashes, and stuck states are handled without escalation. Known failure patterns have known recovery paths.
+4. **Recovery is automatic for known failures**
+   - known popups, loading states, crashes, and stuck patterns should have known recovery paths
 
-5. **Progressive determinism** — interactions that start as vision-driven become deterministic after enough observations. The system gets cheaper and faster over time. The goal is to shrink the vision-required set to <5% of all operations.
+5. **Progressive determinism**
+   - interactions may start vision-heavy but should become cheaper and more deterministic as the project learns them
 
-6. **Resource awareness gates execution** — the system checks resource requirements before running tasks. Don't farm if oil < 200. Resources are observed from the game UI, not computed.
+6. **Resource awareness gates execution**
+   - task execution should be constrained by observed game state, not by guessed or stale bookkeeping
 
-7. **Data collection is a first-class operation** — the system can inventory the entire dock (400+ ships), read ship stats/equipment/skills, record fleet formations, snapshot resource levels. Pagination is robust, interruptible, and resumable from checkpoints.
+7. **Data collection is a first-class capability**
+   - the system should be able to inventory, snapshot, and revisit rich game state, not just click through daily chores
 
-8. **Gestures are first-class actions** — swipes through the dock, map panning in OpSi, pinch-to-zoom. Gestures are recorded as parameterized actions (start, end, duration) and replayable.
+8. **Gestures are first-class actions**
+   - swipes, pans, and other non-tap interactions should be represented and replayed intentionally
 
-9. **Recording captures everything** — every screenshot, tap, state transition, and error is logged in an append-only event log. The corpus enables replay, debugging, calibration, and learning.
+9. **Recording is rich enough for replay and diagnosis**
+   - screenshots, actions, transitions, and failures should be recoverable enough to support analysis and repair
 
-10. **The system runs autonomously and escalates genuine decisions** — routine operations don't require a supervisor. Escalation happens with full context: screenshot, current state candidates, recent actions, what was tried, proposed recovery options.
+10. **Autonomy is paired with escalation**
+   - routine work should not require supervision, but genuine ambiguity should escalate with context
 
-11. **Escalation is rich, not blind** — when the system escalates, it provides enough context for the supervisor (human or AI) to make a decision without re-investigating from scratch.
+11. **Escalation is decision-ready**
+   - escalation should include enough state and recent-history context that a supervisor can act without re-investigating from scratch
 
-12. **The system is buildable incrementally** — each layer works independently and adds value on its own. Navigation works without scheduling. Scheduling works without data collection. But the full stack is where the real power lives.
+12. **The system is buildable incrementally**
+   - parts of the stack should add value before the full system exists
 
-13. **Decision support** — simple decisions (threshold gating) are automatic. Complex decisions (which of 4 commissions to accept based on rewards vs duration) are escalated with structured context so the supervisor brings judgment and the tooling brings speed.
+13. **Decision support remains explicit**
+   - simple threshold rules can be automated; higher-judgment choices should surface structured context to a supervisor

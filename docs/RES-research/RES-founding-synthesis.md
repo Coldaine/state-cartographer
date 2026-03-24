@@ -1,142 +1,111 @@
-# State Machine Tooling for External System Automation: Conversation Synthesis
+# State Machine Tooling for External System Automation
 
 > Historical note: moved from `docs/research/RES-founding-synthesis.md` during the 2026 documentation realignment.
 
+## Status
 
-## The Problem
+This is a synthesis document, not an implementation claim.
 
-When an AI agent automates an external system (browser form, game UI, desktop app, any interface), the **external system has its own state graph**. This is distinct from the agent's orchestration state. No existing library or utility addresses the problem of:
+It captures the durable research thesis behind the project and separates that thesis from repo reality.
 
-1. **Mapping** an external system's states into a queryable, introspectable data structure
-2. **Locating** the agent within that graph from observations alone (passive classification)
-3. **Disambiguating** when passive classification is insufficient (active probing strategy)
-4. **Replacing** expensive vision-driven transitions with cheap deterministic calls
-5. **Routing** between arbitrary states via cheapest available path
+See also:
+- [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
+- [VLM-overview.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-overview.md)
+- [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
 
-Every existing state machine library (pytransitions, python-statemachine, XState) assumes the machine has been running from the start and state is tracked internally. They answer "what transitions are available from my known state?" which presupposes the hard part is solved. No library helps an agent dropped into an ongoing process figure out where it is.
+## Core Problem
 
-This is **not** an orchestration framework problem. It has nothing to do with LangGraph, Temporal, CrewAI, or any agent framework. People using bare Claude Code with no framework hit this problem the moment something goes wrong mid-task.
+When an agent automates an external system, the external system has its own state graph. That graph is not tracked by the agent automatically. The hard problems are:
 
-## The Core Insight: State Graph as Compression Layer
+1. map the external system's states into a usable data structure
+2. determine current state from external observations
+3. disambiguate when passive observation is not enough
+4. replace expensive vision-driven transitions with cheap deterministic transitions where possible
+5. route through the system using the cheapest reliable path
 
-Automating any external system starts maximally expensive: vision model screenshots every frame, LLM reasoning about what it sees, deciding where to click, acting, waiting, repeating. This works but is slow, expensive, and fragile.
+Off-the-shelf state-machine libraries solve internal orchestration. They do not solve external-state discovery, location, and progressive replacement of uncertain interactions.
 
-The state graph compresses this. Once enumerated, most transitions can be replaced with deterministic function calls (ADB taps, DOM clicks, keyboard shortcuts, URL navigation, API calls). The vision/LLM path doesn't disappear; it becomes the **fallback for genuinely uncertain moments**, which is its proper role.
+## Durable Contribution
 
-This is not primarily a cost optimization. Deterministic tooling is better on every axis: faster, more accurate, more reproducible. Cost savings are a side effect.
+The durable contribution is not "another state machine library." It is the combination of:
 
-The end state: the agent calls `graph.route(current, target)` and gets a sequence of cheap deterministic transitions. The state graph is effectively an **API client for a system that never published an API**.
+- a state graph for an external system
+- per-state observation anchors
+- a deterministic `locate()` concept that uses observations plus session history
+- active disambiguation when passive classification is insufficient
+- transition cost awareness
+- weighted routing through the graph
+- a methodology for exploration, consolidation, and replacement
+- offline development against saved artifacts
 
-## The Methodology (Phases)
+## Capabilities The Project Needs
 
-### Phase 1: Expensive Exploration
+These are the capabilities that matter whether or not the current repo already implements them:
 
-Point a vision agent at the system. Let it navigate. Record every screen, every action, every result. The output is raw material for graph construction, not completed tasks.
+### External-system state graph
+- the graph models the target system, not the agent
+- state must be inferred from observation, not trusted from internal memory alone
 
-Key insight: if screenshots are captured at each state, you get a **static dataset for offline development**. The state graph, anchors, transition logic, classifiers can all be built and validated against saved images without re-driving the live system. Decouples "understanding the system" from "interacting with the system."
+### Observation anchors
+- each state needs cheap, stable confirmation signals
+- anchors should be chosen from structural signals, not transient content
 
-Exploration and graph construction are the same activity. The graph is built **while being used**; LLM navigates with whatever graph exists so far, discovers new states, adds them, graph gets richer as it goes.
+### Passive state classification
+- `locate()` should be a tool, not a prompt
+- it should combine current signals with session history
+- it should return either a state or a constrained candidate set
 
-### Phase 2: State Consolidation
+### Active disambiguation
+- when candidates remain ambiguous, the system should propose safe, informative probes
+- probes should be ranked by information value, cost, and risk
 
-The art of the process. Collapse observations into true states:
+### Transition cost awareness
+- transitions differ materially in cost and reliability
+- deterministic calls, grounding checks, and full vision reasoning should not be treated as equivalent
 
-- **Same state, different appearance**: main menu with Monday's event banner = main menu with Tuesday's event banner. Transient content (daily events, rotating banners, timestamps) must be separated from structural identity.
-- **Different state, same appearance**: "confirm sell equipment" dialog vs "confirm retire ship" dialog look identical but are different states with different consequences.
-- **Identifying stable anchors**: per-state signals that persist across sessions and updates. Not "what does this screen look like" (too expensive) but "what specific, cheap-to-check signal confirms this state." DOM element presence, pixel at known coordinates, process output pattern, file existence.
-- **What truly changes**: some elements change daily/weekly (event images, limited-time UI). Anchors must be chosen from the stable structural layer, not the content layer.
+### Weighted routing
+- pathfinding should optimize for cheapest reliable route, not just fewest hops
 
-### Phase 3: Transition Replacement
+### Progressive replacement
+- exploration can begin vision-heavy
+- the graph should get cheaper over time as reliable transitions replace expensive ones
 
-Go state-by-state and ask: what's the cheapest reliable way to execute this transition?
+### Offline iteration
+- saved screenshots, logs, and traces should support graph development without re-driving the live system every time
 
-Common UI patterns cover a huge percentage of the graph:
-- **Back/menu buttons**: nearly universal, almost always in the same position. One wrapper covers many states.
-- **Confirm/cancel dialogs**: predictable structure. The transition either goes back to the previous state or advances through the confirmation.
-- Most transitions resolve to: ADB tap at coordinates, keyboard shortcut, URL navigation, DOM selector click, API call.
+## Methodology
 
-After replacement, remaining vision-requiring transitions should be a small minority, concentrated at genuinely dynamic or novel interaction points.
+### 1. Exploration
+Capture observations, actions, and outcomes while traversing the target system.
 
-An **optimization pass by a separate LLM** reviews the completed graph to identify replacement candidates systematically. This is a distinct analytical role, not the same agent that explored.
+### 2. Consolidation
+Decide what is a true state boundary, what is transient variation, and what stable signals identify the state.
 
-### Phase 4: Wait State Identification
+### 3. Replacement
+Replace expensive transitions with deterministic or semi-deterministic execution where confidence is high enough.
 
-Some states don't need active management. Examples: auto-battle in a game, a long-running upload, a processing spinner. The agent detects "we're in this state," sets a timer or polling interval, and only re-engages when the state changes.
+### 4. Routing
+Use the graph to compute cheap paths between known regions.
 
-Critical because wait states are often the **longest-duration states**, and burning vision-agent tokens watching animations is pure waste. The state graph should annotate which states are wait states and what their exit conditions look like (cheap signals that indicate "something changed, wake up").
+### 5. Maintenance
+Detect unknown states, degrade gracefully, and update the graph as the target system changes.
 
-### Phase 5: Orientation Layer
+## Proven vs Speculative
 
-Two distinct capabilities:
+### Proven by existing systems and prior art
+- external automation needs page/state knowledge
+- deterministic transitions are faster and more reliable than full vision when they can be trusted
+- saved artifacts are useful for offline refinement
+- ALAS is strong evidence that hand-built versions of these ideas work for one target
 
-**5a: Passive classification ("where am I?")**
-This is a **tool, not a prompt**. The agent calls `state_machine.locate()`. The tool:
-- Reads currently available signals (screen content, DOM state, process output)
-- Compares against annotated state graph anchors
-- Uses **session history** to constrain candidates (if you were in state X three actions ago and did two known transitions, candidate set is small)
-- Returns: definitive state ID, or narrowed candidate set with distinguishing criteria
+### Still speculative or unearned in this repo
+- a trustworthy repo-owned `locate()` tool
+- a trustworthy active disambiguation planner
+- a trustworthy runtime that routes and recovers using this model live
+- a fully codified multi-agent methodology for building and maintaining these graphs
 
-Deterministic pattern matching, not LLM reasoning. The LLM is only invoked if the tool returns genuine ambiguity.
+## Practical Use
 
-**5b: Active disambiguation ("what should I try?")**
-When passive classification can't resolve, the tool suggests **probing actions**: "try pressing back and observe what happens." This narrows the candidate set. The tool can rank probes by information value (which action would most effectively distinguish between remaining candidates).
+Use this document to orient on the research thesis.
 
-Session management is integral to the classifier, not an add-on. Without session history, every `locate()` starts from scratch. With it, most calls are trivial.
-
-### Phase 6: Ongoing Maintenance
-
-The external system updates (app patches, new features, UI changes). Some anchors break. The graph needs:
-- Detection: "I'm seeing something I can't classify against the current graph"
-- Graceful degradation: fall back to vision path for unrecognized states
-- Flagging: surface unknown states for graph updates
-- Confidence thresholds: for particularly sensitive transitions, the schema should support marking states where the agent should request vision/LLM review before proceeding, even if the deterministic classifier is confident
-
-## Key Architectural Decisions
-
-### The Graph is Per-System, Not Per-Task
-
-The Azur Lane menu structure is the same whether you're doing daily missions, farming, or managing dock. Any desktop app's navigation layer is shared across all tasks. Only the leaf-level "do the actual thing" varies.
-
-This means the graph is **persistent infrastructure** for a system. Build once, maintain as app updates, every task benefits.
-
-### Pathfinding
-
-With the full graph and traversal costs per transition (cheap function call vs requires vision), compute shortest/cheapest path between any two states. No more backtracking to home screen. If you're three screens deep in one workflow and the next task starts in an adjacent branch, the graph knows the shortcut.
-
-### Hybrid Exploration
-
-The ultimate workflow is an LLM navigating using the state graph itself, where:
-- Known states use deterministic transitions
-- Unknown/uncertain states escalate to vision
-- Newly discovered states get added to the graph in real-time
-- The graph improves with every session
-
-### Human Feedback: Deferred
-
-Human-in-the-loop for state consolidation questions and ambiguity resolution is real but should be **the last thing designed**. Thinking about it too early will cloud the architecture. Park it.
-
-## What Does Not Exist (as of March 2026)
-
-No library, framework, or utility provides:
-- A standard format for declaring an external system's state graph with observation anchors
-- A `locate()` tool that classifies current state from observations + session history
-- A disambiguation planner that suggests probing actions
-- A pathfinder that routes between states via cheapest transitions
-- A methodology/playbook for LLMs to construct these graphs from scratch
-- A multi-agent decomposition for iterative graph refinement
-
-The closest existing primitives:
-- `pytransitions/transitions` (Python, 6.4k stars, active): best introspection API (`get_triggers()`, `may_trigger()`, hierarchical states). Potential foundation.
-- `python-statemachine` (Python, v3.0 Feb 2026): clean declarative API with compound/parallel states and guards.
-- XState (TypeScript, 29k stars): fullest statecharts implementation. `@statelyai/agent` adds LLM-driven transition selection but still assumes known state.
-- Page Object Model (Selenium/Playwright pattern): closest conceptual analogue; each page object describes "what page am I on" via expected elements and "what can I do here" via available actions. But never formalized into a queryable state machine.
-
-## Open Questions (Unanswered)
-
-1. How was the ALAS state machine actually discovered? Manual play, agent exploration, hybrid?
-2. How deep does active disambiguation go in practice? One probing action, or multi-step? Is there a ceiling where you restart from known state?
-3. When state consolidation is ambiguous, does the agent tentatively treat observations as separate states and merge later, or flag and skip?
-4. What typically triggers iterative refinement of the graph? Failures during automation, or realizations during the optimization pass?
-5. What form factor should initial output take? (Skill, library, methodology doc, blog post)
-6. What matters most for the graph data structure? (Human-readable, runtime-queryable, visual, all three)
-7. What's in scope for v1? (Format + API, classifier, disambiguation planner, transition optimizer)
+Do not use it as evidence that the current repo has already earned the full stack it describes.

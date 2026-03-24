@@ -4,26 +4,48 @@
 
 A model profile defines backend behavior and capability assumptions.
 
-It is not the same thing as a prompt.
+It is configuration and capability metadata, not prompt text and not task schema.
 
-## Profile Fields
+See also:
+- [VLM-overview.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-overview.md)
+- [VLM-task-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-task-contracts.md)
+- [VLM-prompts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-prompts.md)
 
-A usable profile should capture at least:
+## What A Profile Owns
 
-- backend type and endpoint
+A usable profile should define at least:
+
+- backend type
+- endpoint or transport
 - model identifier
 - structured output mode
 - reasoning mode or thinking policy
-- supported image count / context policy
+- image-count / context-window limits
 - grounding support
-- OCR strength
+- OCR support
 - expected role in the pipeline
+- fallback / adjudication role
+
+## Example Profile Shape
+
+```yaml
+profile_id: qwen-local-default
+backend: openai_compatible_local
+model: qwen-vl-local
+structured_output: json_schema
+reasoning_mode: low
+max_images: 6
+grounding: true
+ocr: strong
+role: primary_classifier
+fallback_role: none
+```
 
 ## Current Working Profiles
 
 ### Local profile
 
-**Intended model family:** local Qwen 3.5 multimodal deployment
+**Intended family:** local Qwen multimodal deployment
 
 Default role:
 
@@ -41,7 +63,7 @@ Expected strengths:
 
 ### Remote profile
 
-**Intended model family:** latest NVIDIA Nemotron remote profile
+**Intended family:** remote Nemotron-class multimodal profile
 
 Default role:
 
@@ -56,6 +78,9 @@ Expected strengths:
 - better tie-breaking and synthesis
 - useful second opinion for corpus review
 
-## Important Boundary
+## Boundary Rules
 
-If the backend can enforce structured output, that belongs in the profile and API configuration, not in repeated prompt text.
+- Structured output enforcement belongs here and in backend/API configuration.
+- Image-count limits belong here, not in prompt prose.
+- Reasoning policy belongs here, not in prompt prose.
+- Backend selection belongs here, not in task contracts.
