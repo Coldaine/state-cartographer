@@ -272,18 +272,149 @@ def pilot_backend(serial: str = DEFAULT_SERIAL) -> dict[str, BackendFn]:
     }
 
 
-def build_backend(backend_name: str, serial: str = DEFAULT_SERIAL) -> dict[str, BackendFn]:
+def ldplayer_backend(serial: str = "127.0.0.1:5555", ldplayer_folder: str | None = None) -> dict[str, BackendFn]:
+    """Return a backend dict using LDPlayerBridge (ldopengl64.dll) for LDPlayer interaction.
+
+    Uses LDPlayer's native SDK for screenshots - much faster than DroidCast restart cycle.
+    """
+    from pilot_bridge import LDPlayerBridge
+
+    bridge = LDPlayerBridge(serial=serial, ldplayer_folder=ldplayer_folder or "")
+
+    def _navigate_ldplayer(
+        graph: dict[str, Any],
+        current: str | None,
+        target: str,
+        **_kw: Any,
+    ) -> dict[str, Any]:
+        """Navigate using pathfind + LDPlayer bridge."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent))
+        from pathfind import pathfind
+
+        if current is None:
+            return {"success": False, "error": "Current state unknown"}
+
+        result = pathfind(graph, current, target)
+        if "error" in result:
+            return {"success": False, "error": result["error"]}
+
+        # Execute each step in the path
+        route = result.get("route", [])
+        for step in route:
+            action = step.get("action", {})
+            if action.get("type") == "adb_tap":
+                coords = action.get("coords")
+                if coords is None and "x" in action and "y" in action:
+                    coords = [action["x"], action["y"]]
+                if coords:
+                    bridge.tap(coords[0], coords[1])
+                    time.sleep(action.get("wait_after", 1.0))
+
+        # Verify arrival
+        loc_result = _locate_ldplayer(graph=graph)
+        arrived_state = loc_result.get("state")
+        if arrived_state != target:
+            return {
+                "success": False,
+                "error": f"Navigation ended at '{arrived_state}' instead of '{target}'",
+                "locate_result": loc_result,
+            }
+
+        return {"success": True, "state": target}
+
+    def _tap_ldplayer(coords: tuple[int, int], **_kw: Any) -> dict[str, Any]:
+        bridge.tap(coords[0], coords[1])
+        return {"success": True}
+
+    def _swipe_ldplayer(
+        start: tuple[int, int],
+        end: tuple[int, int],
+        duration: int = 300,
+        **_kw: Any,
+    ) -> dict[str, Any]:
+        bridge.swipe(start[0], start[1], end[0], end[1], duration)
+        return {"success": True}
+
+    def _locate_ldplayer(graph: dict[str, Any], **_kw: Any) -> dict[str, Any]:
+        """Locate using LDPlayerBridge screenshot."""
+        import contextlib
+        import sys
+        import tempfile
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent))
+        from locate import locate
+        from observe import build_observations, extract_pixel_coords
+
+        pixel_coords = extract_pixel_coords(graph)
+
+        try:
+            img = bridge.screenshot()
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                screenshot_path = Path(tmp.name)
+                img.save(screenshot_path)
+
+            try:
+                obs = build_observations(screenshot_path, pixel_coords)
+                return locate(graph, {}, obs)
+            finally:
+                with contextlib.suppress(OSError):
+                    screenshot_path.unlink()
+        except Exception as e:
+            return {"state": "unknown", "confidence": 0.0, "error": str(e)}
+
+    def _session_confirm_ldplayer(state: str, session: dict[str, Any], **_kw: Any) -> dict[str, Any]:
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent))
+        from session import confirm_state
+
+        return confirm_state(session, state)
+
+    def _sleep_ldplayer(seconds: float) -> None:
+        time.sleep(seconds)
+
+    return {
+        "navigate": _navigate_ldplayer,
+        "tap": _tap_ldplayer,
+        "swipe": _swipe_ldplayer,
+        "locate": _locate_ldplayer,
+        "session_confirm": _session_confirm_ldplayer,
+        "sleep": _sleep_ldplayer,
+    }
+
+
+def build_backend(
+    backend_name: str, serial: str = DEFAULT_SERIAL, config: dict[str, Any] | None = None
+) -> dict[str, BackendFn]:
     """Build a backend by name.
 
     Canonical live backend for MEmu/Azur Lane is ``pilot``.
+    ``ldplayer`` is for LDPlayer using native ldopengl64.dll (fastest).
     ``adb`` remains available for non-MEmu or debug scenarios but returns
     BLANK FRAMES on MEmu with DirectX rendering — do not use it for live work.
     ``mock`` is a TEST-ONLY no-op backend; never use it in live execution.
+
+    Args:
+        backend_name: Backend type ('pilot', 'ldplayer', 'adb', 'mock')
+        serial: ADB serial for the device
+        config: Optional config dict with emulator-specific settings (e.g., ldplayer_folder)
     """
+    config = config or {}
+
     if backend_name == "mock":
         return mock_backend()
     if backend_name == "pilot":
         return pilot_backend(serial=serial)
+    if backend_name == "ldplayer":
+        return ldplayer_backend(
+            serial=config.get("adb_serial", serial),
+            ldplayer_folder=config.get("paths", {}).get("ldplayer_folder") if config else None,
+        )
     if backend_name == "adb":
         logger.warning(
             "'adb' backend uses raw 'adb screencap' which returns BLANK FRAMES on MEmu "
@@ -373,11 +504,22 @@ def execute_task_by_id(
     serial: str = DEFAULT_SERIAL,
     preflight: bool | None = None,
     session: dict[str, Any] | None = None,
+    config_name: str | None = None,
 ) -> dict[str, Any]:
     """Canonical live/task entrypoint for this repo.
 
     For MEmu/Azur Lane, call this with ``backend_name='pilot'``.
+    For LDPlayer, use ``config_name='ldplayer'`` to auto-load settings.
     """
+    # Load config if specified
+    config = {}
+    if config_name:
+        from emulator_config import load_config
+
+        config = load_config(config_name)
+        backend_name = config.get("backend", backend_name)
+        serial = config.get("adb_serial", serial)
+
     manifest = load_json(tasks_path)
     graph = load_json(graph_path)
     session = session or {"current_state": None, "history": []}
@@ -399,11 +541,13 @@ def execute_task_by_id(
                 "preflight": preflight_report,
             }
 
-    backend = build_backend(backend_name, serial=serial)
+    backend = build_backend(backend_name, serial=serial, config=config)
     result = execute_task(task_def, graph, session, backend)
     result["entrypoint"] = "scripts/executor.py"
     result["backend"] = backend_name
     result["serial"] = serial
+    if config_name:
+        result["config"] = config_name
     if preflight_report is not None:
         result["preflight"] = preflight_report
     return result
@@ -738,10 +882,15 @@ def main() -> None:
     parser.add_argument("--tasks", required=True, help="Path to tasks.json")
     parser.add_argument("--graph", required=True, help="Path to graph.json")
     parser.add_argument(
+        "--config",
+        metavar="NAME",
+        help="Emulator config name (e.g., 'memu', 'ldplayer'). See configs/ directory.",
+    )
+    parser.add_argument(
         "--backend",
-        choices=["pilot", "adb", "mock"],
+        choices=["pilot", "adb", "mock", "ldplayer"],
         default="pilot",
-        help="Backend to use. 'pilot' is the canonical live entrypoint for MEmu/Azur Lane.",
+        help="Backend to use. 'pilot' is for MEmu, 'ldplayer' for LDPlayer.",
     )
     parser.add_argument("--serial", default=DEFAULT_SERIAL, help="ADB serial for live backends")
     parser.add_argument("--mock", action="store_true", help="Deprecated alias for --backend mock")
@@ -750,7 +899,19 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    backend_name = "mock" if args.mock else args.backend
+    # Load config if specified
+    serial = args.serial
+    backend_name = args.backend
+
+    if args.config:
+        from emulator_config import load_config
+
+        config = load_config(args.config)
+        backend_name = config.get("backend", backend_name)
+        serial = config.get("adb_serial", serial)
+        print(f"Loaded config '{args.config}': backend={backend_name}, serial={serial}")
+
+    backend_name = "mock" if args.mock else backend_name
     if args.mock:
         import sys as _sys
 
@@ -771,23 +932,23 @@ def main() -> None:
 
         print(
             "WARNING: The 'adb' backend uses raw 'adb screencap' which returns BLANK FRAMES "
-            "on MEmu with DirectX rendering. Use --backend pilot for live execution on MEmu.",
+            "on some emulators. Use --config for your emulator type.",
             file=_sys.stderr,
         )
     if args.preflight_only:
-        if backend_name != "pilot":
+        if backend_name not in ("pilot", "ldplayer"):
             print(
                 json.dumps(
                     {
                         "success": False,
-                        "error": "--preflight-only is only supported for the pilot backend",
+                        "error": "--preflight-only is only supported for pilot and ldplayer backends",
                         "backend": backend_name,
                     },
                     indent=2,
                 )
             )
             return
-        print(json.dumps(live_preflight(serial=args.serial), indent=2, default=str))
+        print(json.dumps(live_preflight(serial=serial), indent=2, default=str))
         return
 
     result = execute_task_by_id(
@@ -795,8 +956,9 @@ def main() -> None:
         Path(args.tasks),
         Path(args.graph),
         backend_name=backend_name,
-        serial=args.serial,
-        preflight=args.preflight or backend_name == "pilot",
+        serial=serial,
+        preflight=args.preflight or backend_name in ("pilot", "ldplayer"),
+        config_name=args.config,
     )
     print(json.dumps(result, indent=2, default=str))
 
