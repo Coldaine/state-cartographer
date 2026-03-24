@@ -48,6 +48,8 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - ADR-style decisions
 - `workflows/`
   - workflow inventory and operational task descriptions
+- `agentPrompts/`
+  - code-linked prompt rationale docs for prompt-bearing LLM code
 - `vendor-patches/`
   - retained patch/artifact bucket
 - `architecture-overview.md`
@@ -85,6 +87,8 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - `workflows/azur-lane-workflows.md`
 - `Where is the fuller repo map?`
   - `project/repo-index.md`
+- `How should docs be added or updated?`
+  - `project/documentation-playbook.md`
 
 ## Known Overlap Hotspots
 
@@ -136,6 +140,8 @@ Rule:
 - Do not create a new domain. Only `ALS` and `RES` are explicit domains here.
 - Prefer one authoritative doc per question.
 - If a new doc is necessary, define its boundary against neighboring docs immediately.
+- Any code containing an LLM prompt must have a separate companion doc under `agentPrompts/`.
+- That companion doc must link to the code file, justify each meaningful prompt part, and explain how each part helps the model or agent on that task.
 - If a doc is mostly indexing, keep it short.
 - If a doc is mostly state/plan memory, make it explicit and dated where appropriate.
 
@@ -154,3 +160,4 @@ If those answers are weak, the doc probably should not be added.
 - root [AGENTS.md](/mnt/d/_projects/MasterStateMachine/AGENTS.md) for repo-level entrypoint guidance
 - [architecture-overview.md](/mnt/d/_projects/MasterStateMachine/docs/architecture-overview.md) for the organizing model behind this tree
 - [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/project/repo-index.md) for the exhaustive repo map
+- [documentation-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/project/documentation-playbook.md) for documentation workflow rules

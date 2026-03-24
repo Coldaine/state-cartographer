@@ -65,10 +65,13 @@ These exist in the worktree but are not primary project knowledge or product sur
   - architecture and organizing logic
 - `docs/project/`
   - current reality, north star, repo indexing, validation posture
+  - includes `documentation-playbook.md` for docs workflow rules
 - `docs/memory/`
   - dated lessons learned and preserved findings
 - `docs/workflows/`
   - workflow/task inventory
+- `docs/agentPrompts/`
+  - code-linked rationale docs for prompt-bearing LLM code
 - `docs/prework/`
   - corpus/data preparation procedures
 - `docs/runtime/`
@@ -117,3 +120,4 @@ These exist in the worktree but are not primary project knowledge or product sur
 
 If you need short orientation, use root `AGENTS.md`.
 If you need the exhaustive high-level map, use this file.
+If you need the rules for adding or updating docs, use `docs/project/documentation-playbook.md`.

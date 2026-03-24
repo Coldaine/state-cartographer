@@ -10,6 +10,7 @@ See also:
 - [docs/AGENTS.md](/mnt/d/_projects/MasterStateMachine/docs/AGENTS.md)
 - [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/project/repo-index.md)
 - [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
+- [documentation-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/project/documentation-playbook.md)
 
 The key distinction is:
 
@@ -45,6 +46,7 @@ Everything else in `docs/` is a knowledge bucket rather than a domain.
 | `vlm/` | multimodal model profiles, task contracts, prompt policy |
 | `plans/` | tactical and strategic planning documents |
 | `decisions/` | ADRs and stable project decisions |
+| `agentPrompts/` | code-linked prompt rationale for prompt-bearing LLM code |
 
 ## Code And Data Buckets
 

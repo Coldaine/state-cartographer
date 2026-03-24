@@ -13,6 +13,7 @@ Its job is repo-level indexing, not explanation. Use it to find the right projec
 | [architecture-overview.md](/mnt/d/_projects/MasterStateMachine/docs/architecture-overview.md) | How the repo is organized: domains, knowledge buckets, and implementation axes. |
 | [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md) | Current tactical plan and near-term rebuild priorities. |
 | [north-star.md](/mnt/d/_projects/MasterStateMachine/docs/project/north-star.md) | Long-horizon goals and desired end-state behavior. |
+| [documentation-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/project/documentation-playbook.md) | How documentation is organized and what must be updated when docs change. |
 
 ## Documentation Domains
 
