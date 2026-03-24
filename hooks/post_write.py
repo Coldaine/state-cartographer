@@ -2,8 +2,8 @@
 """Post-write hook for state-cartographer.
 
 Runs after any Write tool invocation. Performs two actions:
-1. If a graph.json file was written, validates it against the schema.
-2. If a .py file in scripts/ was written, runs ruff format on it.
+1. If a graph.json file was written and a validator exists, validate it.
+2. If a .py file in scripts/ was written, run ruff format/check on it.
 
 Receives hook input JSON on stdin. Outputs structured JSON on stdout.
 Exit 0 = success. Validation and formatting issues are reported as warnings.
@@ -31,7 +31,7 @@ def main() -> int:
 
     path = Path(file_path)
 
-    # Auto-validate graph.json files after write
+    # Auto-validate graph.json files after write when a validator is available.
     if path.name == "graph.json" and path.exists():
         plugin_root = Path(__file__).parent.parent
         validator = plugin_root / "scripts" / "schema_validator.py"
@@ -51,6 +51,18 @@ def main() -> int:
                     ),
                     flush=True,
                 )
+        else:
+            print(
+                json.dumps(
+                    {
+                        "additionalContext": (
+                            "Graph validation warning: schema validator is not present in this repo snapshot; "
+                            "skipping automatic validation."
+                        )
+                    }
+                ),
+                flush=True,
+            )
 
     # Auto-format Python files in scripts/ after write
     if path.suffix == ".py" and "scripts" in path.parts:

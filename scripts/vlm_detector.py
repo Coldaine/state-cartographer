@@ -8,9 +8,9 @@ as a live control-plane primitive.
 
 Prompt specifications live under:
 
-- docs/prompts/vlm/system-classifier.md
-- docs/prompts/vlm/page-detect.md
-- docs/prompts/vlm/element-locate.md
+- docs/vlm/VLM-overview.md
+- docs/vlm/VLM-task-contracts.md
+- docs/vlm/VLM-prompts.md
 
 Augmentation targets for the rebuild:
 

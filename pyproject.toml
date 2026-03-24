@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 license = "MIT"
 dependencies = [
     "openai>=2.29.0",
+    "requests>=2.32.0",
 ]
 
 [project.optional-dependencies]
@@ -20,7 +21,6 @@ piloting = [
     "numpy>=1.26.0",
     "opencv-python-headless>=4.10.0.84",
     "openai>=1.68.0",
-    "requests>=2.32.0",
 ]
 dev = [
     "pytest>=8.0",
