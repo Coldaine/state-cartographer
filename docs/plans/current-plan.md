@@ -22,6 +22,7 @@ What is currently trusted:
 - corpus and log artifacts under `data/`
 - the small active script surface described in [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
 - the docs tree as the agent knowledge layer
+- the preserved proof that direct MEmu `fb0` capture can return non-black Azur Lane frames on `127.0.0.1:21513`
 
 What is not currently trusted:
 - old graph/navigation/runtime script claims
@@ -59,6 +60,17 @@ No new live-runtime architecture should be treated as active until these questio
 - what is the thinnest architecture that supports that capability?
 - which interfaces must be trusted before new code is added?
 
+For the current MEmu runtime branch, one transport fact is now re-earned:
+
+- direct framebuffer capture through `adb root` + `/dev/graphics/fb0` works on the tested instance
+
+What is still not re-earned:
+
+- repeated transport stability across a full session
+- final channel-order validation
+- action execution plus post-action verification
+- a supported operator-facing runtime entrypoint
+
 ## Active Workstreams
 
 ### Prework
@@ -92,7 +104,9 @@ The current pass is successful when:
 
 ## Linked Work Areas
 
-- MEmu control-stack proposal lives in [memu-android-control-stack-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/memu-android-control-stack-2026-03-24.md)
+- MEmu control-stack plan lives in [memu-android-control-stack-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/memu-android-control-stack-2026-03-24.md)
+- MEmu transport implementation gates and TDD work order live in [memu-fb0-requirements-and-tdd-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/memu-fb0-requirements-and-tdd-plan.md)
 - prework details live in [alas-build-plan.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-build-plan.md) and [corpus-review-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/prework/corpus-review-playbook.md)
 - VLM boundaries live in [VLM-overview.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-overview.md), [VLM-model-profiles.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-model-profiles.md), [VLM-task-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-task-contracts.md), and [VLM-prompts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-prompts.md)
 - runtime constraints live in [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
+- tiered runtime implementation (3-tier architecture with semantic cache) lives in [tiered-runtime-implementation.md](/mnt/d/_projects/MasterStateMachine/docs/plans/tiered-runtime-implementation.md) — activates after the MEmu transport slice is proven and the current gates are answered

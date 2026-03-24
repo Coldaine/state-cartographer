@@ -268,25 +268,6 @@ Important scope note:
   - useful because it is the clearest commission-tab failure, with repeated `daily` / `urgent` / `unknown` switching and a warning that `Commission_switch` should be re-verified
   - ambiguity tested: bad tab asset versus unstable scroll region versus truly ambiguous tab state
 
-### ALAS-Observe Candidates
-
-- [20260314T210002Z-PatrickCustom-smoke](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210002Z-PatrickCustom-smoke)
-  - window: `2026-03-14T21:01:00.758Z` to `21:01:13.605Z`
-  - screenshots: [000003.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210002Z-PatrickCustom-smoke/screenshots/000003.png), [000008.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210002Z-PatrickCustom-smoke/screenshots/000008.png), [000011.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210002Z-PatrickCustom-smoke/screenshots/000011.png), [000016.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210002Z-PatrickCustom-smoke/screenshots/000016.png), [000021.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210002Z-PatrickCustom-smoke/screenshots/000021.png), [000025.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210002Z-PatrickCustom-smoke/screenshots/000025.png), [000030.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210002Z-PatrickCustom-smoke/screenshots/000030.png), [000038.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210002Z-PatrickCustom-smoke/screenshots/000038.png)
-  - useful because it is the cleanest stable guild baseline
-  - ambiguity tested: locator failure on a normal guild screen despite `session.json` believing the page is already `page_guild`
-
-- [20260314T210223Z-PatrickCustom-live](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210223Z-PatrickCustom-live)
-  - window: roughly `2026-03-14T21:05:52.596Z` to `21:06:23.763Z`
-  - screenshots: [000533.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210223Z-PatrickCustom-live/screenshots/000533.png), [000542.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210223Z-PatrickCustom-live/screenshots/000542.png), [000547.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210223Z-PatrickCustom-live/screenshots/000547.png), [000564.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210223Z-PatrickCustom-live/screenshots/000564.png)
-  - useful because it is a short recovery sequence from guild into restart, login, and patch-note/announce UI
-  - ambiguity tested: whether restart recovery is being semantically classified correctly instead of collapsed into generic `unknown`
-
-- [20260314T210749Z-PatrickCustom-restart](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210749Z-PatrickCustom-restart)
-  - window: roughly `2026-03-14T21:07:53.232Z` to `21:08:21.498Z`
-  - screenshots: [000003.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210749Z-PatrickCustom-restart/screenshots/000003.png), [000004.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210749Z-PatrickCustom-restart/screenshots/000004.png), [000020.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210749Z-PatrickCustom-restart/screenshots/000020.png), [000022.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210749Z-PatrickCustom-restart/screenshots/000022.png), [000032.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210749Z-PatrickCustom-restart/screenshots/000032.png), [000080.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210749Z-PatrickCustom-restart/screenshots/000080.png), [000083.png](/mnt/d/_projects/MasterStateMachine/data/alas-observe/20260314T210749Z-PatrickCustom-restart/screenshots/000083.png)
-  - useful because it tests whether navigation to guild succeeded while classification failed, with one black frame mixed in
-  - ambiguity tested: navigation failure versus observation failure versus screenshot-provider glitch
 
 ## Practical Rule
 

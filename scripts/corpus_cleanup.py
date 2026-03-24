@@ -21,7 +21,6 @@ from typing import Any
 
 DEFAULT_BLACK_FRAME_ROOTS = [
     Path("data/raw_stream"),
-    Path("data/alas-observe"),
 ]
 
 
@@ -344,8 +343,6 @@ def classify_root(path: Path) -> str:
     path_str = path.as_posix()
     if path_str.startswith("data/raw_stream"):
         return "data/raw_stream"
-    if path_str.startswith("data/alas-observe"):
-        return "data/alas-observe"
     return "other"
 
 
@@ -519,7 +516,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--root",
         dest="roots",
         action="append",
-        help="Root directory to scan. Repeatable. Defaults to data/raw_stream and data/alas-observe.",
+        help="Root directory to scan. Repeatable. Defaults to data/raw_stream.",
     )
     black_frames.add_argument(
         "--max-size-bytes",

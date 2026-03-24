@@ -33,7 +33,6 @@ vendor/AzurLaneAutoScript/.mypy_cache/
 vendor/AzurLaneAutoScript/.ruff_cache/
 vendor/AzurLaneAutoScript/.venv/
 .pytest_tmp/
-data/alas-observe/
 data/screenshots/
 data/census/
 data/events/

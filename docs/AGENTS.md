@@ -62,6 +62,7 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - `project/current-reality.md`
 - `What is the current tactical plan?`
   - `plans/current-plan.md`
+  - `plans/memu-fb0-requirements-and-tdd-plan.md`
 - `What is the long-horizon plan?`
   - `plans/master-plan.md`
 - `How is the repo organized?`
@@ -86,6 +87,9 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - `memory/2026-03-24-memu-fb0-capture-proof.md`
 - `What workflows exist?`
   - `workflows/azur-lane-workflows.md`
+- `What is the current MEmu runtime slice?`
+  - `plans/memu-android-control-stack-2026-03-24.md`
+  - `plans/memu-fb0-requirements-and-tdd-plan.md`
 - `Where is the fuller repo map?`
   - `project/repo-index.md`
 - `How should docs be added or updated?`

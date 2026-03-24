@@ -79,6 +79,7 @@ These exist in the worktree but are not primary project knowledge or product sur
   - VLM profiles, contracts, and prompt guidance
 - `docs/plans/`
   - tactical and strategic planning docs
+  - includes the current MEmu `fb0` transport plan and requirements/TDD slice
 - `docs/decisions/`
   - ADR-style decision records
 - `docs/vendor-patches/`
