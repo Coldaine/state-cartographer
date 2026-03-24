@@ -34,6 +34,8 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - durable research notes, synthesis, and analysis
 - `project/`
   - current reality, north star, repo index, validation posture
+- `memory/`
+  - dated lessons learned and preserved findings that should not be re-learned
 - `prework/`
   - corpus alignment, cleanup, and ALAS-derived artifact building
 - `runtime/`
@@ -77,6 +79,8 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
 - `How do we work with corpus/log data?`
   - `prework/alas-build-plan.md`
   - `prework/corpus-review-playbook.md`
+- `What recent lessons should we not relearn?`
+  - `memory/2026-03-24-corpus-review-lessons.md`
 - `What workflows exist?`
   - `workflows/azur-lane-workflows.md`
 - `Where is the fuller repo map?`

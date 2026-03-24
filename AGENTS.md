@@ -54,6 +54,7 @@ For the expanded version, read [repo-index.md](/mnt/d/_projects/MasterStateMachi
 | [observation-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/observation-contracts.md) | Observation-side contracts and what is still only design guidance |
 | [azur-lane-workflows.md](/mnt/d/_projects/MasterStateMachine/docs/workflows/azur-lane-workflows.md) | Workflow/task inventory and substate complexity |
 | [alas-build-plan.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-build-plan.md) | Operational program for deriving artifacts from ALAS |
+| [2026-03-24-corpus-review-lessons.md](/mnt/d/_projects/MasterStateMachine/docs/memory/2026-03-24-corpus-review-lessons.md) | Compact lessons learned from the corpus review reset and first direct adjudication pass |
 | [master-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/master-plan.md) | Archived long-horizon plan context still worth knowing |
 
 ## Examples and Meta
