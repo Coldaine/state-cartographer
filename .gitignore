@@ -11,6 +11,7 @@ venv/
 node_modules/
 .DS_Store
 .omc/
+.agents/
 vendor/AzurLaneAutoScript/.omc/
 .cursor/
 *.log
@@ -22,9 +23,7 @@ vendor/AzurLaneAutoScript/.omc/
 .uv-cache/
 htmlcov/
 .coverage
-vendor/alas_req_clean.txt
 vendor/alas_requirements_clean.txt
-vendor/alas_requirements_frozen.txt
 vendor/launch_alas.ps1
 vendor/AzurLaneAutoScript/log/
 vendor/AzurLaneAutoScript/screenshots/
