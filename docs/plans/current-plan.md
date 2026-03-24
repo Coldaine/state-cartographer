@@ -39,7 +39,7 @@ What is not currently trusted:
 
 ### 2. Stabilize prework as the active implementation surface
 
-- keep ALAS log alignment, dedupe, and black-frame cleanup accurate
+- keep ALAS log alignment and corpus cleanup accurate
 - make ALAS-derived build procedures explicit and current
 - keep corpus and labeling workflows grounded in actual retained code
 
@@ -92,6 +92,6 @@ The current pass is successful when:
 
 ## Linked Work Areas
 
-- prework details live in [alas-build-plan.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-build-plan.md) and [corpus-cleanup.md](/mnt/d/_projects/MasterStateMachine/docs/prework/corpus-cleanup.md)
+- prework details live in [alas-build-plan.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-build-plan.md) and [corpus-review-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/prework/corpus-review-playbook.md)
 - VLM boundaries live in [VLM-overview.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-overview.md), [VLM-model-profiles.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-model-profiles.md), [VLM-task-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-task-contracts.md), and [VLM-prompts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-prompts.md)
 - runtime constraints live in [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)

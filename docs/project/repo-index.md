@@ -82,12 +82,10 @@ These exist in the worktree but are not primary project knowledge or product sur
 
 ## Active Code Surface
 
-- `scripts/label_raw_stream.py`
-  - aligns screenshot streams with ALAS log timing and labels
-- `scripts/screenshot_dedupe.py`
-  - corpus hygiene: duplicate screenshot detection/removal
-- `scripts/delete_black_frames.py`
-  - corpus hygiene: black-frame cleanup
+- `scripts/corpus_cleanup.py`
+  - corpus hygiene: duplicate clustering and black-frame cleanup
+- `scripts/kimi_review.py`
+  - cheap Kimi-backed visible-first screenshot review
 - `scripts/vlm_detector.py`
   - VLM-backed offline detection and labeling tool
 

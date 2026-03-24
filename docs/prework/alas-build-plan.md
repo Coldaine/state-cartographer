@@ -12,6 +12,7 @@ See also:
 - [ALS-overview.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-overview.md)
 - [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md)
 - [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
+- [corpus-review-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/prework/corpus-review-playbook.md)
 
 ## Why ALAS Is Still Used Here
 
