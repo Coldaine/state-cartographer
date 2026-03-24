@@ -6,47 +6,38 @@
 
 This document defines testing policy for the current repo shape.
 
-It separates current testing expectations from future runtime testing that has not been re-earned yet.
+It separates present validation expectations from future runtime testing that has not been re-earned yet.
 
 See also:
 - [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
 - [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md)
 - [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
 
-## Current Testing Policy
+## Current Validation Policy
 
-Current automated testing should stay focused on the active surface.
+There is currently no committed automated test suite in the repo.
 
-### Prework and corpus tests
+Validation should stay focused on the active surface:
 
-Validate the corpus pipeline:
-
+- corpus pipeline spot checks and script-level verification
 - ALAS log to screenshot alignment
 - screenshot deduplication
 - black-frame cleanup
-- corpus manifest integrity
-
-### VLM contract tests
-
-Validate the multimodal interface layer:
-
+- corpus manifest integrity where applicable
+- VLM offline labeling/adjudication behavior
 - model profile selection
 - task contract validation
 - structured output handling
 - local vs remote adjudication behavior
-
-### Documentation checks
-
-Whenever docs move or merge:
-
+- documentation consistency checks when docs move or merge
 - path existence
 - internal link validity
 - legacy-path cleanup
 - consistency between `AGENTS.md`, `CLAUDE.md`, and the docs tree
 
-## Current Test Boundary
+## Current Boundary
 
-The surviving automated coverage is still centered on the current script surface. As code is re-homed into `prework/` and `vlm/`, the tests should follow those buckets rather than remain attached to standalone scripts.
+The active validation surface is still centered on the retained scripts and docs. If automated checks return later, they should follow the active `prework/` and `vlm/` code buckets rather than historical standalone script names.
 
 ## Future Runtime Testing
 

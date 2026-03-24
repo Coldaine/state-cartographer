@@ -23,8 +23,6 @@ piloting = [
     "openai>=1.68.0",
 ]
 dev = [
-    "pytest>=8.0",
-    "pytest-cov>=5.0",
     "ruff>=0.11",
 ]
 
@@ -60,7 +58,3 @@ ignore = [
 
 [tool.ruff.lint.isort]
 known-first-party = ["scripts", "screenshot_mock", "locate", "pathfind", "session", "graph_utils", "schema_validator", "alas_log_parser", "alas_converter", "siphon", "observe", "calibrate", "adb_bridge"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-pythonpath = ["scripts"]
