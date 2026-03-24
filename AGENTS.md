@@ -40,7 +40,6 @@ This is the minimal filesystem map you should keep in mind:
 | `docs/` | Agent knowledge layer |
 | `scripts/` | Current active script-shaped tooling |
 | `quarantine/` | Unsupported retained material, if any remains |
-| `tests/` | Current automated checks |
 | `examples/` | Reference/example artifacts |
 
 For the expanded version, read [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/project/repo-index.md).

@@ -34,8 +34,6 @@ See also:
   - retained but unsupported material
 - `scripts/`
   - current active script surface
-- `tests/`
-  - active automated checks
 - `vendor/`
   - external reference code, including ALAS
 
@@ -111,10 +109,10 @@ These exist in the worktree but are not primary project knowledge or product sur
   - unsupported retained material from earlier directions
   - treat contents as reference only unless explicitly re-earned
 
-## Test Surface
+## Validation Surface
 
-- `tests/`
-  - tests for the currently active surface only
+- there is currently no committed automated test suite in the repo
+- validation is presently script execution, corpus inspection, and documentation consistency checks
 
 ## Practical Rule
 

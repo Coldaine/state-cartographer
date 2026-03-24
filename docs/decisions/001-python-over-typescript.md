@@ -25,7 +25,7 @@ The state-cartographer needs a primary runtime language for its scripts (`locate
 
 - Graph definitions will be JSON (loadable from any language)
 - Scripts will be Python 3.11+
-- Dependencies: transitions, Pillow, imagehash, pytest
+- Dependencies: transitions, Pillow, imagehash
 - TypeScript/XState can still be used for visualization via Stately Studio
 
 ## Open Questions
