@@ -1,52 +1,39 @@
 # CLAUDE.md
 
-## Current Working Contract
+## Working Contract
 
-This repository is no longer pretending to be a live runtime.
+Treat `docs/` as the repo's agent knowledge layer.
 
-The active mission is narrower:
-
-- preserve the ALAS log plus screenshot corpus workflow
-- improve corpus hygiene
-- support offline VLM-based labeling and adjudication
-- document the rebuild questions before adding new runtime code
+Only `ALS` and `RES` remain explicit domains. `project`, `architecture`, `workflows`, `prework`, `runtime`, and `vlm` are knowledge buckets, not domains.
 
 ## Hard Rules
 
-1. Do not add new executor, scheduler, graph, navigation, or resource-management scaffolding until the rebuild interview in `docs/rebuild/INTERVIEW.md` has been resolved into explicit contracts.
-2. Do not describe quarantined or deleted code as if it were supported.
-3. Every surviving prompt template must have its own markdown spec under `docs/prompts/vlm/`.
-4. The default use of `scripts/vlm_detector.py` is offline labeling or adjudication, not runtime truth.
-5. The default use of this repo is data work, not emulator control.
+1. Do not reintroduce `OBS/NAV/EXE/AUT` as active domain labels in the docs tree.
+2. Do not let runtime docs claim supported behavior the codebase has not earned.
+3. Keep model configuration separate from task contracts and prompt wording in both code and docs.
+4. Treat `prework`, `vlm`, and `runtime` as distinct buckets with different purposes.
+5. When changing the project understanding, update the relevant docs in the same change.
+6. Treat `quarantine/` as unsupported unless a file is explicitly re-earned.
 
-## Active Surfaces
+## Current Active Surfaces
 
 - `scripts/label_raw_stream.py`
 - `scripts/screenshot_dedupe.py`
 - `scripts/delete_black_frames.py`
 - `scripts/vlm_detector.py`
 
-## Prompt Documentation
+## Documentation Expectations
 
-Every prompt used by `vlm_detector.py` is documented separately:
-
-- [system-classifier.md](docs/prompts/vlm/system-classifier.md)
-- [page-detect.md](docs/prompts/vlm/page-detect.md)
-- [element-locate.md](docs/prompts/vlm/element-locate.md)
-
-If a prompt changes materially, update its doc in the same change.
-
-## Quarantine Rule
-
-`quarantine/scripts/pilot_bridge.py` is retained only as unverified environment knowledge.
-
-It is not a supported capture/control path.
+- `docs/ALS-reference/` and `docs/RES-research/` are retained domains.
+- `docs/vlm/` is the operational home for multimodal model profiles, task contracts, and prompt policy.
+- `docs/runtime/` is for live-system contracts and retained runtime design knowledge.
+- `docs/prework/` is for corpus and data-building work that happens before or outside the live runtime.
 
 ## Testing Rule
 
-Only run targeted checks for active code:
+Prefer targeted checks only:
 
-- label generation from ALAS logs
-- screenshot dedupe
-- black-frame detection
-- VLM detector smoke checks against the configured endpoint shape
+- corpus labeling from ALAS logs
+- screenshot dedupe and black-frame cleanup behavior
+- VLM detector smoke checks and contract tests
+- documentation/link checks when docs are moved or consolidated

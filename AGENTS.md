@@ -2,67 +2,64 @@
 
 This file is the mandatory starting point.
 
-## Current Phase
+## Docs Are the Agent Knowledge Layer
 
-As of 2026-03-23, this repo is in a data-first peel-back phase.
-
-The old runtime/navigation surface has been removed from active code. This repo now preserves truth sources and a minimal set of tools around the ALAS log plus screenshot corpus workflow.
+The `docs/` tree is project memory for the agent. It is not primarily end-user documentation. It exists to preserve architecture, constraints, operating assumptions, historical context, and open questions in a form that can be retrieved reliably across sessions.
 
 ## Read This First
 
 1. [CLAUDE.md](CLAUDE.md)
-2. [docs/REPO_STATUS.md](docs/REPO_STATUS.md)
-3. [docs/rebuild/INTERVIEW.md](docs/rebuild/INTERVIEW.md)
+2. [repo-status.md](docs/project/repo-status.md)
+3. [architecture-overview.md](docs/architecture/architecture-overview.md)
+4. [rebuild-interview.md](docs/plans/rebuild-interview.md)
+5. [north-star.md](docs/project/north-star.md)
 
-## Repo Labels
+## Retained Domains
 
-- `active`: trusted code used right now
-- `quarantine`: retained for possible future salvage, not trusted or supported
-- `data`: preserved truth and already-paid-for artifacts
-- `vendor`: external reference code and corpus source material
+Only two documentation domains remain explicit:
 
-## What Is Active
+- `ALS` — ALAS as reference system, corpus source, and operational comparison point
+- `RES` — research, investigations, synthesis, and technical hypotheses
 
-Active code is intentionally narrow:
+Everything else in `docs/` is organized as a knowledge bucket rather than a domain.
+
+## Knowledge Buckets
+
+- `project/` — repo status, north star, testing posture
+- `architecture/` — architecture map and organizing principles
+- `workflows/` — assignment and workflow inventories
+- `prework/` — corpus work, labeling, extraction, and data gathering before a live runtime
+- `runtime/` — future live-system contracts and retained runtime design knowledge
+- `vlm/` — model profiles, task contracts, prompt policy, and multimodal design
+- `plans/` — active and historical planning documents
+- `decisions/` — ADRs and project decisions
+
+## Current Working Reality
+
+As of 2026-03-24:
+
+- active code is still narrow and data-first
+- the ALAS log plus screenshot corpus workflow remains real and important
+- `scripts/vlm_detector.py` is an offline labeling and analysis tool, not live runtime truth
+- `quarantine/` holds code retained for possible salvage, not supported operation
+- historical `OBS/NAV/EXE/AUT` naming is preserved only as context inside migrated docs
+
+## Active Code Surface
 
 - `scripts/label_raw_stream.py`
 - `scripts/screenshot_dedupe.py`
 - `scripts/delete_black_frames.py`
 - `scripts/vlm_detector.py`
 
-These tools exist to support:
-
-- alignment between ALAS logs and screenshot corpus artifacts
-- corpus hygiene
-- offline VLM labeling, adjudication, and analysis
-
-## What Is Not Active
-
-There is no supported live runtime entrypoint in this repo right now.
-
-The following lines of work were removed from active code during the peel-back:
-
-- executor and scheduler scaffolding
-- graph/navigation scaffolding
-- anchor calibration and mock runtime side paths
-- one-off analysis utilities that were not required by the corpus pipeline
-
-Do not treat historical docs or example artifacts as proof that a runtime exists.
-
 ## Vendor Stance
 
-`vendor/AzurLaneAutoScript/` is preserved intact.
+`vendor/AzurLaneAutoScript/` remains intact.
 
-ALAS remains useful as:
+ALAS is used as:
 
-- reference implementation
+- reference architecture
 - corpus source material
-- operational truth about workflow complexity
+- evidence of workflow complexity
+- a comparison point for what a mature automation system actually has to solve
 
-ALAS is not the runtime being shipped from this repo.
-
-## Quarantine
-
-Environment-specific capture/control experiments are retained only under [quarantine/README.md](quarantine/README.md).
-
-Anything under `quarantine/` is out of the supported path unless it is explicitly re-earned.
+ALAS is not the repo's shipped runtime.
