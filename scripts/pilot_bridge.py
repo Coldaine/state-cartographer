@@ -61,6 +61,8 @@ except ImportError:
 
 
 DEFAULT_SERIAL = "127.0.0.1:21513"  # MEmu Index 1 (32.87 GB, the only valid instance)
+LDPLAYER_SERIAL = "127.0.0.1:5555"  # LDPlayer default
+
 DROIDCAST_APK_LOCAL = Path("vendor/AzurLaneAutoScript/bin/DroidCast/DroidCast_raw-release-1.0.apk")
 DROIDCAST_APK_REMOTE = "/data/local/tmp/DroidCast_raw.apk"
 DROIDCAST_PORT_REMOTE = 53516
@@ -69,6 +71,21 @@ LOCAL_ATX_PORT = 17912
 LOCAL_DROIDCAST_PORT = 53516
 EVENT_LOG_DIR = Path("data/events")
 SCREENSHOT_DIR = Path("data/screenshots")
+
+
+# ---------------------------------------------------------------------------
+# Optional import: LDPlayer native screenshot via ALAS
+# ---------------------------------------------------------------------------
+try:
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).parent.parent / "vendor" / "AzurLaneAutoScript"))
+    from module.device.method.ldopengl import LDOpenGLError, LDOpenGLImpl, LDOpenGLIncompatible
+
+    _ldopengl_available = True
+except Exception:
+    _ldopengl_available = False
+    LDOpenGLImpl = None  # type: ignore
 
 
 def _decode_bytes(data: bytes | str | None) -> str:
@@ -345,10 +362,9 @@ class PilotBridge:
     def screenshot(self, save_path: str | Path | None = None) -> Image.Image:
         """Capture a screenshot.
 
-        Tries the fast ATX agent path first (~100 ms).  If it returns a blank
-        frame — which happens on MEmu with DirectX rendering because the Android
-        compositor is bypassed — falls back to the DroidCast restart-per-frame
-        cycle (~3 s but reliable).
+        On OpenGL, uses ATX agent directly (~100 ms). On DirectX, falls back to
+        DroidCast restart cycle (~3 s) because DirectX bypasses the Android
+        compositor and standard screencap returns blank.
 
         Returns a PIL Image.  If *save_path* is given, the PNG is also
         written to disk.  When recording is enabled, every screenshot is
@@ -357,12 +373,16 @@ class PilotBridge:
         with self._lock:
             self._ensure_connected()
 
+            # On OpenGL: ATX screenshot works directly, no DroidCast needed
             bgr = self.screenshot_via_atx()
             if bgr is not None and not self._is_blank_frame(bgr):
                 logger.debug("Screenshot via ATX agent (%dx%d)", bgr.shape[1], bgr.shape[0])
             else:
+                # On DirectX: need DroidCast restart cycle
                 if bgr is not None:
-                    logger.debug("ATX screenshot returned blank frame; falling back to DroidCast")
+                    logger.debug("ATX screenshot returned blank frame; falling back to DroidCast (DirectX mode?)")
+                else:
+                    logger.debug("ATX screenshot failed; falling back to DroidCast")
                 bgr = self._restart_and_capture()
 
             if bgr is None:
@@ -534,6 +554,138 @@ class PilotBridge:
     # ------------------------------------------------------------------
     # CLI
     # ------------------------------------------------------------------
+
+
+class LDPlayerBridge(PilotBridge):
+    """LDPlayer bridge using native ldopengl64.dll for screenshots.
+
+    Much faster than DroidCast - no restart cycle needed.
+    Screenshots are captured directly from the emulator's render surface.
+    """
+
+    def __init__(
+        self,
+        serial: str = LDPLAYER_SERIAL,
+        *,
+        ldplayer_folder: str | None = None,
+        instance_id: int = 0,
+        **kwargs,
+    ):
+        """Initialize LDPlayer bridge.
+
+        Args:
+            serial: ADB serial (default 127.0.0.1:5555)
+            ldplayer_folder: Path to LDPlayer installation (e.g., "C:/ProgramFiles/LDPlayer9")
+            instance_id: Emulator instance ID (default 0)
+            **kwargs: Passed to PilotBridge parent
+        """
+        super().__init__(serial=serial, **kwargs)
+        self.ldplayer_folder = ldplayer_folder
+        self.instance_id = instance_id
+        self._ldopengl: LDOpenGLImpl | None = None
+
+        if not _ldopengl_available:
+            raise RuntimeError("LDOpenGL not available. Cannot import ALAS module.device.method.ldopengl")
+
+    def connect(self) -> None:
+        """Initialize LDOpenGL connection."""
+        with self._lock:
+            if self._connected:
+                return
+
+            # Find LDPlayer folder if not specified
+            if not self.ldplayer_folder:
+                self.ldplayer_folder = self._find_ldplayer_folder()
+
+            if not self.ldplayer_folder or not Path(self.ldplayer_folder).exists():
+                raise RuntimeError(
+                    f"LDPlayer folder not found: {self.ldplayer_folder}. Please specify ldplayer_folder explicitly."
+                )
+
+            # Initialize LDOpenGL
+            try:
+                self._ldopengl = LDOpenGLImpl(
+                    ld_folder=self.ldplayer_folder,
+                    instance_id=self.instance_id,
+                )
+                self._connected = True
+                self.screenshot_dir.mkdir(parents=True, exist_ok=True)
+                if self.record:
+                    self.event_log_path.parent.mkdir(parents=True, exist_ok=True)
+                logger.info(f"LDPlayerBridge connected: {self.ldplayer_folder}, instance {self.instance_id}")
+            except (LDOpenGLIncompatible, LDOpenGLError) as e:
+                raise RuntimeError(f"Failed to initialize LDOpenGL: {e}") from e
+
+    def _find_ldplayer_folder(self) -> str | None:
+        """Auto-detect LDPlayer installation folder from registry."""
+        import winreg
+
+        # Try common registry locations for LDPlayer
+        reg_paths = [
+            (winreg.HKEY_CURRENT_USER, r"SOFTWARE\leidian\ldplayer9"),
+            (winreg.HKEY_CURRENT_USER, r"SOFTWARE\leidian\ldplayer"),
+            (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\leidian\ldplayer9"),
+            (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\leidian\ldplayer"),
+        ]
+
+        for hkey, path in reg_paths:
+            try:
+                with winreg.OpenKey(hkey, path) as key:
+                    install_dir, _ = winreg.QueryValueEx(key, "InstallDir")
+                    if install_dir and Path(install_dir).exists():
+                        return str(Path(install_dir))
+            except (OSError, FileNotFoundError):
+                continue
+
+        # Fallback: check common installation paths
+        common_paths = [
+            "C:/Program Files/LDPlayer9",
+            "C:/Program Files (x86)/LDPlayer9",
+            "C:/ProgramFiles/LDPlayer9",
+            "D:/Program Files/LDPlayer9",
+            "D:/LDPlayer9",
+        ]
+        for path in common_paths:
+            if Path(path).exists():
+                return path
+
+        return None
+
+    def screenshot(self, save_path: str | Path | None = None) -> Image.Image:
+        """Capture screenshot using LDOpenGL (fast, no DroidCast restart)."""
+        with self._lock:
+            self._ensure_connected()
+
+            if not self._ldopengl:
+                raise RuntimeError("LDOpenGL not initialized")
+
+            # Capture via LDOpenGL
+            try:
+                bgr = self._ldopengl.screenshot()
+            except Exception as e:
+                raise RuntimeError(f"LDOpenGL screenshot failed: {e}") from e
+
+            if bgr is None or bgr.size == 0:
+                raise RuntimeError("LDOpenGL returned empty frame")
+
+            # Convert BGR to RGB PIL Image
+            rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(rgb)
+
+            # Auto-save when recording
+            self._screenshot_serial += 1
+            auto_path = self.screenshot_dir / f"{self.run_id}_{self._screenshot_serial:04d}.png"
+            if save_path:
+                save_path = Path(save_path)
+                save_path.parent.mkdir(parents=True, exist_ok=True)
+                img.save(save_path)
+            if self.record:
+                auto_path.parent.mkdir(parents=True, exist_ok=True)
+                img.save(auto_path)
+
+            return img
+
+    # tap/swipe/back use ADB via parent class - no changes needed
 
 
 def main() -> int:

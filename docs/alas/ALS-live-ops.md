@@ -28,10 +28,10 @@ These are the non-negotiable rules for live ALAS runs in this repo.
 
 ## Current Repo Enforcement
 
-- [`alas_observe_runner.py`](/mnt/d/_projects/MasterStateMachine/scripts/alas_observe_runner.py) refuses to start when
-  duplicate ALAS controllers are already running for the same config.
-- [`alas_observe_runner.py`](/mnt/d/_projects/MasterStateMachine/scripts/alas_observe_runner.py) exits non-zero and
-  emits a recovery event when the appended ALAS log ends in `Request human takeover`.
+- Screenshot capture is baked directly into `vendor/AzurLaneAutoScript/module/device/screenshot.py`.
+  Every frame is written to `data/raw_stream/` when that directory exists. No wrapper script needed.
+- No automated enforcement of duplicate-controller detection or takeover-exit is currently implemented
+  (the runner that did this was deleted as over-engineering). Monitor ALAS logs manually.
 
 ## Practical Debug Sequence
 

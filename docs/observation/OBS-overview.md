@@ -29,6 +29,8 @@ This is Layer 1 — everything else depends on it. You can't navigate without kn
 
 ## What exists today
 
+- `vendor/AzurLaneAutoScript/module/device/screenshot.py` — **patched directly** to save every frame
+  to `data/raw_stream/<YYYYMMDD_HHMMSS_mmm>.png` when that directory exists. No wrapper needed.
 - `scripts/locate.py` — pixel-anchor classifier (works against mocks, untested live)
 - `scripts/observe.py` — observation extractor from screenshots
 - `scripts/vlm_detector.py` — VLM page detection via Qwen3.5-9B (working, thinking mode fixed)

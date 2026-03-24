@@ -22,6 +22,50 @@ state verification, and event logging. Direct screenshot tooling remains useful
 for debugging, calibration, and exploration, but it is not the normal operator
 interface.
 
+## Current Phase: Observation-to-State-Machine Build
+
+**We are in the phase between corpus collection and deterministic navigation.**
+
+The pipeline is:
+
+```
+ALAS runs live (screenshot.py patched directly in vendor/)
+    ↓ saves every frame to data/raw_stream/<YYYYMMDD_HHMMSS_mmm>.png
+    ↓ ALAS logs page labels with millisecond timestamps (log/YYYY-MM-DD_PatrickCustom.txt)
+label_raw_stream.py joins log timestamps → data/raw_stream/index.jsonl
+    ↓ frames with matching log entries get alas_page label
+    ↓ remaining unlabeled frames → VLM (vlm_detector.py / Qwen3.5-9B-AWQ)
+State machine authors & validates graph.json
+    ↓ Every page in ALAS represented, transitions verified
+    ↓ calibrate.py uses VLM-labeled corpus to sample real RGB anchors
+locate.py works on real screenshots (production path)
+    ↓ deterministic, fast, no VLM needed
+Executor + Scheduler drive live game
+```
+
+**What works now:** ALAS monkeypatch capture ✓ | DroidCast screenshots ✓ |
+VLM detection ✓ | Event log pipeline ✓ | pilot_bridge.py tap/swipe ✓
+
+**What's next:** Full state machine graph authored from corpus | calibrate.py
+recalibrated from real ALAS screenshots | locate.py validated on live frames |
+pilot-driven navigation loops
+
+### On locate.py and calibrate.py
+
+These are **not obsolete** — they are the production destination. VLM is the
+bootstrap bridge.
+
+- `locate.py` — the cheap, deterministic, always-on state classifier. Currently
+  returns "unknown" for all real frames because the RGB anchors in `graph.json`
+  came from ALAS source code tuples, not sampled from real pixels. Once
+  calibrated, it replaces VLM entirely for classification.
+- `calibrate.py` — the tool that samples real pixel values from VLM-labeled
+  screenshots and writes calibrated anchors back into `graph.json`. This is
+  the step that will fix locate.py.
+- `vlm_detector.py` — current state detector (Qwen3.5-9B-AWQ @ localhost:18900).
+  Used for corpus labeling AND as the runtime fallback until locate.py is
+  calibrated. Will become the LLM escalation path once locate.py works.
+
 ## Current canonical live entrypoint
 
 For live MEmu/Azur Lane control, the single supported entrypoint today is:
@@ -30,25 +74,35 @@ For live MEmu/Azur Lane control, the single supported entrypoint today is:
 - `execute_task_by_id(...)`
 - backend `pilot`
 
-Use `python scripts/executor.py --backend pilot --serial 127.0.0.1:21513 ...` for live execution, and `--preflight-only` when you need an explicit readiness proof. Do not treat `pilot_bridge.py`, raw `adb_bridge.py`, or direct vendor ALAS launch as interchangeable control-plane entrypoints.
+Use `python scripts/executor.py --backend pilot --serial 127.0.0.1:21513 ...` for live execution, and `--preflight-only` when you need an explicit readiness proof. Do not treat raw `adb_bridge.py` or direct vendor ALAS launch as interchangeable control-plane entrypoints.
 
-**ALAS is reference architecture and an optional observation source, not the
-runtime we are building.** The project's design, schema, and playbook are
-validated against AzurLaneAutoScript (ALAS), a 9-year-old automation framework
-that solved these problems by hand for Azur Lane. We may siphon labeled
-screenshots or compare behavior against ALAS, but the live control path moving
-forward is State Cartographer's own executor/backend stack.
+`scripts/pilot_bridge.py` **is** the pilot backend — it owns DroidCast screenshot
+capture, ADB tap/swipe, and NDJSON event recording. It is imported by
+`executor.py`; use the executor as the entry point rather than instantiating
+`PilotBridge` directly unless you are debugging the screenshot/action layer.
+See `docs/execution/EXE-pilot-bridge-rework.md` for the planned cleanup.
 
-## Optional ALAS observation workflow
+**ALAS is reference architecture and the active labeled-corpus source.** The
+project's design is validated against AzurLaneAutoScript (ALAS). Running ALAS
+normally generates screenshot corpus — `vendor/AzurLaneAutoScript/module/device/screenshot.py`
+is patched directly to save every frame to `data/raw_stream/`. ALAS logs provide
+page labels; `label_raw_stream.py` joins them to the timestamped PNGs. The live
+control path for State Cartographer's own automation is `executor.py` + `pilot_bridge.py`.
 
-Use this only when you explicitly need to compare behavior against ALAS or
-harvest labeled observations from it. Do not treat ALAS as the default live
-control plane for State Cartographer.
+## ALAS observation pipeline (active — not optional)
 
-The ALAS harness lives at `vendor/AzurLaneAutoScript`. It is the
-**LmeSzinc/AzurLaneAutoScript** upstream repo (the canonical source).
+See `docs/alas/ALS-live-ops.md` for hard rules and `docs/observation/OBS-overview.md` for the
+full capture/labeling pipeline. Short version: screenshot capture is patched directly into
+`vendor/AzurLaneAutoScript/module/device/screenshot.py` — run ALAS normally, frames land in
+`data/raw_stream/`. After a run, join ALAS log timestamps to label the corpus:
 
-### Clean slate before every launch (MANDATORY)
+```bash
+uv run python scripts/label_raw_stream.py \
+  --log vendor/AzurLaneAutoScript/log/$(date +%Y-%m-%d)_PatrickCustom.txt \
+  --raw-stream data/raw_stream
+```
+
+### Clean slate before every ALAS launch (MANDATORY)
 
 ```powershell
 # 1. Kill all ALAS/Python processes
@@ -125,10 +179,9 @@ versions. Instead:
 ## When working on this project
 
 - Read `docs/NORTH_STAR.md` for the vision and guiding principles.
-- Read `docs/synthesis.md` and `docs/novel-capabilities.md` for full context on
-  what this plugin does and why.
+- Read `docs/research/RES-founding-synthesis.md` and `docs/research/RES-novel-capabilities.md` for full context.
 - Read `docs/architecture.md` for the layer mapping and design decisions.
-- Read `docs/revisions-and-open-design-spaces.md` for corrected premature decisions.
+- Read `docs/plans/plan.md` for the current execution plan and script status table.
 - The Python scripts in `scripts/` are the hard tooling. They must have
   tests. Run: `uv run pytest tests/ -v`
 - The markdown files in `skills/`, `agents/`, `commands/`,
@@ -170,7 +223,7 @@ uv run ruff format scripts/ tests/ hooks/
 ## Key files to read first
 
 1. `docs/NORTH_STAR.md` — the vision
-2. `docs/synthesis.md` — the full problem statement
-3. `docs/novel-capabilities.md` — what's novel vs what exists
+2. `docs/research/RES-founding-synthesis.md` — the full problem statement
+3. `docs/research/RES-novel-capabilities.md` — what's novel vs what exists
 4. `docs/architecture.md` — layer mapping, capability assignments
-5. `docs/revisions-and-open-design-spaces.md` — corrected assumptions
+5. `docs/plans/plan.md` — current script status, pivot decisions, phase exit criteria

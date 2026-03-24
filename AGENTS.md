@@ -2,16 +2,21 @@
 
 > This file is the mandatory starting point. Read this before anything else.
 
+> **Current Phase (2026-03-20):** Observation-to-State-Machine Build — ALAS corpus
+> collected, labeling in progress, state machine being authored, pilot_bridge.py
+> rework planned. See `CLAUDE.md` for the full phase description.
+
 ## Required Reading (Start Here)
 
 | Document | What It Covers |
-|----------|---------------|
+|----------|--------------|
 | [MASTER_PLAN.md](MASTER_PLAN.md) | Master plan: development phases, key workflows, success metrics |
-| [CLAUDE.md](CLAUDE.md) | Project conventions, commands, coding standards for Claude Code |
+| [CLAUDE.md](CLAUDE.md) | Project conventions, commands, coding standards — **read this for current phase** |
 | [docs/NORTH_STAR.md](docs/NORTH_STAR.md) | Vision, goals, guiding principles, open questions |
-| [docs/architecture.md](docs/architecture.md) | 7-layer architecture, capability-to-layer mapping |
-| [docs/workflows.md](docs/workflows.md) | Complete Azur Lane workflow inventory (26 workflows) |
-| [docs/data-collection.md](docs/data-collection.md) | Data collection scheduler, ship census, pagination design |
+| [docs/architecture.md](docs/architecture.md) | 4-domain architecture (OBS/NAV/EXE/AUT), layer mapping |
+| [docs/execution/EXE-workflows.md](docs/execution/EXE-workflows.md) | Azur Lane workflow inventory |
+| [docs/execution/EXE-data-collection.md](docs/execution/EXE-data-collection.md) | Data collection design (planned) |
+| [docs/plans/plan.md](docs/plans/plan.md) | **Current execution plan — script status, pivot decisions, phase exit criteria** |
 
 ## Current Project Direction
 
@@ -67,16 +72,16 @@ The ALAS repo is available as a git submodule at `vendor/AzurLaneAutoScript/`.
 
 | Document | Topic |
 |----------|-------|
-| [docs/redesign-plan.md](docs/redesign-plan.md) | Diagnosis + redesign from navigation library to automation runtime |
-| [docs/workflows.md](docs/workflows.md) | All 26 Azur Lane workflows with entry states, OCR regions, decisions |
-| [docs/data-collection.md](docs/data-collection.md) | Ship census, stat recording, pagination engine, second scheduler |
-| [docs/alas-execution-event-schema.md](docs/alas-execution-event-schema.md) | NDJSON event log schema for recording all actions |
-| [docs/alas-state-machine-build-plan.md](docs/alas-state-machine-build-plan.md) | Concrete work program for ALAS → SC artifact conversion |
-| [docs/alas-live-ops.md](docs/alas-live-ops.md) | Hard rules for live ALAS harness operation |
-| [docs/synthesis.md](docs/synthesis.md) | State machine tooling synthesis — survey of existing tools |
-| [docs/novel-capabilities.md](docs/novel-capabilities.md) | Capabilities no existing library provides |
-| [docs/testing-strategy.md](docs/testing-strategy.md) | Testing approach: unit, integration, end-to-end, mock system |
-| [docs/revisions-and-open-design-spaces.md](docs/revisions-and-open-design-spaces.md) | Open design decisions and areas needing resolution |
+| [docs/plans/plan.md](docs/plans/plan.md) | **Current execution plan** — replaces all older plan docs |
+| [docs/execution/EXE-workflows.md](docs/execution/EXE-workflows.md) | All Azur Lane workflows with entry states, OCR regions, decisions |
+| [docs/execution/EXE-data-collection.md](docs/execution/EXE-data-collection.md) | Ship census, stat recording, pagination engine (planned) |
+| [docs/alas/ALS-event-schema.md](docs/alas/ALS-event-schema.md) | NDJSON event log schema for recording all actions |
+| [docs/research/RES-alas-build-plan.md](docs/research/RES-alas-build-plan.md) | Concrete work program for ALAS → SC artifact conversion |
+| [docs/alas/ALS-live-ops.md](docs/alas/ALS-live-ops.md) | Hard rules for live ALAS harness operation |
+| [docs/research/RES-founding-synthesis.md](docs/research/RES-founding-synthesis.md) | State machine tooling synthesis — survey of existing tools |
+| [docs/research/RES-novel-capabilities.md](docs/research/RES-novel-capabilities.md) | Capabilities no existing library provides |
+| [docs/research/RES-vlm-live-observer.md](docs/research/RES-vlm-live-observer.md) | VLM as continuous live observer — state stream, session memory, rich escalation |
+| [docs/testing-strategy.md](docs/testing-strategy.md) | Testing approach (TODO: needs rewrite) |
 | [docs/decisions/001-python-over-typescript.md](docs/decisions/001-python-over-typescript.md) | ADR: Why Python instead of TypeScript |
 
 ## Plugin Structure
@@ -86,7 +91,6 @@ The ALAS repo is available as a git submodule at `vendor/AzurLaneAutoScript/`.
 | Skill | Purpose |
 |-------|---------|
 | [skills/state-graph-authoring/SKILL.md](skills/state-graph-authoring/SKILL.md) | Core playbook: exploration → consolidation → optimization → maintenance |
-| [skills/state-graph-navigation/SKILL.md](skills/state-graph-navigation/SKILL.md) | Using an existing graph for cheap navigation |
 
 ### Agents (Subagent Definitions)
 
@@ -100,8 +104,7 @@ The ALAS repo is available as a git submodule at `vendor/AzurLaneAutoScript/`.
 
 | Rule | Governs |
 |------|---------|
-| [rules/safety.md](rules/safety.md) | Confidence tiers, irreversible action guards, escalation paths |
-| [rules/orientation.md](rules/orientation.md) | State confirmation after transitions, disambiguation, recovery |
+
 | [rules/graph-maintenance.md](rules/graph-maintenance.md) | When and how to update the graph during operation |
 
 ### Scripts (Runtime Tools)
@@ -131,7 +134,6 @@ The ALAS repo is available as a git submodule at `vendor/AzurLaneAutoScript/`.
 | Script | Function |
 |--------|----------|
 | `scripts/execution_event_log.py` | Append-only NDJSON event stream — records every action |
-| `scripts/alas_observe_runner.py` | Passive observer — attaches to ALAS, captures screenshots + events |
 | `scripts/alas_event_instrumentation.py` | Monkeypatch instrumentation for ALAS method recording |
 | `scripts/alas_log_parser.py` | Structures ALAS text logs into task runs + error analysis |
 

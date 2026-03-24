@@ -1,0 +1,17 @@
+{
+  "name": "LDPlayer",
+  "emulator_type": "ldplayer",
+  "adb_serial": "127.0.0.1:5555",
+  "screenshot_method": "ldopengl",
+  "backend": "ldplayer",
+  "description": "LDPlayer with native ldopengl64.dll screenshot (faster, no DroidCast needed)",
+  "ports": {
+    "atx_agent": 7912
+  },
+  "paths": {
+    "ldplayer_folder": "C:/ProgramFiles/LDPlayer9",
+    "ldopengl_dll": "C:/ProgramFiles/LDPlayer9/ldopengl64.dll",
+    "ld_console": "C:/ProgramFiles/LDPlayer9/ldconsole.exe"
+  },
+  "instance_id": 0
+}
