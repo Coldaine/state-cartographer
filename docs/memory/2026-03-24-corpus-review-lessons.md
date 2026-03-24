@@ -61,19 +61,13 @@ Tags: `P0` `kimi` `review`
 
 Use Kimi for visible-text extraction, visible-region extraction, provisional labels, and disagreement surfacing across many frames. Do not let Kimi-generated output enter the trusted ledger unless a direct review pass accepts it.
 
-### 8. Kimi path-based review can work, but missing files still need guarding
-
-Tags: `P1` `kimi` `review` `artifacts`
-
-Direct CLI checks showed that Kimi can often inspect a real screenshot when the prompt includes a valid workspace file path, even if the script does not attach the image as explicit media input. But a nonexistent image path can still produce a fabricated screenshot description instead of a hard failure. Treat file existence checks and explicit input validation as part of the review contract, not optional polish.
-
-### 9. Preserve provenance when cleaning the corpus
+### 8. Preserve provenance when cleaning the corpus
 
 Tags: `P1` `artifacts` `review`
 
 Black-frame and dedupe passes are only trustworthy if they preserve reports of what existed and what was removed or compressed. Cleanup without manifests destroys evidence and makes later review weaker.
 
-### 10. Keep the stable output small
+### 9. Keep the stable output small
 
 Tags: `P1` `artifacts` `review`
 
@@ -82,6 +76,5 @@ The first stable artifact should be a small reviewed ledger, not another giant J
 ## Current Implications
 
 - use [kimi_review.py](/mnt/d/_projects/MasterStateMachine/scripts/kimi_review.py) for cheap evidence extraction, not accepted truth
-- require image-path existence checks before trusting any Kimi screenshot review result
 - store accepted stretch findings in [reviewed_stretches.tsv](/mnt/d/_projects/MasterStateMachine/data/review/reviewed_stretches.tsv)
 - grow the state vocabulary from reviewed stretches, not from bulk synthetic labels

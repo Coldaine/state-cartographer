@@ -1,0 +1,4 @@
+{
+  "ruff.importStrategy": "useBundled",
+  "ruff.showSyntaxErrors": true
+}
