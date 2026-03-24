@@ -17,7 +17,7 @@ These backend requirements remain valuable design constraints.
 
 They do **not** imply that the current repo ships a supported live backend.
 
-`quarantine/scripts/pilot_bridge.py` holds the last major backend experiment. It is retained for salvage, not operation.
+The last major backend experiment (`pilot_bridge.py`) has been removed. The lessons below are what survive.
 
 ## Failure Model
 
@@ -48,7 +48,7 @@ A healthy device connection is not the same thing as a healthy observation path.
 
 ## Bridge Salvage Rules
 
-What is worth salvaging from the quarantined bridge path:
+What is worth carrying forward from the bridge path:
 - narrowly scoped screenshot capture
 - narrowly scoped tap and swipe execution
 - explicit backend readiness checks
@@ -60,17 +60,16 @@ What should not live in a bridge:
 - runtime policy decisions
 - broad control-plane assumptions about what the caller is trying to do
 
-## Criteria To Re-Earn Bridge Code
+## Criteria For Future Bridge Code
 
-Before `pilot_bridge.py` or any successor leaves quarantine, it must prove:
+Any new bridge implementation must prove:
 - the intended emulator and render stack is correct and documented
 - screenshot capture is real, current, and decodable
 - tap and swipe actions are verified on the intended setup
 - failure and recovery behavior are reproducible
 - the bridge is generic transport and observation infrastructure, not embedded game logic
 
-## What This Document No Longer Claims
+## What This Document Does Not Claim
 
 - there is no supported operator entrypoint described here
-- this doc does not certify `pilot_bridge.py` as production-ready
 - this doc does not imply the executor path currently exists

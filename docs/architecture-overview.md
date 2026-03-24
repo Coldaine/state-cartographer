@@ -56,7 +56,6 @@ The implementation side of the repo should be thought about separately from docs
 - `vendor/` holds external code and reference systems
 - `scripts/` is the current active script-shaped surface
 - future `prework/`, `vlm/`, and `runtime/` code areas are design directions, not proof of present implementation
-- `quarantine/` holds retained but unsupported material
 
 ## Why Docs And Code Use Different Axes
 

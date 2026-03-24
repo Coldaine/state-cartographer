@@ -30,8 +30,6 @@ See also:
   - example/reference artifacts
 - `hooks/`
   - hook-related code and assets retained in the repo
-- `quarantine/`
-  - retained but unsupported material
 - `scripts/`
   - current active script surface
 - `vendor/`
@@ -104,12 +102,6 @@ These exist in the worktree but are not primary project knowledge or product sur
 
 - `vendor/AzurLaneAutoScript/`
   - ALAS reference implementation and source of operational prior art
-
-## Quarantine Surface
-
-- `quarantine/`
-  - unsupported retained material from earlier directions
-  - treat contents as reference only unless explicitly re-earned
 
 ## Validation Surface
 
