@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-"""Cluster and deduplicate large screenshot corpora.
+"""Corpus hygiene tooling for screenshot corpora.
 
-The tool scans a directory tree for PNG files, computes lightweight image
-fingerprints, then emits JSON with dedupe clusters and summary stats.
+This script owns the retained corpus-cleanup jobs:
 
-Fingerprint strategy:
-1. Prefer perceptual hash (`imagehash.phash`) when Pillow + imagehash exist.
-2. Fall back to SHA-256 file hash when vision deps are unavailable or fail.
+- perceptual duplicate clustering
+- verified black-frame detection and optional deletion
 """
 
 from __future__ import annotations
@@ -14,12 +12,17 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
+
+DEFAULT_BLACK_FRAME_ROOTS = [
+    Path("data/raw_stream"),
+    Path("data/alas-observe"),
+]
 
 
 @dataclass(frozen=True)
@@ -110,18 +113,17 @@ class BKTree:
         return results
 
 
-@lru_cache(maxsize=1)
-def _load_vision_backend():
-    try:
-        import imagehash
-        from PIL import Image
-    except Exception:
-        return None
-    return Image, imagehash
-
-
 def discover_pngs(root: Path) -> list[Path]:
     return sorted(path for path in root.rglob("*") if path.is_file() and path.suffix.lower() == ".png")
+
+
+def discover_pngs_under_roots(roots: list[Path]) -> list[Path]:
+    seen: set[Path] = set()
+    for root in roots:
+        if not root.exists():
+            continue
+        seen.update(discover_pngs(root))
+    return sorted(seen, key=lambda path: path.as_posix())
 
 
 def hamming_distance(a: int, b: int) -> int:
@@ -133,6 +135,28 @@ def _safe_relative(path: Path, root: Path) -> str:
         return path.relative_to(root).as_posix()
     except ValueError:
         return path.as_posix()
+
+
+@lru_cache(maxsize=1)
+def _load_dedupe_backend():
+    try:
+        import imagehash
+        from PIL import Image
+    except Exception:
+        return None
+    return Image, imagehash
+
+
+@lru_cache(maxsize=1)
+def _load_black_frame_backend():
+    try:
+        from PIL import Image, ImageStat
+    except Exception as exc:
+        raise SystemExit(
+            "corpus_cleanup.py black-frames requires Pillow. Run it with "
+            "`uv run --extra vision python scripts/corpus_cleanup.py black-frames ...`."
+        ) from exc
+    return Image, ImageStat
 
 
 def _sha256_file(path: Path) -> str:
@@ -147,7 +171,7 @@ def _sha256_file(path: Path) -> str:
 
 
 def fingerprint_path(path: Path, root: Path) -> ImageFingerprint:
-    backend = _load_vision_backend()
+    backend = _load_dedupe_backend()
     if backend is not None:
         image_module, imagehash_module = backend
         try:
@@ -163,7 +187,6 @@ def fingerprint_path(path: Path, root: Path) -> ImageFingerprint:
                 hash_int=int(phash_hex, 16),
             )
         except Exception:
-            # Fall through to deterministic file-hash fallback.
             pass
 
     sha = _sha256_file(path)
@@ -269,7 +292,11 @@ def _cluster_to_json(records: list[ImageFingerprint], cluster: list[int], cluste
     }
 
 
-def generate_report(input_root: Path, distance_threshold: int = 6, include_singletons: bool = False) -> dict[str, Any]:
+def generate_dedupe_report(
+    input_root: Path,
+    distance_threshold: int = 6,
+    include_singletons: bool = False,
+) -> dict[str, Any]:
     png_paths = discover_pngs(input_root)
     records = index_images(png_paths, input_root)
     clusters = cluster_records(records, distance_threshold)
@@ -297,14 +324,14 @@ def generate_report(input_root: Path, distance_threshold: int = 6, include_singl
         "cluster_count": len(json_clusters),
         "duplicate_images": duplicate_images,
         "potential_bytes_saved": potential_bytes_saved,
-        "perceptual_hash_available": _load_vision_backend() is not None,
+        "perceptual_hash_available": _load_dedupe_backend() is not None,
         "perceptual_hash_used": methods_count.get("phash", 0) > 0,
         "fingerprint_methods": dict(methods_count),
         "clusters": json_clusters,
     }
 
 
-def write_report(report: dict[str, Any], output_path: Path | None) -> None:
+def write_json_report(report: dict[str, Any], output_path: Path | None) -> None:
     json_payload = json.dumps(report, indent=2, sort_keys=False)
     if output_path is None:
         print(json_payload)
@@ -313,41 +340,229 @@ def write_report(report: dict[str, Any], output_path: Path | None) -> None:
     output_path.write_text(json_payload + "\n", encoding="utf-8")
 
 
-def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Cluster and dedupe screenshot PNG corpora")
-    parser.add_argument("--input", required=True, help="Directory root containing PNG screenshots")
-    parser.add_argument("--output", help="Path to output JSON report (default: stdout)")
-    parser.add_argument(
-        "--threshold",
-        type=int,
-        default=6,
-        help="Hamming distance threshold for perceptual hash clustering (default: 6)",
-    )
-    parser.add_argument(
-        "--include-singletons",
-        action="store_true",
-        help="Include one-image clusters in output (default: duplicates only)",
-    )
-    return parser.parse_args(argv)
+def classify_root(path: Path) -> str:
+    path_str = path.as_posix()
+    if path_str.startswith("data/raw_stream"):
+        return "data/raw_stream"
+    if path_str.startswith("data/alas-observe"):
+        return "data/alas-observe"
+    return "other"
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = parse_args(argv)
+def is_verified_black_frame(
+    path: Path,
+    *,
+    max_size_bytes: int,
+    mean_threshold: float,
+    stddev_threshold: float,
+) -> tuple[bool, dict[str, float | int]]:
+    image_module, image_stat_module = _load_black_frame_backend()
+
+    size = path.stat().st_size
+    if size > max_size_bytes:
+        return False, {"size": size}
+
+    with image_module.open(path) as img:
+        gray = img.convert("L")
+        stat = image_stat_module.Stat(gray)
+        mean = float(stat.mean[0])
+        stddev = float(stat.stddev[0])
+
+    return mean <= mean_threshold and stddev <= stddev_threshold, {
+        "size": size,
+        "mean": mean,
+        "stddev": stddev,
+    }
+
+
+def generate_black_frame_report(
+    roots: list[Path],
+    *,
+    max_size_bytes: int,
+    mean_threshold: float,
+    stddev_threshold: float,
+    delete: bool,
+) -> tuple[dict[str, Any], list[dict[str, object]]]:
+    pngs = discover_pngs_under_roots(roots)
+    verified: list[tuple[Path, dict[str, float | int]]] = []
+    errors: list[dict[str, str]] = []
+
+    for path in pngs:
+        try:
+            ok, metrics = is_verified_black_frame(
+                path,
+                max_size_bytes=max_size_bytes,
+                mean_threshold=mean_threshold,
+                stddev_threshold=stddev_threshold,
+            )
+            if ok:
+                verified.append((path, metrics))
+        except Exception as exc:
+            errors.append({"path": str(path), "error": str(exc)})
+
+    deleted = 0
+    if delete:
+        for path, _metrics in verified:
+            path.unlink(missing_ok=False)
+            deleted += 1
+
+    verified_entries: list[dict[str, object]] = []
+    by_root: Counter[str] = Counter()
+    for path, metrics in sorted(verified, key=lambda item: item[0].as_posix()):
+        root_bucket = classify_root(path)
+        by_root[root_bucket] += 1
+        verified_entries.append(
+            {
+                "path": path.as_posix(),
+                "root": root_bucket,
+                "metrics": metrics,
+                "deleted": delete,
+            }
+        )
+
+    summary = {
+        "generated_at": datetime.now(UTC).isoformat(),
+        "mode": "delete" if delete else "dry-run",
+        "roots": [str(root) for root in roots],
+        "scanned_pngs": len(pngs),
+        "verified_black_frames": len(verified),
+        "deleted": deleted,
+        "by_root": dict(by_root),
+        "thresholds": {
+            "max_size_bytes": max_size_bytes,
+            "mean_threshold": mean_threshold,
+            "stddev_threshold": stddev_threshold,
+        },
+        "errors": errors,
+    }
+    return summary, verified_entries
+
+
+def run_dedupe(args: argparse.Namespace) -> int:
     input_root = Path(args.input)
     if not input_root.exists():
         raise FileNotFoundError(f"input directory does not exist: {input_root}")
     if not input_root.is_dir():
         raise NotADirectoryError(f"input path is not a directory: {input_root}")
 
-    report = generate_report(
+    report = generate_dedupe_report(
         input_root=input_root,
         distance_threshold=args.threshold,
         include_singletons=args.include_singletons,
     )
 
     output_path = Path(args.output) if args.output else None
-    write_report(report, output_path)
+    write_json_report(report, output_path)
     return 0
+
+
+def run_black_frames(args: argparse.Namespace) -> int:
+    roots = [Path(p) for p in args.roots] if args.roots else DEFAULT_BLACK_FRAME_ROOTS
+    summary, verified_entries = generate_black_frame_report(
+        roots=roots,
+        max_size_bytes=args.max_size_bytes,
+        mean_threshold=args.mean_threshold,
+        stddev_threshold=args.stddev_threshold,
+        delete=args.delete,
+    )
+
+    if args.report:
+        report = {
+            **summary,
+            "verified_files": verified_entries,
+        }
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        args.report.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+
+    if args.json:
+        print(json.dumps(summary, indent=2))
+        return 0
+
+    print(f"Mode: {summary['mode']}")
+    print(f"Scanned PNGs: {summary['scanned_pngs']}")
+    print(f"Verified black frames: {summary['verified_black_frames']}")
+    print(f"Deleted: {summary['deleted']}")
+    for key, value in summary["by_root"].items():
+        print(f"  {key}: {value}")
+    if summary["errors"]:
+        print(f"Errors: {len(summary['errors'])}")
+    if args.report:
+        print(f"Report: {args.report}")
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Corpus hygiene tooling for screenshot corpora")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    dedupe = subparsers.add_parser("dedupe", help="Cluster visually duplicate PNG screenshots")
+    dedupe.add_argument("--input", required=True, help="Directory root containing PNG screenshots")
+    dedupe.add_argument("--output", help="Path to output JSON report (default: stdout)")
+    dedupe.add_argument(
+        "--threshold",
+        type=int,
+        default=6,
+        help="Hamming distance threshold for perceptual hash clustering (default: 6)",
+    )
+    dedupe.add_argument(
+        "--include-singletons",
+        action="store_true",
+        help="Include one-image clusters in output (default: duplicates only)",
+    )
+    dedupe.set_defaults(handler=run_dedupe)
+
+    black_frames = subparsers.add_parser(
+        "black-frames",
+        help="Find verified black-frame PNGs and optionally delete them",
+    )
+    black_frames.add_argument(
+        "--root",
+        dest="roots",
+        action="append",
+        help="Root directory to scan. Repeatable. Defaults to data/raw_stream and data/alas-observe.",
+    )
+    black_frames.add_argument(
+        "--max-size-bytes",
+        type=int,
+        default=10_000,
+        help="Only inspect PNGs at or below this size. Default: 10000.",
+    )
+    black_frames.add_argument(
+        "--mean-threshold",
+        type=float,
+        default=5.0,
+        help="Maximum grayscale mean for a verified black frame. Default: 5.0.",
+    )
+    black_frames.add_argument(
+        "--stddev-threshold",
+        type=float,
+        default=2.0,
+        help="Maximum grayscale stddev for a verified black frame. Default: 2.0.",
+    )
+    black_frames.add_argument(
+        "--delete",
+        action="store_true",
+        help="Actually delete files. Without this flag, the script performs a dry run.",
+    )
+    black_frames.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit the summary as JSON.",
+    )
+    black_frames.add_argument(
+        "--report",
+        type=Path,
+        help="Optional path to write a full JSON manifest of verified files and thresholds.",
+    )
+    black_frames.set_defaults(handler=run_black_frames)
+
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    return args.handler(args)
 
 
 if __name__ == "__main__":

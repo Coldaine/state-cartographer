@@ -75,8 +75,8 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - `vlm/VLM-task-contracts.md`
   - `vlm/VLM-prompts.md`
 - `How do we work with corpus/log data?`
-  - `prework/corpus-cleanup.md`
   - `prework/alas-build-plan.md`
+  - `prework/corpus-review-playbook.md`
 - `What workflows exist?`
   - `workflows/azur-lane-workflows.md`
 - `Where is the fuller repo map?`
