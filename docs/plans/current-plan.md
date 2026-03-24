@@ -1,12 +1,8 @@
 # Current Plan
 
-> Historical note: moved from `docs/plans/plan.md`. Older observation-first runtime language is preserved only where still useful as context.
-
 ## Purpose
 
-This is the canonical current plan.
-
-It should describe current work and current gating questions only. Older implementation claims belong in historical docs, not here.
+This is the canonical current plan. It describes active work and standing constraints only.
 
 See also:
 - [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
@@ -26,32 +22,31 @@ What is currently trusted:
 What is not currently trusted:
 - old graph/navigation/runtime script claims
 - any implied live operator path that has not been re-earned
-- older plan language that assumes deleted scripts still exist
 
-## Immediate Goals
+## Active Work
 
-### 1. Finish documentation consolidation
-
-- remove or merge stale overlap docs
-- keep only a few durable docs per question
-- make folder roles explicit and narrow
-- preserve project memory without keeping dead planning artifacts alive
-
-### 2. Stabilize prework as the active implementation surface
+### Stabilize prework as the active implementation surface
 
 - keep ALAS log alignment and corpus cleanup accurate
 - make ALAS-derived build procedures explicit and current
 - keep corpus and labeling workflows grounded in actual retained code
 
-### 3. Tighten the VLM contract surface
+Active workstreams:
+- ALAS-derived artifact building
+- corpus cleanup and corpus hygiene
+- log/frame alignment
+- label ontology and review quality
 
-- separate model profiles, task contracts, and prompt guidance cleanly
-- stop carrying backend/config constraints inside prompt prose
-- keep VLM work focused on offline labeling/adjudication until a live path is re-earned
+### MEmu control stack
 
-### 4. Re-earn runtime only after the gates are answered
+- canonical runtime blueprint in [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
+- emulator transport/integration companion in [memu-android-control-stack-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/memu-android-control-stack-2026-03-24.md)
+- ADB + DroidCast as the minimum viable stack
+- first goal: prove observe-act-observe loop on a single MEmu session
 
-No new live-runtime architecture should be treated as active until these questions are answered clearly:
+## Standing Constraint: Runtime Gates
+
+No new live-runtime architecture should be treated as active until these questions are answered:
 - what is the first real capability being shipped?
 - what proof counts as success?
 - which truth sources are trusted, weak, or provisional?
@@ -59,40 +54,10 @@ No new live-runtime architecture should be treated as active until these questio
 - what is the thinnest architecture that supports that capability?
 - which interfaces must be trusted before new code is added?
 
-## Active Workstreams
-
-### Prework
-
-- ALAS-derived artifact building
-- corpus cleanup and corpus hygiene
-- log/frame alignment
-- label ontology and review quality
-
-### VLM
-
-- model profile cleanup
-- task contract cleanup
-- prompt/config separation
-- offline evaluation and adjudication flow
-
-### Docs
-
-- collapse duplicate docs
-- mark historical docs as historical
-- keep `AGENTS.md` and `repo-index.md` aligned with actual repo structure
-
-## Near-Term Exit Criteria
-
-The current pass is successful when:
-- the docs tree no longer implies deleted code still exists
-- each major question has one authoritative doc
-- prework docs match the retained script surface
-- VLM docs reflect current model/config reality rather than 2024-era prompt habits
-- the next runtime step is blocked by explicit gates rather than hidden assumptions
-
 ## Linked Work Areas
 
-- MEmu control-stack proposal lives in [memu-android-control-stack-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/memu-android-control-stack-2026-03-24.md)
-- prework details live in [alas-build-plan.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-build-plan.md) and [corpus-review-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/prework/corpus-review-playbook.md)
-- VLM boundaries live in [VLM-overview.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-overview.md), [VLM-model-profiles.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-model-profiles.md), [VLM-task-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-task-contracts.md), and [VLM-prompts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-prompts.md)
-- runtime constraints live in [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
+- prework details: [alas-build-plan.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-build-plan.md) and [corpus-review-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/prework/corpus-review-playbook.md)
+- VLM boundaries: [VLM-overview.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-overview.md), [VLM-model-profiles.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-model-profiles.md), [VLM-task-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-task-contracts.md), [VLM-prompts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-prompts.md)
+- runtime architecture plan: [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
+- runtime constraints and ownership: [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
+- current prototype status: [tiered-automation-stack.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/tiered-automation-stack.md)

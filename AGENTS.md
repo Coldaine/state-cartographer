@@ -12,6 +12,7 @@ Its job is repo-level indexing, not explanation. Use it to find the right projec
 | [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/project/repo-index.md) | Exhaustive high-level map of code, docs, data, and retained artifacts. |
 | [architecture-overview.md](/mnt/d/_projects/MasterStateMachine/docs/architecture-overview.md) | How the repo is organized: domains, knowledge buckets, and implementation axes. |
 | [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md) | Current tactical plan and near-term rebuild priorities. |
+| [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md) | Canonical runtime architecture and phased implementation plan. |
 | [north-star.md](/mnt/d/_projects/MasterStateMachine/docs/project/north-star.md) | Long-horizon goals and desired end-state behavior. |
 | [documentation-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/project/documentation-playbook.md) | How documentation is organized and what must be updated when docs change. |
 
@@ -26,6 +27,7 @@ These live under:
 
 - [ALS-overview.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-overview.md)
 - [RES-founding-synthesis.md](/mnt/d/_projects/MasterStateMachine/docs/RES-research/RES-founding-synthesis.md)
+- [RES-stability-trap-analysis.md](/mnt/d/_projects/MasterStateMachine/docs/RES-research/RES-stability-trap-analysis.md)
 
 
 For the docs-only map, read [docs/AGENTS.md](/mnt/d/_projects/MasterStateMachine/docs/AGENTS.md).
@@ -51,11 +53,12 @@ For the expanded version, read [repo-index.md](/mnt/d/_projects/MasterStateMachi
 | [ALS-overview.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-overview.md) | Why ALAS matters and how to use it correctly as reference material |
 | [VLM-overview.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-overview.md) | What multimodal models are expected to do in this project |
 | [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md) | What the eventual live runtime is supposed to own |
+| [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md) | Canonical runtime architecture, tiering order, and phased build path |
 | [observation-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/observation-contracts.md) | Observation-side contracts and what is still only design guidance |
 | [azur-lane-workflows.md](/mnt/d/_projects/MasterStateMachine/docs/workflows/azur-lane-workflows.md) | Workflow/task inventory and substate complexity |
 | [alas-build-plan.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-build-plan.md) | Operational program for deriving artifacts from ALAS |
 | [2026-03-24-corpus-review-lessons.md](/mnt/d/_projects/MasterStateMachine/docs/memory/2026-03-24-corpus-review-lessons.md) | Compact lessons learned from the corpus review reset and first direct adjudication pass |
-| [master-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/master-plan.md) | Archived long-horizon plan context still worth knowing |
+| [testing-strategy.md](/mnt/d/_projects/MasterStateMachine/docs/dev/testing-strategy.md) | Testing policy: no mocks, no tests until files are mostly complete |
 
 ## Examples and Meta
 

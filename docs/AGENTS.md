@@ -29,21 +29,23 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
 ## Docs Tree
 
 - `ALS-reference/`
-  - ALAS as reference system: overview, event schema, live-ops rules
+  - ALAS as reference system: overview, live-ops rules
 - `RES-research/`
   - durable research notes, synthesis, and analysis
 - `project/`
-  - current reality, north star, repo index, validation posture
+  - current reality, north star, repo index
 - `memory/`
   - dated lessons learned and preserved findings that should not be re-learned
 - `prework/`
   - corpus alignment, cleanup, and ALAS-derived artifact building
 - `runtime/`
-  - live-system boundaries, observation contracts, backend hardening
+  - live-system boundaries, observation contracts, backend hardening, draft event schema, prototype runtime status
+- `dev/`
+  - developer workflow docs (testing strategy, etc.)
 - `vlm/`
   - model profiles, task contracts, prompt-layer guidance
 - `plans/`
-  - current and long-horizon planning docs
+  - tactical planning docs and the canonical runtime architecture plan
 - `decisions/`
   - ADR-style decisions
 - `workflows/`
@@ -62,17 +64,22 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - `project/current-reality.md`
 - `What is the current tactical plan?`
   - `plans/current-plan.md`
-- `What is the long-horizon plan?`
-  - `plans/master-plan.md`
 - `How is the repo organized?`
   - `architecture-overview.md`
 - `How should the live system be thought about?`
+  - `plans/multi-tier-runtime-implementation-plan-2026-03-24.md`
   - `runtime/runtime-overview.md`
   - `runtime/observation-contracts.md`
   - `runtime/backend-hardening.md`
+- `What is implemented versus merely planned in the runtime area?`
+  - `runtime/tiered-automation-stack.md`
+- `How does the MEmu emulator path connect to the runtime work?`
+  - `plans/memu-android-control-stack-2026-03-24.md`
 - `What is ALAS in this repo?`
   - `ALS-reference/ALS-overview.md`
   - `ALS-reference/ALS-live-ops.md`
+- `What is the testing policy?`
+  - `dev/testing-strategy.md`
 - `What is the VLM stack supposed to look like?`
   - `vlm/VLM-overview.md`
   - `vlm/VLM-model-profiles.md`
@@ -116,11 +123,15 @@ Rule:
 - `runtime/runtime-overview.md`
 - `runtime/observation-contracts.md`
 - `runtime/backend-hardening.md`
+- `plans/multi-tier-runtime-implementation-plan-2026-03-24.md`
+- `runtime/tiered-automation-stack.md`
 
 Rule:
 - `runtime-overview.md` owns runtime scope and operator-facing boundary
 - `observation-contracts.md` owns observation contract shape
 - `backend-hardening.md` owns backend constraints and salvage notes
+- the multi-tier runtime plan owns canonical runtime architecture and phased sequencing
+- `tiered-automation-stack.md` owns current prototype status only
 
 ### 4. VLM family drift
 - `vlm/VLM-overview.md`

@@ -62,7 +62,7 @@ These exist in the worktree but are not primary project knowledge or product sur
 - `docs/architecture-overview.md`
   - architecture and organizing logic
 - `docs/project/`
-  - current reality, north star, repo indexing, validation posture
+  - current reality, north star, repo indexing
   - includes `documentation-playbook.md` for docs workflow rules
 - `docs/memory/`
   - dated lessons learned and preserved findings
@@ -73,11 +73,14 @@ These exist in the worktree but are not primary project knowledge or product sur
 - `docs/prework/`
   - corpus/data preparation procedures
 - `docs/runtime/`
-  - runtime boundaries and retained runtime design knowledge
+  - runtime boundaries, retained runtime design knowledge, draft event schema, and prototype runtime status
+  - includes `tiered-automation-stack.md` for current scaffold truth, not canonical architecture
+- `docs/dev/`
+  - developer workflow docs (testing strategy, etc.)
 - `docs/vlm/`
   - VLM profiles, contracts, and prompt guidance
 - `docs/plans/`
-  - tactical and strategic planning docs
+  - tactical planning docs, including the canonical multi-tier runtime plan and the MEmu transport companion
 - `docs/decisions/`
   - ADR-style decision records
 - `docs/vendor-patches/`
@@ -91,6 +94,8 @@ These exist in the worktree but are not primary project knowledge or product sur
   - cheap Kimi-backed visible-first screenshot review
 - `scripts/vlm_detector.py`
   - VLM-backed offline detection and labeling tool
+- `scripts/tiered_automation.py`
+  - Phase-1 runtime scaffold with Tier-2-first resolution, ADB observe-act support, and an optional prototype template cache
 
 ## Data Surface
 

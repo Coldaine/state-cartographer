@@ -9,8 +9,10 @@ Describe what the future live runtime is supposed to own, and what should count 
 See also:
 - [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
 - [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md)
+- [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
 - [observation-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/observation-contracts.md)
 - [backend-hardening.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/backend-hardening.md)
+- [tiered-automation-stack.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/tiered-automation-stack.md)
 
 ## What Runtime Means Here
 
@@ -91,5 +93,7 @@ A rebuilt runtime should eventually own:
 ## Runtime Documents
 
 The runtime knowledge docs that remain after consolidation are:
+- [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
 - [observation-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/observation-contracts.md)
 - [backend-hardening.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/backend-hardening.md)
+- [tiered-automation-stack.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/tiered-automation-stack.md)
