@@ -17,6 +17,9 @@ vendor/AzurLaneAutoScript/.omc/
 .env
 .mypy_cache/
 .ruff_cache/
+.uv_cache/
+.uv_cache_codex/
+.uv-cache/
 htmlcov/
 .coverage
 vendor/alas_req_clean.txt
