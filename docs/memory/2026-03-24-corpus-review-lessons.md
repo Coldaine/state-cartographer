@@ -12,7 +12,7 @@ See also:
 ## Tag Key
 
 - `P0` = critical working rule
-- `P1` = important operating rule
+- `P1` = important operating rulea
 - `P2` = useful refinement
 
 Topic tags are plain words such as `kimi`, `prompting`, `review`, `truth`, `logs`, `images`, `ontology`, and `artifacts`.

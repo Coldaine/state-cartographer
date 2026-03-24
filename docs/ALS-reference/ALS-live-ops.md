@@ -6,7 +6,7 @@ These are the non-negotiable rules for live ALAS runs in this repo.
 
 See also:
 - [ALS-overview.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-overview.md)
-- [ALS-event-schema.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-event-schema.md)
+- [ALS-event-schema.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/ALS-event-schema.md)
 - [backend-hardening.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/backend-hardening.md)
 
 ## Hard Rules
