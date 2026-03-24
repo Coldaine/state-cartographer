@@ -30,7 +30,7 @@ A re-earned runtime would be responsible for:
 - not the research archive
 - not the VLM profile library by itself
 - not ALAS
-- not quarantined bridge experiments
+- not previous bridge experiments
 
 ## Operator-Facing Model
 
@@ -49,7 +49,7 @@ These do **not** count as operator-facing just because they exist:
 - reference-system tools
 - corpus cleanup scripts
 - ad hoc screenshot or labeling helpers
-- quarantined bridge code
+- previous bridge experiments
 - historical or planned entrypoints
 
 ## Current Status
