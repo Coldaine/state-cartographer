@@ -4,7 +4,7 @@
 
 ## Purpose
 
-This document defines testing policy for the current repo shape.
+This document defines validation policy for the current repo shape.
 
 It separates present validation expectations from future runtime testing that has not been re-earned yet.
 
@@ -15,7 +15,7 @@ See also:
 
 ## Current Validation Policy
 
-There is currently no committed automated test suite in the repo.
+There are currently no committed automated checks in the repo.
 
 Validation should stay focused on the active surface:
 
