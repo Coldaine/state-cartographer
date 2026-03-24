@@ -4,6 +4,16 @@ This file is the mandatory starting point.
 
 Its job is repo-level indexing, not explanation. Use it to find the right project knowledge quickly.
 
+## Prompt Documentation Rule
+
+Any code that contains a prompt for an LLM must have a separate markdown document under `/docs/agentPrompts/`.
+
+That document must:
+
+- link to the code file that contains the prompt
+- break down and justify each meaningful part of the prompt
+- explain how each part helps the agent or model for the specific task it is being used on
+
 ## Required Reading
 
 | Document | What It Covers |
