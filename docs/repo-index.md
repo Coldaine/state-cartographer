@@ -71,6 +71,7 @@ These exist in the worktree but are not primary project knowledge or product sur
   - docs workflow rules
 - `docs/memory/`
   - dated lessons learned and preserved findings
+  - includes `2026-03-25-memu-transport-probe-results.md` for the first live MEmu transport verdict
 - `docs/workflows/`
   - workflow/task inventory
 - `docs/agentPrompts/`
@@ -120,6 +121,7 @@ These exist in the worktree but are not primary project knowledge or product sur
 - `data/`
   - corpus, labels, screenshots, logs, backups, and other working artifacts
   - preserve by default unless there is a strong reason not to
+  - `data/events/memu-transport/` holds transport bootstrap/probe artifacts and dated session reports
 
 ## Reference Code Surface
 

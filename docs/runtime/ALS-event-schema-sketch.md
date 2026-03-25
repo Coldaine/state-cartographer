@@ -76,7 +76,7 @@ Examples:
   "ts": "2026-03-14T21:15:01.123Z",
   "run_id": "run-20260314-001",
   "session_id": "session-001",
-  "serial": "127.0.0.1:21513",
+  "serial": "127.0.0.1:21503",
   "assignment": "Commission",
   "event_type": "execution",
   "semantic_action": "handle_popup_confirm",
@@ -169,7 +169,7 @@ Examples:
 {
   "ts": "2026-03-14T21:15:00.000Z",
   "run_id": "run-20260314-001",
-  "serial": "127.0.0.1:21513",
+  "serial": "127.0.0.1:21503",
   "assignment": "Commission",
   "event_type": "assignment",
   "semantic_action": "assignment_start",
@@ -184,7 +184,7 @@ Examples:
 {
   "ts": "2026-03-14T21:15:00.412Z",
   "run_id": "run-20260314-001",
-  "serial": "127.0.0.1:21513",
+  "serial": "127.0.0.1:21503",
   "assignment": "Commission",
   "event_type": "observation",
   "semantic_action": "state_confirm",
@@ -201,7 +201,7 @@ Examples:
 {
   "ts": "2026-03-14T21:19:44.002Z",
   "run_id": "run-20260314-001",
-  "serial": "127.0.0.1:21513",
+  "serial": "127.0.0.1:21503",
   "assignment": "Commission",
   "event_type": "recovery",
   "semantic_action": "ui_goto_main",

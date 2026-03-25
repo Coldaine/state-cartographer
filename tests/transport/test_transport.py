@@ -24,7 +24,7 @@ from state_cartographer.transport.models import (
 def test_load_config_defaults():
     """Default config at configs/memu.json loads without error."""
     cfg = load_config()
-    assert cfg.adb_serial == "127.0.0.1:21513"
+    assert cfg.adb_serial == "127.0.0.1:21503"
     assert cfg.emulator_type == "memu"
 
 

@@ -30,6 +30,12 @@ The borrowed substrate posture is:
 
 The runtime should borrow these tools rather than reimplementing attachment, capture, and input plumbing.
 
+Observed result from the 2026-03-25 live probe pass:
+
+- Maa/ADB control path is accepted for the current machine
+- `scrcpy` attaches and coexists, but is `debug_only` rather than a runtime-consumable frame source on this Windows setup
+- the next runtime slice should use Maa screenshot capture for machine-consumable observation
+
 ## What This Layer Owns
 
 - device connection and basic health checks

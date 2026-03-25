@@ -196,16 +196,22 @@ The next implementation priority is:
    - retry
    - detect stuck states
    - emit structured JSONL run logs plus screenshots
-3. validate transport on a real MEmu session
-   - confirm whether the preferred visual substrate is runtime-consumable or debug-only
-   - confirm the borrowed control tool is the stable attach/action surface
-4. collect run artifacts before semantic cache work
+3. collect run artifacts before semantic cache work
    - before/after screenshots
    - chosen coordinates
    - verification result
    - latency and confidence signals
 
 This is the point where the borrowed-substrate scaffold becomes a real runtime slice rather than a single-action helper.
+
+## Transport Status Update
+
+The real-device transport proof was completed on `2026-03-25` against the pinned MEmu instance.
+
+- Maa/ADB path: accepted for the current transport slice
+- scrcpy: `debug_only` on this Windows setup
+- next-slice runtime observation path: `maamcp_screenshot`
+- next implementation focus: stronger verification and the multi-step runtime loop above transport
 
 ## Current Positioning
 

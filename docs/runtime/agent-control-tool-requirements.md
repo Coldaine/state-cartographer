@@ -30,10 +30,10 @@ The repo has already made the directional substrate decision:
 - `adbfriend` is installed separately and is not part of the runtime path
 
 What remains open is not tool selection.
-What remains open is operational proof on the pinned MEmu 9 setup:
+The 2026-03-25 live probe pass answered the two operational-proof questions on the pinned MEmu 9 setup:
 
-- whether `MaaMCP` behaves reliably enough in repeated real use
-- whether `scrcpy` yields a runtime-consumable frame path or only operator/debug visibility
+- the Maa/ADB path is reliable enough for the current transport slice
+- `scrcpy` yields operator/debug visibility only on this Windows setup; it is not the runtime frame source here
 
 So this document remains useful as the acceptance spec for that proof step, not as an invitation to reopen tool shopping.
 

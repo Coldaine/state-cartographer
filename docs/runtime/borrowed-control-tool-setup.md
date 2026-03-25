@@ -31,6 +31,14 @@ Its job is to make the next step operationally clear:
 - validate them on the pinned MEmu instance
 - determine whether `scrcpy` is usable as the runtime observation path or only as the debug/operator stream
 
+That compatibility spike was executed on `2026-03-25`.
+Current machine verdict:
+
+- pinned serial: `127.0.0.1:21503`
+- control path: Maa/ADB fallback accepted
+- runtime observation path: `maamcp_screenshot`
+- `scrcpy`: `debug_only` on this Windows setup
+
 ## Tool Roles
 
 - `MaaMCP`
@@ -55,7 +63,7 @@ The pinned emulator path is currently described in:
 
 Current default serial in local config:
 
-- `127.0.0.1:21513`
+- `127.0.0.1:21503`
 
 Any borrowed control tool used for the runtime must target that pinned instance explicitly.
 
@@ -77,8 +85,8 @@ At minimum, capture:
 
 ## Compatibility Spike
 
-Run this spike before rebuilding runtime code around the borrowed substrate.
-This is a validation gate for the chosen stack, not another tool-selection round.
+This spike has already been run for the current machine.
+Keep the gate below as the acceptance shape for future revalidation, not as an unexecuted task.
 
 ### MaaMCP gate
 
@@ -120,3 +128,15 @@ After the spike, choose the observation path like this:
   - document that as a degraded but accepted first implementation
 
 This is the only intended branch point for substrate selection in the current rebuild.
+
+## Current Recorded Outcome
+
+- `bootstrap` and `doctor` proved `adb` plus `scrcpy` discovery and confirmed the device was online
+- `doctor` still reported `fail` because native MaaFramework tooling was not installed locally
+- the transport slice still passed in practice because `MaaAdapter` fell back to direct ADB control
+- Maa probe passed repeated capture, input, and reconnect checks
+- scrcpy probe attached and coexisted with Maa control, but failed the programmatic frame-path test
+- accepted next-slice posture:
+  - control via Maa/ADB
+  - observation via Maa screenshot capture
+  - `scrcpy` for operator/debug visibility only
