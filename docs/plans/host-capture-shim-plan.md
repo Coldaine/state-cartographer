@@ -6,11 +6,57 @@
 
 ## Problem Statement
 
-ADB `exec-out screencap -p` returns pure-black 3,669-byte frames on MEmu (OpenGL renderer). This is because all Android-side screenshot methods — ADB screencap, DroidCast, uiautomator2, nemu_ipc — read the same virtual SurfaceFlinger framebuffer. When the emulator hasn't flushed that framebuffer, every method returns black.
+ADB `exec-out screencap -p` returns pure-black 3,669-byte frames on MEmu (OpenGL renderer).
 
-ALAS has 10 screenshot methods and a `check_screen_black()` that retries once. It has NO host-side fallback. Our current `capture.py` is a 58-line wrapper around `adb.screenshot_png()` with zero validation.
+### Why ADB screencap fails on emulators (and not on real phones)
 
-The user asks two questions:
+On a **real phone**, Android's SurfaceFlinger compositor drives a physical display. The framebuffer is always valid because it HAS to be — there's a screen attached, and SurfaceFlinger must produce a frame for every vsync. Asking SurfaceFlinger for its framebuffer (which is what `screencap` does) always returns real content.
+
+On an **emulator**, there is no physical display. The emulator does two things:
+
+1. Runs Android's SurfaceFlinger, which composites to a **virtual framebuffer** in GPU memory
+2. The **host-side renderer** (OpenGL or DirectX, depending on emulator settings) reads that virtual framebuffer and draws it in the emulator window on the desktop
+
+The problem is the boundary between step 1 and step 2. When MEmu is using OpenGL rendering (which ours is), the virtual framebuffer can be in states that would never happen on real hardware:
+
+- SurfaceFlinger thinks it rendered, but the GPU hasn't flushed yet → **black**
+- The emulator window is minimized or behind another window → the host renderer may not bother compositing → **black**
+- OpenGL context switches during the screencap call → **black**
+- The emulator is still initializing its renderer → **black**
+
+**Every Android-side screenshot method has this same fundamental weakness:**
+
+| Method | What it does | Why it gets black |
+|---|---|---|
+| `adb screencap` | Asks SurfaceFlinger for the framebuffer | Framebuffer not flushed |
+| `uiautomator2` / minicap | Grabs SurfaceFlinger via framework API | Same framebuffer |
+| `DroidCast` | SurfaceControl API into SurfaceFlinger | Same framebuffer |
+| `nemu_ipc` | Shared memory into emulator's internal buffer | Closer to truth but still virtual |
+| `aScreenCap` | Native binary reading SurfaceFlinger | Same framebuffer |
+
+They are all reading the **same data through different doors**. If the virtual framebuffer is black, every door shows black. ALAS has 10 screenshot methods and they are mostly 10 different ways to read the same broken framebuffer.
+
+The **only methods that escape this** read from a fundamentally different data source:
+
+- **Host-side window capture** (DXcam, WGC, PrintWindow+PW_RENDERFULLCONTENT) — grabs what the emulator's host renderer actually painted in the desktop window
+- **scrcpy** — decodes the H.264 stream the emulator's video encoder produces for its own display pipeline
+
+This is why our probe data shows 3,669-byte black frames from ADB screencap but scrcpy client captures are 1MB+ of real content. They read from different pipelines.
+
+### What ALAS does about it
+
+ALAS's `check_screen_black()` (line 243 of `module/device/screenshot.py`) does this:
+
+1. `screenshot()` captures a frame
+2. Calls `check_screen_black()` — if `sum(color) < 1` across the entire 1280x720 image, it's pure black
+3. Returns `False`, the `for _ in range(2)` loop retries **once**
+4. If the retry also gets a black frame, it returns the black frame anyway (the loop exits after 2 tries)
+5. Once it gets ONE good frame, it sets `_screen_black_checked = True` and **never checks again for the rest of the session**
+
+ALAS does NOT switch methods on failure, does NOT have host-side fallback, does NOT keep validating after the first good frame. The method dictionary is good architecture but the black screen handling is a `for _ in range(2)` with a warning log.
+
+### The questions this plan answers
+
 1. Can we add a host-side window capture shim as a backup?
 2. Should we adopt ALAS's pipeline as our hardened backend?
 
@@ -91,7 +137,7 @@ The user asks two questions:
 
 ### Invalidation Rationale for Alternatives
 
-- **Option C (PrintWindow):** Fundamentally broken for OpenGL/DirectX emulator windows — returns black or stale GDI content. Same class of bug as ADB screencap.
+- **Option C (PrintWindow) as PRIMARY:** Not selected as primary because it triggers a DWM compositor flush per capture (~5-20ms, heavier than DXcam's ~3-5ms) and the `PW_RENDERFULLCONTENT` flag is undocumented (not in `win32con`, must be hardcoded as `0x00000002`). However, Option C IS viable as a fallback — it handles occlusion (which DXcam DXGI cannot), works for OpenGL/DirectX via DWM, and requires zero new dependencies (ctypes only). It is included in the fallback chain as the third method after `adb_screencap` and `host_dxcam`. **Note:** Base `PrintWindow` WITHOUT `PW_RENDERFULLCONTENT` is broken for GPU-rendered content — only the flag version works.
 - **Option D (continuous scrcpy):** Wrong resource model — we need on-demand, not streaming. Already correctly scoped as debug-only in substrate plan.
 - **Adopting ALAS wholesale:** GPL incompatibility with our MIT license. Python 3.7 deps would regress our stack. ALAS has no host-side capture (the entire point). The useful patterns are ~200 lines of code to re-implement cleanly.
 
@@ -274,6 +320,6 @@ Optional upgrade: `pip install "dxcam[winrt]"` (~5MB additional) to enable WGC b
 - **Decision:** Add DXcam-based host-side window capture as fallback for ADB screencap failures.
 - **Drivers:** ADB screencap returns black on MEmu OpenGL. All Android-side methods read the same broken framebuffer. Host-side capture reads from a fundamentally different data source (GPU desktop output).
 - **Alternatives considered:** (A) DXcam/DXGI region capture, (B) WGC window capture, (C) PrintWindow/BitBlt, (D) continuous scrcpy decode, (E) adopt ALAS pipeline wholesale.
-- **Why chosen:** A+B via dxcam dual backend. Fastest, lightest, same library for both approaches. PrintWindow broken for OpenGL. scrcpy wrong resource model. ALAS has no host capture and GPL-incompatible.
+- **Why chosen:** A+B via dxcam dual backend as primary, C (PrintWindow+PW_RENDERFULLCONTENT) as zero-dep fallback. DXcam is fastest and lightest. PrintWindow+PW_RENDERFULLCONTENT handles occlusion that DXcam DXGI cannot. scrcpy wrong resource model. ALAS has no host capture and GPL-incompatible.
 - **Consequences:** Emulator must be visible on screen for host fallback to work. Minimized/hidden windows cannot use host capture — ADB is the only option in those states. DXcam is Windows-only — acceptable since this is a Windows-only project.
 - **Follow-ups:** Monitor capture telemetry to measure ADB vs host success rates. Consider WGC backend if occlusion becomes a problem. Consider nemu_ipc shared-memory path for MEmu-specific optimization.
