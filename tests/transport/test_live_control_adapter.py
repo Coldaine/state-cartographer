@@ -1,38 +1,98 @@
+"""Live smoke tests for transport layer.
+
+These require a running MEmu emulator. They are skipped if the device is offline.
+"""
+
 import time
 
 import pytest
 
 from state_cartographer.transport.adb import Adb
-from state_cartographer.transport.config import artifacts_dir, load_config
-from state_cartographer.transport.discovery import bootstrap
-from state_cartographer.transport.maamcp import MaaAdapter
+from state_cartographer.transport.capture import Capture
+from state_cartographer.transport.config import load_config
+from state_cartographer.transport.maatouch import MaaTouch
 
 
-def test_live_control_adapter_smoke():
+def test_live_adb_screenshot():
     cfg = load_config()
-    manifest = bootstrap(cfg)
-    adb_path = next((tool.path for tool in manifest.tools if tool.name == "adb" and tool.found and tool.path), None)
-    if not adb_path:
-        pytest.skip("adb unavailable, skipping live test")
+    adb = Adb(cfg.serial)
 
-    adb = Adb(cfg.serial, adb_path=adb_path)
     if not adb.is_device_online():
         pytest.skip("Device offline, skipping live test")
 
-    adapter = MaaAdapter(cfg.serial, adb_path=adb_path, agent_path=cfg.agent_path)
-    assert adapter.connect()
+    data = adb.screenshot_png()
+    assert data is not None
+    assert len(data) > 100
 
-    # This is a control-adapter smoke test, not proof of the native Maa path.
-    assert adapter.backend in {"adb_direct", "maafw"}
 
-    out_dir = artifacts_dir()
-    cap_path = out_dir / "test_live_control_adapter_cap.png"
-    data, _elapsed_ms = adapter.screenshot(cap_path)
+def test_live_adb_tap():
+    cfg = load_config()
+    adb = Adb(cfg.serial)
+
+    if not adb.is_device_online():
+        pytest.skip("Device offline, skipping live test")
+
+    ok = adb.tap(100, 100)
+    assert ok is True
+
+
+def test_live_adb_input_methods():
+    cfg = load_config()
+    adb = Adb(cfg.serial)
+
+    if not adb.is_device_online():
+        pytest.skip("Device offline, skipping live test")
+
+    assert adb.is_device_online()
+    assert adb.connect()
+    assert adb.devices() is not None
+
+
+def test_live_capture_screenshot():
+    cfg = load_config()
+    adb = Adb(cfg.serial)
+
+    if not adb.is_device_online():
+        pytest.skip("Device offline, skipping live test")
+
+    capture = Capture(adb)
+    data = capture.screenshot_png()
 
     assert data is not None
     assert len(data) > 100
-    assert cap_path.exists()
 
-    assert adapter.tap(50, 50)
-    time.sleep(0.5)
-    assert adapter.swipe(100, 300, 100, 500, duration_ms=200)
+
+def test_live_maatouch_tap():
+    cfg = load_config()
+    adb = Adb(cfg.serial)
+
+    if not adb.is_device_online():
+        pytest.skip("Device offline, skipping live test")
+
+    maatouch = MaaTouch(adb)
+    if not maatouch.connect():
+        pytest.skip("MaaTouch not available, skipping test")
+
+    try:
+        ok = maatouch.tap(200, 200)
+        assert ok is True
+    finally:
+        maatouch.disconnect()
+
+
+def test_live_maatouch_swipe():
+    cfg = load_config()
+    adb = Adb(cfg.serial)
+
+    if not adb.is_device_online():
+        pytest.skip("Device offline, skipping live test")
+
+    maatouch = MaaTouch(adb)
+    if not maatouch.connect():
+        pytest.skip("MaaTouch not available, skipping test")
+
+    try:
+        ok = maatouch.swipe(100, 300, 100, 500, duration_ms=200)
+        assert ok is True
+    finally:
+        maatouch.disconnect()
