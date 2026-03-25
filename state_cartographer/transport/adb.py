@@ -57,11 +57,10 @@ class AdbError(Exception):
 class Adb:
     """adbutils-based ADB client scoped to a single serial."""
 
-    def __init__(self, serial: str, adb_path: str | None = None):
+    def __init__(self, serial: str):
         self.serial = serial
         self._client = AdbClient()
         self._device: AdbDevice | None = None
-        self._adb_path = adb_path
 
     def _get_device(self) -> AdbDevice:
         if self._device is None:
@@ -73,7 +72,7 @@ class Adb:
                         return self._device
                 raise AdbError(f"Device {self.serial} not found")
             except AdbutilsError as e:
-                raise AdbError(f"ADB error listing devices: {e}")
+                raise AdbError(f"ADB error listing devices: {e}") from e
         return self._device
 
     @property
@@ -105,13 +104,16 @@ class Adb:
             return False
 
     def devices(self) -> list[str]:
-        return [d.serial for d in self._client.device_list()]
+        try:
+            return [d.serial for d in self._client.device_list()]
+        except AdbutilsError as e:
+            raise AdbError(f"ADB error listing devices: {e}") from e
 
     def is_device_online(self) -> bool:
         try:
             _ = self.device
             return True
-        except AdbError:
+        except (AdbError, AdbutilsError):
             return False
 
     @retry

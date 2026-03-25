@@ -9,12 +9,11 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from state_cartographer.transport.adb import Adb, AdbError
+from state_cartographer.transport.adb import Adb
 from state_cartographer.transport.capture import Capture
-from state_cartographer.transport.config import TransportConfig, load_config
+from state_cartographer.transport.config import load_config
 from state_cartographer.transport.health import DoctorReport, doctor, recovery_ladder
 from state_cartographer.transport.maatouch import MaaTouch
-from state_cartographer.transport.models import ReadinessTier
 
 log = logging.getLogger(__name__)
 
@@ -73,13 +72,13 @@ class Pilot:
 
     def tap(self, x: int, y: int) -> bool:
         """Tap at coordinates. Uses MaaTouch if available, falls back to ADB."""
-        if self._maatouch and self._maatouch._proc:
+        if self._maatouch and self._maatouch.is_connected():
             return self.maatouch.tap(x, y)
         return self.adb.tap(x, y)
 
     def swipe(self, x1: int, y1: int, x2: int, y2: int, duration_ms: int = 300) -> bool:
         """Swipe from (x1,y1) to (x2,y2). Uses MaaTouch if available."""
-        if self._maatouch and self._maatouch._proc:
+        if self._maatouch and self._maatouch.is_connected():
             return self.maatouch.swipe(x1, y1, x2, y2, duration_ms)
         return self.adb.swipe(x1, y1, x2, y2, duration_ms)
 
@@ -103,7 +102,7 @@ class Pilot:
         """Quick check if device is reachable."""
         return self.adb.is_device_online()
 
-    def __enter__(self) -> "Pilot":
+    def __enter__(self) -> Pilot:
         self.connect()
         return self
 

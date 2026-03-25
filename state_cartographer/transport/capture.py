@@ -9,7 +9,7 @@ import logging
 import time
 from pathlib import Path
 
-from state_cartographer.transport.adb import Adb, AdbError
+from state_cartographer.transport.adb import Adb
 
 log = logging.getLogger(__name__)
 

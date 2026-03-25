@@ -48,8 +48,8 @@ def _start_scrcpy(binary: str, serial: str, extra_args: list[str] | None = None)
     log.info("Starting scrcpy: %s", " ".join(cmd))
     return subprocess.Popen(
         cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
 
 
@@ -88,7 +88,7 @@ def _probe_record_path(binary: str, serial: str, run_dir: Path) -> bool:
 
     proc: subprocess.Popen[bytes] | None = None
     try:
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(5)  # record 5 seconds
 
         # Graceful stop
@@ -160,9 +160,8 @@ def run_scrcpy_probe(
             except subprocess.TimeoutExpired:
                 proc.kill()
         else:
-            stderr = proc.stderr.read().decode(errors="replace") if proc.stderr else ""
             report.attached = False
-            report.errors.append(f"scrcpy exited immediately: {stderr[:500]}")
+            report.errors.append("scrcpy exited immediately")
     except Exception as e:
         report.errors.append(f"scrcpy attach failed: {e}")
 

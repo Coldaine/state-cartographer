@@ -1,7 +1,7 @@
 """MaaTouch protocol for precision touch input.
 
-Uses stdin/stdout of an adb shell Popen process. Faster and more precise than
-adb shell input. Protocol: banner on stdout, minitouch commands to stdin,
+Uses adbutils shell stream transport. Faster and more precise than
+adb shell input. Protocol: banner on stdout, minitouch commands to stream,
 timestamp echo-back for sync mode.
 """
 
@@ -9,13 +9,13 @@ from __future__ import annotations
 
 import logging
 import queue
-import subprocess
 import threading
 import time
+from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 
-from state_cartographer.transport.adb import Adb, AdbError
+from state_cartographer.transport.adb import Adb
 
 log = logging.getLogger(__name__)
 
@@ -35,13 +35,9 @@ class Command:
     text: str = ""
 
     def to_minitouch(self) -> str:
-        if self.operation == "c":
+        if self.operation == "c" or self.operation == "r":
             return f"{self.operation}\n"
-        elif self.operation == "r":
-            return f"{self.operation}\n"
-        elif self.operation == "d":
-            return f"{self.operation} {self.contact} {self.x} {self.y} {self.pressure}\n"
-        elif self.operation == "m":
+        elif self.operation == "d" or self.operation == "m":
             return f"{self.operation} {self.contact} {self.x} {self.y} {self.pressure}\n"
         elif self.operation == "u":
             return f"{self.operation} {self.contact}\n"
@@ -57,11 +53,7 @@ class Command:
             if self.mode:
                 return f"{self.operation} {self.mode}\n"
             return f"{self.operation}\n"
-        elif self.operation == "d":
-            if self.mode:
-                return f"{self.operation} {self.contact} {self.x} {self.y} {self.pressure} {self.mode}\n"
-            return f"{self.operation} {self.contact} {self.x} {self.y} {self.pressure}\n"
-        elif self.operation == "m":
+        elif self.operation == "d" or self.operation == "m":
             if self.mode:
                 return f"{self.operation} {self.contact} {self.x} {self.y} {self.pressure} {self.mode}\n"
             return f"{self.operation} {self.contact} {self.x} {self.y} {self.pressure}\n"
@@ -80,38 +72,38 @@ class Command:
 class CommandBuilder:
     DEFAULT_DELAY = 0.05
 
-    def __init__(self, device: "MaaTouch", contact: int = 0):
+    def __init__(self, device: MaaTouch, contact: int = 0):
         self.device = device
         self.contact = contact
         self.commands: list[Command] = []
         self.delay = 0
 
-    def commit(self) -> "CommandBuilder":
+    def commit(self) -> CommandBuilder:
         self.commands.append(Command("c"))
         return self
 
-    def reset(self, mode: int = 0) -> "CommandBuilder":
+    def reset(self, mode: int = 0) -> CommandBuilder:
         self.commands.append(Command("r", mode=mode))
         return self
 
-    def wait(self, ms: int = 10) -> "CommandBuilder":
+    def wait(self, ms: int = 10) -> CommandBuilder:
         self.commands.append(Command("w", ms=ms))
         self.delay += ms
         return self
 
-    def up(self, mode: int = 0) -> "CommandBuilder":
+    def up(self, mode: int = 0) -> CommandBuilder:
         self.commands.append(Command("u", contact=self.contact, mode=mode))
         return self
 
-    def down(self, x: int, y: int, pressure: int = 100, mode: int = 0) -> "CommandBuilder":
+    def down(self, x: int, y: int, pressure: int = 100, mode: int = 0) -> CommandBuilder:
         self.commands.append(Command("d", x=x, y=y, contact=self.contact, pressure=pressure, mode=mode))
         return self
 
-    def move(self, x: int, y: int, pressure: int = 100, mode: int = 0) -> "CommandBuilder":
+    def move(self, x: int, y: int, pressure: int = 100, mode: int = 0) -> CommandBuilder:
         self.commands.append(Command("m", x=x, y=y, contact=self.contact, pressure=pressure, mode=mode))
         return self
 
-    def clear(self) -> "CommandBuilder":
+    def clear(self) -> CommandBuilder:
         self.commands = []
         self.delay = 0
         return self
@@ -138,9 +130,9 @@ class MaaTouchSyncTimeout(MaaTouchError):
 class MaaTouch:
     """MaaTouch precision touch controller.
 
-    Communicates via stdin/stdout of an adb shell subprocess (Popen with PIPE).
-    maatouchsync reads minitouch commands from stdin and echoes timestamps back
-    on stdout for sync-mode confirmation.
+    Communicates via adbutils shell stream.
+    maatouchsync reads minitouch commands from stream writes and echoes
+    timestamps back on stream reads for sync-mode confirmation.
     """
 
     def __init__(
@@ -152,7 +144,7 @@ class MaaTouch:
         self.adb = adb
         self.local_path = local_path
         self.remote_path = remote_path
-        self._proc: subprocess.Popen | None = None
+        self._conn = None
         self._stdout_q: queue.Queue = queue.Queue()
         self._reader_thread: threading.Thread | None = None
         self._max_x = 1280
@@ -173,12 +165,26 @@ class MaaTouch:
         return result
 
     def _start_reader(self) -> None:
-        """Background thread that drains stdout lines into a queue."""
+        """Background thread that drains stream output lines into a queue."""
+
         def _reader():
-            assert self._proc is not None
-            for raw in self._proc.stdout:  # type: ignore[union-attr]
-                line = raw.rstrip(b"\r\n").decode(errors="replace")
-                self._stdout_q.put(line)
+            if self._conn is None:
+                return
+            buffer = b""
+            try:
+                while True:
+                    chunk = self._conn.read(1024)
+                    if not chunk:
+                        break
+                    buffer += chunk
+                    while b"\n" in buffer:
+                        raw, buffer = buffer.split(b"\n", 1)
+                        self._stdout_q.put(raw.rstrip(b"\r").decode(errors="replace"))
+                if buffer:
+                    self._stdout_q.put(buffer.rstrip(b"\r").decode(errors="replace"))
+            except Exception as e:
+                log.debug("MaaTouch stream reader exited: %s", e)
+
         self._reader_thread = threading.Thread(target=_reader, daemon=True)
         self._reader_thread.start()
 
@@ -186,21 +192,16 @@ class MaaTouch:
         """Read one line from stdout queue with a timeout."""
         try:
             return self._stdout_q.get(timeout=timeout)
-        except queue.Empty:
-            raise MaaTouchSyncTimeout(f"No response within {timeout}s")
+        except queue.Empty as e:
+            raise MaaTouchSyncTimeout(f"No response within {timeout}s") from e
 
     def connect(self) -> bool:
         if not self._ensure_installed():
             return False
 
         try:
-            serial = self.adb.serial
-            self._proc = subprocess.Popen(
-                ["adb", "-s", serial, "shell",
-                 f"CLASSPATH={self.remote_path} app_process / com.shxyke.MaaTouch.App"],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
+            self._conn = self.adb.device.open_shell(
+                f"CLASSPATH={self.remote_path} app_process / com.shxyke.MaaTouch.App"
             )
             self._start_reader()
 
@@ -213,7 +214,7 @@ class MaaTouch:
                 raise MaaTouchNotInstalledError("MaaTouch aborted — incompatible with device")
 
             try:
-                _, max_contacts, max_x, max_y, max_pressure = banner.split()
+                _, _max_contacts, max_x, max_y, _max_pressure = banner.split()
                 self._max_x = int(max_x)
                 self._max_y = int(max_y)
             except ValueError:
@@ -237,30 +238,29 @@ class MaaTouch:
             return False
 
     def disconnect(self) -> None:
-        if self._proc:
-            try:
-                self._proc.terminate()
-                self._proc.wait(timeout=3)
-            except Exception:
-                pass
-            self._proc = None
+        if self._conn:
+            with suppress(Exception):
+                self._conn.close()
+            self._conn = None
         self._reader_thread = None
+
+    def is_connected(self) -> bool:
+        return self._conn is not None
 
     def _send(self, builder: CommandBuilder) -> bool:
         """Send commands; no sync confirmation."""
-        if self._proc is None:
+        if self._conn is None:
             raise MaaTouchError("MaaTouch not connected")
 
         content = builder.to_minitouch().encode("utf-8")
-        self._proc.stdin.write(content)  # type: ignore[union-attr]
-        self._proc.stdin.flush()  # type: ignore[union-attr]
+        self._conn.send(content)
         time.sleep(builder.DEFAULT_DELAY)
         builder.clear()
         return True
 
     def _send_sync(self, builder: CommandBuilder, mode: int = 2) -> bool:
         """Send commands with timestamp echo-back confirmation."""
-        if self._proc is None:
+        if self._conn is None:
             raise MaaTouchError("MaaTouch not connected")
 
         for cmd in builder.commands[::-1]:
@@ -272,16 +272,20 @@ class MaaTouch:
         builder.commands.insert(0, Command("s", text=timestamp))
 
         content = builder.to_maatouch_sync().encode("utf-8")
-        self._proc.stdin.write(content)  # type: ignore[union-attr]
-        self._proc.stdin.flush()  # type: ignore[union-attr]
+        self._conn.send(content)
 
         # Wait for timestamp echo-back
+        matched = False
         for _ in range(5):
             out = self._readline(timeout=2.0)
             if out == timestamp:
+                matched = True
                 break
             if out == "Killed":
                 raise MaaTouchNotInstalledError("MaaTouch died")
+
+        if not matched:
+            raise MaaTouchSyncTimeout("MaaTouch sync echo not observed")
 
         time.sleep(builder.DEFAULT_DELAY)
         builder.clear()
@@ -317,7 +321,7 @@ class MaaTouch:
         builder.up().commit()
         return self._send_sync(builder)
 
-    def __enter__(self) -> "MaaTouch":
+    def __enter__(self) -> MaaTouch:
         self.connect()
         return self
 

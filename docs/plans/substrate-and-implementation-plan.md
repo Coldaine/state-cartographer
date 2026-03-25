@@ -136,10 +136,10 @@ The ALAS multi-backend pattern (multiple inheritance + method dictionaries for r
 {
   "name": "MEmu Player",
   "emulator_type": "memu",
-  "adb_serial": "127.0.0.1:21503",
+  "adb_serial": "127.0.0.1:21513",
   "primary_control": "maatouch",
-  "fallback_observation": "adb_screenshot",
-  "maatouch_filepath_local": "state_cartographer/bin/MaaTouch/maatouchsync",
+  "fallback_observation": "adb_screencap",
+  "maatouch_filepath_local": "vendor/AzurLaneAutoScript/bin/MaaTouch/maatouchsync",
   "maatouch_filepath_remote": "/data/local/tmp/maatouchsync"
 }
 ```
