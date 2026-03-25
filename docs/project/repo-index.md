@@ -53,6 +53,8 @@ These exist in the worktree but are not primary project knowledge or product sur
 
 ## Docs Map
 
+- `docs/todo.md`
+  - repo-wide execution tracker for active tasks, blockers, and immediate next actions
 - `docs/AGENTS.md`
   - local index for the docs tree
 - `docs/ALS-reference/`

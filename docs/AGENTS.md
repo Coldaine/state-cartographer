@@ -28,6 +28,8 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
 
 ## Docs Tree
 
+- `todo.md`
+  - repo-wide execution tracker and blockers list
 - `ALS-reference/`
   - ALAS as reference system: overview, live-ops rules
 - `RES-research/`
@@ -64,6 +66,8 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - `project/current-reality.md`
 - `What is the current tactical plan?`
   - `plans/current-plan.md`
+- `What should we do next at the execution level?`
+  - `todo.md`
 - `How is the repo organized?`
   - `architecture-overview.md`
 - `How should the live system be thought about?`
@@ -110,11 +114,13 @@ Rule:
 - `project/repo-index.md` is the exhaustive repo map
 
 ### 2. Current truth vs strategy
+- `todo.md`
 - `project/current-reality.md`
 - `project/north-star.md`
 - `plans/current-plan.md`
 
 Rule:
+- `todo.md` owns repo-wide execution tracking only
 - `current-reality.md` owns what is true now
 - `north-star.md` owns desired end state
 - `current-plan.md` owns near-term change program

@@ -29,6 +29,7 @@ Everything else in `docs/` is a knowledge bucket rather than a domain.
 
 Current buckets include:
 
+- `todo.md`
 - `project/`
 - `memory/`
 - `prework/`
@@ -54,6 +55,7 @@ If those answers are weak, the doc probably should not be added.
 
 Use these placement rules:
 
+- put the repo-wide execution tracker in `docs/todo.md`
 - put repo-wide status and orientation docs in `docs/project/`
 - put dated lessons and preserved findings in `docs/memory/`
 - put corpus preparation and cleanup procedures in `docs/prework/`
@@ -65,6 +67,33 @@ Use these placement rules:
 
 If a doc is narrow, put it next to the question it answers instead of creating a new top-level category.
 
+## Repo-Wide Todo Rule
+
+`docs/todo.md` is allowed as the single repo-wide execution tracker.
+
+Its purpose is operational, not architectural.
+
+It should contain:
+
+- current focus
+- active checklist items
+- blockers
+- deferred items when useful
+
+It should not contain:
+
+- duplicated architecture rationale
+- duplicated near-term plan narrative
+- long-form design explanation already owned by another doc
+- historical memory that belongs in `docs/memory/`
+
+Use these boundaries:
+
+- `docs/todo.md` owns execution tracking only
+- `plans/current-plan.md` owns the near-term change program
+- canonical plan docs own architecture and rationale
+- `project/current-reality.md` owns what is true now
+
 ## One Question, One Owner
 
 Prefer one authoritative doc per question.
@@ -73,6 +102,7 @@ Do not create multiple docs that answer the same question in slightly different 
 
 Use these existing ownership boundaries:
 
+- `todo.md` owns repo-wide execution tracking
 - `project/current-reality.md` owns what is true now
 - `project/north-star.md` owns desired end state
 - `plans/current-plan.md` owns the near-term change program
@@ -118,6 +148,7 @@ Use [VLM-prompts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-prompts.md
 - do not bury important repo rules only inside scripts or code comments
 - do not let indexes drift after adding or moving docs
 - do not mix current truth, desired future state, and tactical planning into one document
+- do not let `docs/todo.md` turn into a second plan document
 - do not let prompt rationale sprawl into unrelated docs
 
 ## Maintenance Checklist
