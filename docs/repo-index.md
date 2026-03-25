@@ -81,14 +81,17 @@ These exist in the worktree but are not primary project knowledge or product sur
 - `docs/runtime/`
   - runtime boundaries, retained runtime design knowledge, external tool requirements, and borrowed-tool intake/setup notes
   - includes `agent-control-tool-requirements.md` for borrowed substrate selection criteria
+  - includes `health-heartbeat-logging.md` for readiness tiers, layered heartbeat design, structured event logging, and evidence layout
   - includes `borrowed-control-tool-setup.md` for local setup and compatibility-spike procedure
 - `docs/dev/`
   - developer workflow docs (testing strategy, etc.)
+  - includes `testingADB.md` for live ADB/emulator integration testing and evidence expectations
 - `docs/vlm/`
   - VLM profiles, contracts, and prompt guidance
   - includes `llama-swap-quickstart.md` for local model serving and endpoint usage
 - `docs/plans/`
   - tactical planning docs, including the canonical runtime plan and the MEmu transport companion
+  - includes `adb-touch-vision-substrate-selection-2026-03-25.md` for the 10-candidate borrowed-substrate evaluation and final touch/vision recommendation
 - `docs/vendor-patches/`
   - existing patch/reference bucket retained as-is
 

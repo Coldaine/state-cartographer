@@ -46,12 +46,15 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - corpus alignment, cleanup, and ALAS-derived artifact building
 - `runtime/`
   - live-system boundaries, observation contracts, external tool requirements, and borrowed-tool intake/setup notes
+  - includes `health-heartbeat-logging.md` for readiness tiers, layered heartbeats, event schema, and operational evidence layout
 - `dev/`
   - developer workflow docs (testing strategy, etc.)
+  - includes `testingADB.md` for live ADB/emulator integration testing strategy
 - `vlm/`
   - model profiles, task contracts, prompt-layer guidance
 - `plans/`
   - tactical planning docs and the canonical runtime architecture plan
+  - includes `adb-touch-vision-substrate-selection-2026-03-25.md` for the 10-candidate substrate evaluation and final touch/vision decision
 - `workflows/`
   - workflow inventory and operational task descriptions
 - `agentPrompts/`
@@ -70,6 +73,8 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - `todo.md`
 - `What should we do next at the execution level?`
   - `todo.md`
+- `What did the 10-candidate substrate evaluation conclude?`
+  - `plans/adb-touch-vision-substrate-selection-2026-03-25.md`
 - `How is the repo organized?`
   - `architecture-overview.md`
 - `How should the live system be thought about?`
@@ -79,6 +84,8 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - `runtime/backend-lessons.md`
 - `What must an external agent-facing emulator control tool already provide?`
   - `runtime/agent-control-tool-requirements.md`
+- `How should live health, heartbeats, and runtime logging work?`
+  - `runtime/health-heartbeat-logging.md`
 - `How should the borrowed control tools be set up and evaluated locally?`
   - `runtime/borrowed-control-tool-setup.md`
 - `How does the MEmu emulator path connect to the runtime work?`
@@ -92,6 +99,8 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - `ALS-reference/ALS-live-ops.md`
 - `What is the testing policy?`
   - `dev/testing-strategy.md`
+- `How should live ADB/emulator testing work?`
+  - `dev/testingADB.md`
 - `What is the VLM stack supposed to look like?`
   - `vlm/VLM-overview.md`
   - `vlm/VLM-model-profiles.md`
@@ -135,6 +144,7 @@ Rule:
 - `runtime/runtime-overview.md`
 - `runtime/observation-contracts.md`
 - `runtime/backend-lessons.md`
+- `runtime/health-heartbeat-logging.md`
 - `plans/multi-tier-runtime-implementation-plan-2026-03-24.md`
 - `runtime/agent-control-tool-requirements.md`
 - `runtime/borrowed-control-tool-setup.md`
@@ -143,6 +153,7 @@ Rule:
 - `runtime-overview.md` owns runtime scope and operator-facing boundary
 - `observation-contracts.md` owns observation contract shape
 - `backend-lessons.md` owns backend constraints and salvage notes
+- `health-heartbeat-logging.md` owns readiness tiers, layered heartbeats, event schema, and operational evidence boundaries
 - the multi-tier runtime plan owns canonical runtime architecture and phased sequencing
 - `agent-control-tool-requirements.md` owns external tool selection criteria
 - `borrowed-control-tool-setup.md` owns local intake/setup and compatibility spike procedure

@@ -16,12 +16,13 @@ Thin tracker only.
 ## Next
 
 1. Strengthen post-action verification above the transport layer; keep raw frame diff as a cheap signal only.
-2. Build the thin multi-step runtime loop on top of the proven transport slice.
+2. Build the thin multi-step runtime loop on top of the proven Maa-first transport slice.
 3. Persist structured step-by-step runtime events and screenshots before any semantic cache work.
+4. Add live readiness/capture/recovery tests from `dev/testingADB.md`.
 
 ## Blockers
 
-- `maafw` / native MaaFramework tooling is not installed locally, so `doctor` still fails the strict tool-discovery gate
+- `maafw` / native MaaFramework tooling is not installed locally, so the current posture remains degraded rather than preferred
 - `scrcpy` is confirmed `debug_only` on this Windows MEmu setup; it is not a runtime frame source here
 
 ## Deferred
@@ -33,8 +34,10 @@ Thin tracker only.
 
 - dated probe outcome: [2026-03-25-memu-transport-probe-results.md](/mnt/d/_projects/MasterStateMachine/docs/memory/2026-03-25-memu-transport-probe-results.md)
 - runtime architecture: [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
+- substrate decision: [adb-touch-vision-substrate-selection-2026-03-25.md](/mnt/d/_projects/MasterStateMachine/docs/plans/adb-touch-vision-substrate-selection-2026-03-25.md)
 - tool requirements: [agent-control-tool-requirements.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/agent-control-tool-requirements.md)
 - tool setup and compatibility spike: [borrowed-control-tool-setup.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/borrowed-control-tool-setup.md)
+- live ADB testing plan: [testingADB.md](/mnt/d/_projects/MasterStateMachine/docs/dev/testingADB.md)
 - runtime scope: [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
 - ALAS artifact guidance: [alas-artifacts.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-artifacts.md)
 - corpus review procedure: [corpus-review-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/prework/corpus-review-playbook.md)

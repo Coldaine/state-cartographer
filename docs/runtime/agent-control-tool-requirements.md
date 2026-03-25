@@ -23,19 +23,20 @@ Those remain owned by the runtime plan and runtime code.
 
 ## Current Decision Status
 
-The repo has already made the directional substrate decision:
+The repo has a currently accepted directional substrate decision:
 
 - `MaaMCP` is the primary agent-facing control tool
 - `scrcpy` is the preferred live visual/debug substrate
 - `adbfriend` is installed separately and is not part of the runtime path
 
-What remains open is not tool selection.
+What remains open is not broad unconstrained tool shopping.
+What does remain open is final proof quality for the preferred posture.
 The 2026-03-25 live probe pass answered the two operational-proof questions on the pinned MEmu 9 setup:
 
 - the Maa/ADB path is reliable enough for the current transport slice
 - `scrcpy` yields operator/debug visibility only on this Windows setup; it is not the runtime frame source here
 
-So this document remains useful as the acceptance spec for that proof step, not as an invitation to reopen tool shopping.
+So this document remains useful as the acceptance spec for that proof step, not as an invitation to casually reopen tool shopping every time a degraded run is misclassified.
 
 ## Core Requirement
 
