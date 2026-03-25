@@ -83,6 +83,10 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - `runtime/borrowed-control-tool-setup.md`
 - `How does the MEmu emulator path connect to the runtime work?`
   - `plans/memu-android-control-stack-2026-03-24.md`
+- `Where is the transport implementation code?`
+  - `state_cartographer/transport/` (package) and `scripts/memu_transport.py` (CLI)
+- `How do I run transport probes?`
+  - `python scripts/memu_transport.py --help`
 - `What is ALAS in this repo?`
   - `ALS-reference/ALS-overview.md`
   - `ALS-reference/ALS-live-ops.md`

@@ -99,6 +99,21 @@ These exist in the worktree but are not primary project knowledge or product sur
   - cheap Kimi-backed visible-first screenshot review
 - `scripts/vlm_detector.py`
   - VLM-backed offline detection and labeling tool
+- `scripts/memu_transport.py`
+  - CLI for MEmu transport probes: bootstrap, doctor, connect, capture, input, probe
+
+## Transport Package
+
+- `state_cartographer/transport/`
+  - borrowed-substrate surface for emulator control
+  - `config.py` — transport config from `configs/memu.json`
+  - `models.py` — probe verdicts, reports, and manifest data models
+  - `artifacts.py` — timestamped artifact directory management
+  - `discovery.py` — tool bootstrap (adb, maamcp, scrcpy, adbfriend)
+  - `adb.py` — thin ADB subprocess wrapper
+  - `maamcp.py` — MaaAdapter (maafw with adb fallback), MaaMCP probe
+  - `scrcpy_probe.py` — scrcpy coexistence testing and verdict
+  - `health.py` — doctor readiness check, recovery ladder
 
 ## Data Surface
 
@@ -113,8 +128,9 @@ These exist in the worktree but are not primary project knowledge or product sur
 
 ## Validation Surface
 
-- there are currently no committed automated checks in the repo
-- validation is presently script execution, corpus inspection, and documentation consistency checks
+- `tests/transport/test_transport.py`
+  - 15 pure-code tests for transport config, models, discovery, and health logic
+- validation is presently test execution, script execution, corpus inspection, and documentation consistency checks
 
 ## Practical Rule
 
