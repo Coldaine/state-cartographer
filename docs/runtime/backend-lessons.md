@@ -1,75 +1,55 @@
 # Backend Lessons
 
-> Historical note: this document was previously `docs/execution/EXE-backend-hardening.md`. It now also absorbs the salvage guidance that was split into `pilot-bridge-rework.md`.
-
 ## Purpose
 
-Retain the backend lessons learned from live emulator work without pretending there is a supported runtime path today.
-
-See also:
-- [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
-- [ALS-live-ops.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-live-ops.md)
-- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
-
-## Current Status
-
-These backend requirements remain valuable design constraints.
-
-They do **not** imply that the current repo ships a supported live backend.
-
-The last major backend experiment (`pilot_bridge.py`) has been removed. The lessons below are what survive.
+Lessons learned from live emulator work. These are design constraints for the next transport implementation.
 
 ## Failure Model
 
-A live backend is not one thing. It is at least four layers:
+A live backend is four layers, not one:
 
-1. ADB transport health
-2. port-forward ownership and reconciliation
-3. automation plane health
-4. screenshot plane health
+1. ADB transport health — is the device reachable?
+2. Session management — is the adbutils connection alive?
+3. Control surface health — is MaaTouch responding? Is ADB input working?
+4. Observation health — are screenshots current and decodable?
 
-A healthy device connection is not the same thing as a healthy observation path.
+A healthy device connection is not the same as a healthy observation path.
 
-## Requirements To Keep
+## Requirements
 
-- serial-scoped ownership of connection and recovery state
-- explicit forward reconciliation rather than blind forward spraying
-- proof of observation, not just proof of socket connectivity
-- narrow recovery ladders before full restarts
-- separation between backend concerns and game-specific recovery logic
+- Serial-scoped ownership of connection and recovery state
+- Explicit reconnection rather than blind retry spraying
+- Proof of observation (real frame capture), not just proof of socket connectivity
+- Narrow recovery ladders before full restarts
+- Separation between transport concerns and game-specific recovery logic
 
-## Lessons To Preserve
+## Lessons
 
-- screenshot health must be tested independently of transport health
-- emulator and render-stack assumptions must be documented, not buried in ad hoc code
-- bridge code should not absorb game-specific popup logic
-- backend readiness should be proven by real frame capture
-- coexistence with another operator process can be a real issue and should be designed explicitly, not assumed away
+- Screenshot health must be tested independently of transport health
+- Emulator and render-stack assumptions must be documented, not buried in code
+- Transport code must not absorb game-specific popup logic
+- Backend readiness must be proven by real frame capture
+- Coexistence with another operator process (scrcpy) must be designed explicitly
 
-## Bridge Salvage Rules
+## What Belongs in Transport Code
 
-What is worth carrying forward from the bridge path:
-- narrowly scoped screenshot capture
-- narrowly scoped tap and swipe execution
-- explicit backend readiness checks
-- environment-specific notes about emulator, renderer, and screenshot transport behavior
+- Narrowly scoped screenshot capture
+- Narrowly scoped tap and swipe execution
+- Explicit backend readiness checks
+- Environment-specific notes about emulator behavior
 
-What should not live in a bridge:
-- game-specific popup handling
-- assignment-specific recovery routines
-- runtime policy decisions
-- broad control-plane assumptions about what the caller is trying to do
+## What Does NOT Belong in Transport Code
 
-## Criteria For Future Bridge Code
+- Game-specific popup handling
+- Assignment-specific recovery routines
+- Runtime policy decisions
+- Broad control-plane assumptions about caller intent
 
-Any new bridge implementation must prove:
-- the intended emulator and render stack is correct and documented
-- screenshot capture is real, current, and decodable
-- tap and swipe actions are verified on the intended setup
-- failure and recovery behavior are reproducible
-- the bridge is generic transport and observation infrastructure, not embedded game logic
+## Criteria For New Transport Code
 
-## What This Document Does Not Claim
-
-- there is no supported operator entrypoint described here
-- this doc does not imply the executor path currently exists
+Any new transport implementation must prove:
+1. The intended emulator and render stack is correct and documented
+2. Screenshot capture is real, current, and decodable
+3. Tap and swipe actions are verified on the intended setup
+4. Failure and recovery behavior are reproducible
+5. The code is generic transport infrastructure, not embedded game logic

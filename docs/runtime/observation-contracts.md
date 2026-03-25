@@ -1,63 +1,46 @@
 # Observation Contracts
 
-> Historical note: this document replaces the old pattern of treating observation as its own top-level domain.
-
 ## Purpose
 
-Define what the runtime must be able to ask of the observation stack, regardless of which detectors, models, or retrieval strategies are currently in use.
-
-See also:
-- [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
-- [VLM-task-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-task-contracts.md)
-- [VLM-model-profiles.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-model-profiles.md)
+What the runtime must be able to ask of observation, regardless of which models or retrieval strategies are in use.
 
 ## Core Runtime Questions
 
-The runtime needs answers to questions like:
-- what is visible right now?
-- what workflow substate is this likely to be?
-- what changed between the last frame and this one?
-- where is the element I need to act on?
-- how uncertain is this answer?
+The runtime needs answers to:
+- What is visible right now?
+- What workflow substate is this?
+- What changed between the last frame and this one?
+- Where is the element I need to act on?
+- How uncertain is this answer?
 
 ## Required Inputs
 
-Observation calls should be able to use more than a single screenshot when needed.
-
-Expected inputs:
-- primary frame
-- optional neighboring frames
-- optional task or workflow context
-- optional candidate labels or retrieved exemplars
-- session context when available
+Observation calls use more than a single screenshot when needed:
+- Primary frame
+- Optional neighboring frames
+- Optional task or workflow context
+- Optional candidate labels or retrieved exemplars
+- Session context when available
 
 ## Required Outputs
 
-Observation should return structured results, not free-form guesswork.
-
-Expected fields vary by task, but should include some combination of:
-- classification result or candidate set
-- confidence and uncertainty
-- grounding result (`bbox`, point, or `not found`)
-- evidence summary grounded in visible content
-- follow-up recommendation when evidence is weak
+Observation returns structured results:
+- Classification result or candidate set
+- Confidence and uncertainty
+- Grounding result (bbox, point, or not found)
+- Evidence summary grounded in visible content
+- Follow-up recommendation when evidence is weak
 
 ## Contract Boundaries
 
-- model configuration belongs in backend and profile selection
-- task schema belongs in the task contract
-- prompt wording should be the thinnest layer
-- runtime should consume typed outputs, not raw model strings
-
-Do not push schema enforcement or backend policy into prompt prose when the inference stack can enforce it directly.
+- Model configuration belongs in profiles (see [VLM-model-profiles.md](../vlm/VLM-model-profiles.md))
+- Task schema belongs in task contracts (see [VLM-task-contracts.md](../vlm/VLM-task-contracts.md))
+- Prompt wording is the thinnest layer (see [VLM-prompts.md](../vlm/VLM-prompts.md))
+- Runtime consumes typed outputs, not raw model strings
 
 ## Practical Implications
 
-- multi-image context should be normal when single-frame reasoning is weak
-- grounding is a first-class capability, not a separate afterthought
-- local and remote models may both participate in one observation pipeline
-- the runtime contract should stay stable even if specific model providers change
-
-## What This Document Does Not Claim
-
-This document does not claim that the current repo already implements a complete observation stack. It defines the contract shape that a re-earned runtime should be built against.
+- Multi-image context is normal when single-frame reasoning is weak
+- Grounding is first-class, not an afterthought
+- Local and remote models may both participate in one observation pipeline
+- The runtime contract stays stable even if model providers change

@@ -1,94 +1,62 @@
 # Architecture Overview
 
-> Historical note: this document was previously `docs/architecture.md`. Older `OBS/NAV/EXE/AUT` language is historical context only.
-
 ## Purpose
 
-This document explains how the repo is organized as knowledge, not just as code.
+How the repo is organized as knowledge and code.
 
-See also:
-- [docs/AGENTS.md](/mnt/d/_projects/MasterStateMachine/docs/AGENTS.md)
-- [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/repo-index.md)
-- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
-- [documentation-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/documentation-playbook.md)
+## Two Axes
 
-The key distinction is:
+- `docs/` organizes project knowledge (for retrieval, project memory, and continuity)
+- Code and data organize implementation work (for ownership, lifecycle, and active surfaces)
 
-- `docs/` organizes agent knowledge
-- code and data organize implementation work
-
-Those are different axes and should not be forced into one tree.
+These are different axes and should not be forced into one tree.
 
 ## Documentation Domains
 
-Two documentation domains remain explicit because they describe durable bodies of project knowledge independent of current code shape:
+Two explicit documentation domains:
+- `ALS-reference/` — ALAS as reference system, corpus source, and comparison point
+- `RES-research/` — research, experiments, hypotheses, and synthesis
 
-- `ALS` — ALAS as reference system, harvested truth source, and operational comparison point
-- `RES` — research, experiments, technical hypotheses, and synthesis work
-
-These domains live in:
-
-- `docs/ALS-reference/`
-- `docs/RES-research/`
+Everything else in `docs/` is a knowledge bucket.
 
 ## Knowledge Buckets
 
-Everything else in `docs/` is a knowledge bucket rather than a domain.
-
 | Bucket | Purpose |
 |---|---|
-| root `docs/*.md` | current truth, north star, repo indexing, and documentation rules |
-| `memory/` | dated lessons learned, salvage notes, and findings worth preserving |
-| `architecture-overview.md` | organizing principles and architectural map |
-| `workflows/` | assignment and workflow knowledge |
-| `prework/` | corpus alignment, cleanup, extraction, and data-gathering programs |
-| `runtime/` | live-system contracts and retained runtime design constraints |
+| root `docs/*.md` | current truth, north star, repo index, doc rules |
+| `memory/` | dated lessons learned and findings worth preserving |
+| `workflows/` | workflow and task knowledge |
+| `prework/` | corpus alignment, cleanup, data-gathering procedures |
+| `runtime/` | live-system contracts, backend lessons, health design |
 | `vlm/` | multimodal model profiles, task contracts, prompt policy |
 | `plans/` | tactical and strategic planning documents |
 | `agentPrompts/` | code-linked prompt rationale for prompt-bearing LLM code |
+| `dev/` | developer workflow docs (testing, ADB integration) |
 
-## Code And Data Buckets
+## Code and Data Buckets
 
-The implementation side of the repo should be thought about separately from docs:
+| Path | Purpose |
+|---|---|
+| `state_cartographer/` | Python package: transport layer and future runtime code |
+| `scripts/` | Active script-shaped tooling (corpus cleanup, kimi review, vlm detector) |
+| `data/` | Truth artifacts, corpora, screenshots, logs |
+| `vendor/` | External reference code (ALAS, scrcpy) |
+| `configs/` | Project configuration (emulator serial, tool posture) |
+| `tests/` | Automated tests |
+| `examples/` | Reference/example artifacts |
 
-- `data/` holds truth artifacts and corpora
-- `vendor/` holds external code and reference systems
-- `scripts/` is the current active script-shaped surface
-- future `prework/`, `vlm/`, and `runtime/` code areas are design directions, not proof of present implementation
+## Current Implementation State
 
-## Why Docs And Code Use Different Axes
+- `state_cartographer/transport/` is empty — transport layer is being rebuilt
+- Active scripts: `corpus_cleanup.py`, `kimi_review.py`, `vlm_detector.py`
+- No live runtime exists yet
+- Substrate decision made: adbutils + MaaTouch (see [substrate-and-implementation-plan.md](plans/substrate-and-implementation-plan.md))
 
-The docs tree is optimized for:
+## Organizing Principles
 
-- retrieval
-- project memory
-- conceptual boundaries
-- historical continuity
-
-The code tree is optimized for:
-
-- ownership
-- implementation lifecycle
-- active vs unsupported surfaces
-- future refactoring flexibility
-
-This is why `ALS` and `RES` remain explicit documentation domains even though they do not map neatly to single code packages.
-
-## Historical Layering Context
-
-The old `OBS/NAV/EXE/AUT` decomposition still names useful concerns:
-
-- observation
-- navigation
-- execution
-- automation
-
-Those concerns are no longer the primary docs taxonomy. They survive as historical vocabulary and as sub-concerns inside runtime design.
-
-## Current Organizing Principles
-
-- docs are optimized for agent retrieval and project continuity
+- Docs are optimized for agent retrieval and project continuity
 - ALAS and research remain first-class documentation domains
-- VLM is treated as first-class capability knowledge, not a side detail
-- prework and runtime are deliberately separated
-- runtime claims must be earned by code, not inferred from plans
+- VLM is first-class capability knowledge
+- Prework and runtime are deliberately separated
+- Runtime claims must be earned by code, not inferred from plans
+- One authoritative doc per question — no duplication

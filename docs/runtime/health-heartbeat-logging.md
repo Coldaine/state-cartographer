@@ -1,87 +1,57 @@
 # Runtime Health, Heartbeat, and Logging Design
 
-Status: concrete design proposal for the next runtime slice.
+**Status:** Concrete design for the runtime health and event layers.
 
-This document defines how the repo should classify health, emit heartbeats, and record local evidence for live emulator control.
+How the repo classifies health, emits heartbeats, and records local evidence.
 
-The current repo problem is not lack of probes; it is lack of **correct separation between layers**. A missing preferred tool must not be reported as a transport failure when ADB reachability and fallback control are still healthy.
-
-See also:
-- [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
-- [agent-control-tool-requirements.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/agent-control-tool-requirements.md)
-- [borrowed-control-tool-setup.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/borrowed-control-tool-setup.md)
-- [2026-03-25-memu-transport-probe-results.md](/mnt/d/_projects/MasterStateMachine/docs/memory/2026-03-25-memu-transport-probe-results.md)
-
-## Design Stance
-
-Health must be modeled as:
-- one **readiness tier**
-- one set of **layer statuses**
-- zero or more **degradation codes**
-- one **evidence bundle**
+The key principle: a missing preferred tool (MaaTouch not deployed) does not mean transport failure. If ADB is reachable and fallback control works, that is DEGRADED, not UNREACHABLE.
 
 ## Readiness Tiers
 
-Use three exclusive tiers:
+Three exclusive tiers:
 
 | Tier | Meaning | Can run workflow |
 |------|---------|-----------------|
-| `unreachable` | No pinned-device communication. `adb` missing, serial unreachable, or device offline after reconnect. | No |
-| `degraded` | Transport is reachable, but the current posture is limited or fallback-backed. Examples: preferred Maa stack missing, observation still unverified, visual path debug-only. | Supervised only |
-| `operable` | Transport is reachable and the preferred control posture is available for the current machine. | Supervised only |
+| `unreachable` | No device communication. ADB missing, serial unreachable, or device offline after reconnect. | No |
+| `degraded` | Transport reachable but posture limited. Examples: MaaTouch not deployed (using ADB input fallback), observation unverified. | Supervised only |
+| `operable` | Transport reachable and preferred control posture available. | Supervised only |
 
-`reachable` from the old 5-tier model is dropped. The useful distinction is now `unreachable` vs `degraded` vs `operable`.
+### Degradation Codes
 
-### Degradation flags
+Explicit reasons attached to the current report:
 
-Degradation codes are explicit reasons attached to the current report. A truthful `doctor()` report on the current pinned machine looks like:
+- `preferred_input_missing` — MaaTouch not deployed, using ADB shell input fallback
+- `debug_only_visual` — scrcpy available but not usable as runtime frame source
+- `visual_tool_missing` — no visual debug tool attached
+- `frame_freshness_unproven` — have not yet verified frame timestamps
+- `action_ack_weak` — action dispatch works but semantic verification not yet proven
+- `workflow_progress_unproven` — no workflow-level progress proof yet
+- `high_latency` — capture or action latency exceeds thresholds
+- `intermittent_disconnects` — ADB session drops seen
 
-```
+### Example truthful report
+
+`
 tier = degraded
-degradation_codes = [observation_unverified, preferred_stack_missing]
-```
-
-The later session probe may append `debug_only_visual` once `scrcpy` has been exercised and classified.
-This is much more useful than a sad `fail`.
-
-### Required degradation codes
-
-- `preferred_stack_missing`
-- `debug_only_visual`
-- `visual_tool_missing`
-- `frame_freshness_unproven`
-- `action_ack_weak`
-- `workflow_progress_unproven`
-- `high_latency`
-- `intermittent_disconnects`
+degradation_codes = [preferred_input_missing, frame_freshness_unproven]
+`
 
 ## Layer Status Model
 
-Transport-facing `DoctorReport` layers should be reported independently:
+Report independently:
 
-- transport: `unreachable` or `ready`
-- control: `unavailable`, `fallback`, or `preferred`
-- observation: `unavailable` or `unverified`
-
-Runtime-level heartbeats may later add richer semantic status on top of those transport-layer values, but the base transport report should not collapse them into a single generic label.
-
-The richer per-layer metadata below is a target for later heartbeat/event work, not something `DoctorReport` fully implements today.
-Each layer record should eventually carry:
-- `checked_at`
-- `evidence_age_ms`
-- `reason_codes`
-- `last_success_at`
-- `last_failure_at`
-- `consecutive_failures`
+- **transport:** `unreachable` or `ready` — is ADB reachable?
+- **control:** `unavailable`, `fallback`, or `preferred` — MaaTouch active, ADB input fallback, or nothing?
+- **observation:** `unavailable` or `unverified` — can we capture frames?
 
 ## Heartbeat Design
 
 Five layers, each with its own cadence during active execution:
 
-| Layer | Cadence (active) | Checks |
-|-------|-----------------|--------|
-| ADB transport | 2s | serial still online, shell works |
-| Control surface | 5s | tool responds, session alive |
+| Layer | Cadence | Checks |
+|-------|---------|--------|
+| ADB transport | 2s | serial online, shell works |
+| Control surface | 5s | MaaTouch or ADB input responds |
 | Frame freshness | per capture + 3s watchdog | frame captured, decodable, timestamped |
 | Action acknowledgement | per action | pre/post evidence, semantic change |
 | Workflow progress | 15s no-progress watchdog | objective advanced or quarantined |
@@ -92,83 +62,44 @@ Five layers, each with its own cadence during active execution:
 |-------|---------|-----------------|
 | 0 Observe | first anomaly | record miss, capture diagnostic frame |
 | 1 Retry | transient miss | reissue same command once |
-| 2 Re-establish layer | same layer missed twice | reconnect ADB, reattach Maa |
-| 3 Re-prove loop | substrate back but operability unproven | fresh capture + benign action acknowledgement |
-| 4 Runtime-safe recovery | workflow progress failed despite healthy substrate | navigate to known-safe page, re-enter app state |
-| 5 Incident quarantine | repeated Level 4 failure or unexplained oscillation | incident bundle, stop and escalate outward |
+| 2 Re-establish | same layer missed twice | reconnect ADB, redeploy MaaTouch |
+| 3 Re-prove | substrate back but unproven | fresh capture + benign action ack |
+| 4 Runtime recovery | workflow failed despite healthy substrate | navigate to known-safe page |
+| 5 Incident quarantine | repeated Level 4 | incident bundle, stop and escalate |
 
 ## Event Schema
 
-### Canonical streams
-
-Two append-only NDJSON streams share the same envelope:
+Two append-only NDJSON streams:
 - `tooling` — what the substrate did
 - `runtime` — why we asked and whether the workflow moved
 
-### Required envelope
+### Envelope
 
-```json
+`json
 {
   "ts": "2026-03-25T18:41:09.812Z",
-  "event_id": "evt-01HQ...",
+  "event_id": "evt-...",
   "stream": "runtime",
   "kind": "action_ack",
   "name": "tap_ack",
-  "session_id": "sess-20260325-1840-001",
+  "session_id": "sess-...",
   "serial": "127.0.0.1:21503",
   "component": "runtime.verifier",
   "ok": true,
   "readiness_tier": "degraded",
-  "degradation_codes": ["preferred_stack_missing"]
+  "degradation_codes": ["preferred_input_missing"]
 }
-```
-
-### Strongly recommended identifiers
-
-- `transport_session_id` — substrate attach instance
-- `workflow_run_id` — one workflow execution attempt
-- `action_id` — one semantic action attempt
-- `attempt_id` — retry instance under the same `action_id`
-- `frame_before_ref` / `frame_after_ref` — for frame-verified actions
-- `frame_before_hash` / `frame_after_hash`
+`
 
 ### Required event families
 
-Tooling stream: `bootstrap`, `health_transition`, `heartbeat`, `frame_capture`, `input_dispatch`, `recovery_step`, `incident`, `session_end`
+Tooling: `bootstrap`, `health_transition`, `heartbeat`, `frame_capture`, `input_dispatch`, `recovery_step`, `incident`, `session_end`
 
-Runtime stream: `session_start`, `observation`, `action_ack`, `workflow_progress`, `incident`, `session_end`
-
-### Example action acknowledgement event
-
-```json
-{
-  "ts": "2026-03-25T18:41:09.812Z",
-  "event_id": "evt-01HQ...",
-  "stream": "runtime",
-  "kind": "action_ack",
-  "name": "tap_ack",
-  "session_id": "sess-20260325-1840-001",
-  "action_id": "act-00041",
-  "attempt_id": "act-00041-attempt-01",
-  "serial": "127.0.0.1:21503",
-  "component": "runtime.verifier",
-  "ok": true,
-  "semantic_action": "collect_commission_reward",
-  "primitive_action": "tap",
-  "coords": [1118, 642],
-  "expected_ack": "reward_modal_disappears",
-  "ack_result": "confirmed",
-  "frame_before_ref": "data/artifacts/sessions/.../00041-before.png",
-  "frame_after_ref": "data/artifacts/sessions/.../00042-after.png",
-  "frame_before_hash": "sha256:...",
-  "frame_after_hash": "sha256:...",
-  "dur_ms": 611
-}
-```
+Runtime: `session_start`, `observation`, `action_ack`, `workflow_progress`, `incident`, `session_end`
 
 ## File Layout
 
-```
+`
 data/
   events/
     tooling/YYYY-MM-DD/<session_id>/tooling.ndjson
@@ -180,38 +111,21 @@ data/
   artifacts/
     sessions/YYYY-MM-DD/<session_id>/frames/
     incidents/YYYY-MM-DD/<incident_id>/
-```
-
-Retention defaults:
-- events: 180 days, gzip after 24h
-- logs: 14 days success / 30 days failed
-- artifacts: 14 days success / 90 days failed; incidents kept indefinitely
+`
 
 ## Implementation Phases
 
 ### Phase 1 — Fix truthfulness at transport layer
-
-- replace `PASS/FAIL` doctor with 3-tier readiness + degradation codes
-- expose per-layer statuses independently in `DoctorReport`
-- add structured tooling events under `data/events/tooling/`
+- 3-tier readiness + degradation codes in DoctorReport
+- Per-layer statuses reported independently
+- Structured tooling events under `data/events/tooling/`
 
 ### Phase 2 — Runtime heartbeat and action acknowledgement
-
-- separate runtime event writer from tooling event writer
-- per-action `action_id` and `attempt_id`
-- before/after frame references on meaningful actions
-- acknowledgement verifier with expected vs actual verdict
-- workflow no-progress watchdog
+- Separate runtime event writer from tooling event writer
+- Per-action `action_id` and `attempt_id`
+- Before/after frame references on meaningful actions
+- Workflow no-progress watchdog
 
 ### Phase 3 — Incident bundles and production gate
-
-- incident bundling across both streams
-- promotion gate requiring: stable preferred stack + fresh-frame proof + action acknowledgement + watchdog + one forced-failure drill
-
-## Most Important Near-Term Assertion
-
-The first live assertion this repo should add is:
-
-> if ADB is healthy, Maa/ADB fallback can capture fresh frames, and inputs work, then the system is `degraded`, not `fail`.
-
-That one assertion fixes the conceptual bug from the 2026-03-25 probe run and gives the next runtime slice a truthful foundation.
+- Incident bundling across both streams
+- Promotion gate: stable preferred stack + fresh-frame proof + action ack + watchdog + one forced-failure drill

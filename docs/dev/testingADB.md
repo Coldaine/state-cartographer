@@ -11,9 +11,9 @@ It follows the repo testing rule:
 
 See also:
 - [testing-strategy.md](/mnt/d/_projects/MasterStateMachine/docs/dev/testing-strategy.md)
-- [adb-touch-vision-substrate-selection-2026-03-25.md](/mnt/d/_projects/MasterStateMachine/docs/plans/adb-touch-vision-substrate-selection-2026-03-25.md)
+- [substrate-and-implementation-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/substrate-and-implementation-plan.md)
 - [health-heartbeat-logging.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/health-heartbeat-logging.md)
-- [borrowed-control-tool-setup.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/borrowed-control-tool-setup.md)
+- [agent-control-tool-requirements.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/agent-control-tool-requirements.md)
 
 ## Purpose
 

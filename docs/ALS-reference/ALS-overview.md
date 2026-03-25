@@ -8,7 +8,6 @@ ALAS (AzurLaneAutoScript) is a long-lived automation framework for Azur Lane. In
 
 See also:
 - [ALS-live-ops.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-live-ops.md)
-- [ALS-event-schema-sketch.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/ALS-event-schema-sketch.md)
 - [alas-artifacts.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-artifacts.md)
 
 ## Role in State Cartographer

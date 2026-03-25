@@ -1,43 +1,43 @@
 # Todo
 
-Thin tracker only.
+Thin tracker. Current truth only.
 
 ## Now
 
-- transport slice implementation on branch `transport/memu-substrate-slice`
-- `state_cartographer/transport/` package: bootstrap, discovery, MaaAdapter (maafw + adb fallback), scrcpy probe, health/recovery
-- `scripts/memu_transport.py` CLI: bootstrap, doctor, connect, capture, input, probe
-- chosen control posture: `MaaMCP` + `scrcpy`, with `adbfriend` separate
-- live probe results captured on 2026-03-25 against pinned MEmu serial `127.0.0.1:21503`
-- accepted near-term runtime posture: Maa/ADB path for control plus `maamcp_screenshot` for observation
-- trusted active scripts: `scripts/corpus_cleanup.py`, `scripts/kimi_review.py`, `scripts/vlm_detector.py`, `scripts/memu_transport.py`
-- 15 pure-code transport tests plus 3 live transport smoke tests passing (`tests/transport/`)
+- Branch: `transport/memu-substrate-slice`
+- `state_cartographer/transport/` is **empty** — all prior implementation deleted (commit ef52c12)
+- Substrate decision made: adbutils + MaaTouch + ADB screencap
+- Implementation plan: [substrate-and-implementation-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/substrate-and-implementation-plan.md)
+- Active scripts: `scripts/corpus_cleanup.py`, `scripts/kimi_review.py`, `scripts/vlm_detector.py`
+- No live runtime exists
 
 ## Next
 
-1. Strengthen post-action verification above the transport layer; keep raw frame diff as a cheap signal only.
-2. Build the thin multi-step runtime loop on top of the proven Maa-first transport slice.
-3. Persist structured step-by-step runtime events and screenshots before any semantic cache work.
-4. Expand the current live smoke tests toward the fuller evidence-emitting suite described in `dev/testingADB.md`.
+1. **Step 1:** Replace subprocess ADB with adbutils in `state_cartographer/transport/adb.py`
+2. **Step 2:** Add MaaTouch support in `state_cartographer/transport/maatouch.py`
+3. **Step 3:** Add screenshot methods in `state_cartographer/transport/capture.py`
+4. **Step 4:** Write and run live integration tests against MEmu
+5. **Step 5:** Build Tier 2 VLM grounding loop (observe-act-observe on real device)
+6. **Step 6:** Add multi-step workflow execution with stuck detection
+7. **Step 7:** Structured NDJSON event logging
 
 ## Blockers
 
-- `maafw` / native MaaFramework tooling is not installed locally, so the current posture remains degraded rather than preferred
-- `scrcpy` is confirmed `debug_only` on this Windows MEmu setup; it is not a runtime frame source here
+- MaaTouch binary needs to be deployed to MEmu device (`/data/local/tmp/maatouchsync`)
+- `adbutils` needs to be added to `pyproject.toml` dependencies and installed
 
 ## Deferred
 
-- replay and teacher layers
-- maafw agent_path / MaaAgentBinary configuration
+- MaaFramework / MaaMCP (requires full MAA Windows DLL installation)
+- Semantic embedding cache (Tier 1) — no data yet to justify it
+- Teacher escalation (Tier 3) — not until Tier 2 baseline works
+- Replay and teacher layers
 
 ## See Also
 
-- dated probe outcome: [2026-03-25-memu-transport-probe-results.md](/mnt/d/_projects/MasterStateMachine/docs/memory/2026-03-25-memu-transport-probe-results.md)
-- runtime architecture: [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
-- substrate decision: [adb-touch-vision-substrate-selection-2026-03-25.md](/mnt/d/_projects/MasterStateMachine/docs/plans/adb-touch-vision-substrate-selection-2026-03-25.md)
-- tool requirements: [agent-control-tool-requirements.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/agent-control-tool-requirements.md)
-- tool setup and compatibility spike: [borrowed-control-tool-setup.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/borrowed-control-tool-setup.md)
-- live ADB testing plan: [testingADB.md](/mnt/d/_projects/MasterStateMachine/docs/dev/testingADB.md)
-- runtime scope: [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
-- ALAS artifact guidance: [alas-artifacts.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-artifacts.md)
-- corpus review procedure: [corpus-review-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/prework/corpus-review-playbook.md)
+- substrate decision and implementation plan: [substrate-and-implementation-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/substrate-and-implementation-plan.md)
+- runtime architecture (tiered): [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
+- probe evidence: [2026-03-25-memu-transport-probe-results.md](/mnt/d/_projects/MasterStateMachine/docs/memory/2026-03-25-memu-transport-probe-results.md)
+- runtime overview: [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
+- testing plan: [testingADB.md](/mnt/d/_projects/MasterStateMachine/docs/dev/testingADB.md)
+- workflow inventory: [azur-lane-workflows.md](/mnt/d/_projects/MasterStateMachine/docs/workflows/azur-lane-workflows.md)

@@ -6,8 +6,7 @@ Retain the dated transport verdict from the first live probe pass against the pi
 
 See also:
 - [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
-- [borrowed-control-tool-setup.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/borrowed-control-tool-setup.md)
-- [memu-android-control-stack-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/memu-android-control-stack-2026-03-24.md)
+- [substrate-and-implementation-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/substrate-and-implementation-plan.md)
 
 ## Environment
 
@@ -46,7 +45,7 @@ See also:
 - full session probe verdict: `pass`
 - accepted near-term posture:
   - control: Maa/ADB path
-  - runtime observation: `maamcp_screenshot`
+  - runtime observation: ADB screencap via adbutils
   - operator/debug stream: `scrcpy`
 
 ## Implications
