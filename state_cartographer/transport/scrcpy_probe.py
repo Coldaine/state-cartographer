@@ -21,8 +21,6 @@ from state_cartographer.transport.models import ObservationDecision, ProbeVerdic
 
 log = logging.getLogger(__name__)
 
-_ATTACH_TIMEOUT = 15
-
 
 def _find_scrcpy_binary(scrcpy_path: str | None = None) -> str | None:
     """Resolve scrcpy binary path."""
@@ -108,10 +106,11 @@ def _probe_record_path(binary: str, serial: str, run_dir: Path) -> bool:
     except Exception as e:
         log.warning("scrcpy record probe failed: %s", e)
         if proc is not None:
-            import contextlib
-
-            with contextlib.suppress(Exception):
+            try:
                 proc.kill()
+                proc.wait(timeout=5)
+            except OSError:
+                pass
         return False
 
 

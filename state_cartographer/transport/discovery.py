@@ -148,9 +148,12 @@ def bootstrap(cfg: TransportConfig) -> BootstrapManifest:
         errors=errors,
     )
 
-    # Persist to artifacts
-    out = artifacts_dir() / "bootstrap-manifest.json"
-    out.write_text(manifest.to_json(), encoding="utf-8")
-    log.info("Bootstrap manifest written to %s", out)
+    # Persist to artifacts — non-fatal if write fails
+    try:
+        out = artifacts_dir() / "bootstrap-manifest.json"
+        out.write_text(manifest.to_json(), encoding="utf-8")
+        log.info("Bootstrap manifest written to %s", out)
+    except OSError as e:
+        log.warning("Could not write bootstrap manifest: %s", e)
 
     return manifest
