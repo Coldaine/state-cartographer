@@ -65,7 +65,7 @@ class Adb:
 
     def _get_device(self) -> AdbDevice:
         if self._device is None:
-            devices = self._client.list_devices()
+            devices = self._client.device_list()
             for d in devices:
                 if d.serial == self.serial:
                     self._device = d
