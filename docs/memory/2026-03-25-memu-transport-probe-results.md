@@ -22,7 +22,7 @@ See also:
 - `adb` was found and reachable
 - `scrcpy` was found and attachable
 - `maafw` / native MaaFramework tooling was not installed locally
-- `doctor` therefore remained `fail` at the strict discovery level even while the device was online
+- `doctor` returned `verdict=pass` with `readiness_tier=degraded` due to missing preferred Maa stack, even while the device was online and ADB was healthy
 
 ### 2. Maa control path
 
