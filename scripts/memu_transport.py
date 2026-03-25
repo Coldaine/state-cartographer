@@ -113,14 +113,26 @@ def cmd_input(args):
 
     action = args.input_action
     if action == "tap":
+        if len(args.params) != 2:
+            print("tap requires X Y", file=sys.stderr)
+            return 2
         ok = adapter.tap(int(args.params[0]), int(args.params[1]))
     elif action == "swipe":
+        if len(args.params) != 4:
+            print("swipe requires X1 Y1 X2 Y2", file=sys.stderr)
+            return 2
         p = args.params
         duration = int(args.duration) if args.duration else 300
         ok = adapter.swipe(int(p[0]), int(p[1]), int(p[2]), int(p[3]), duration)
     elif action == "key":
+        if len(args.params) != 1:
+            print("key requires KEYCODE", file=sys.stderr)
+            return 2
         ok = adapter.key(args.params[0])
     elif action == "text":
+        if not args.params:
+            print("text requires at least one TEXT token", file=sys.stderr)
+            return 2
         ok = adapter.text(" ".join(args.params))
     else:
         print(f"Unknown input action: {action}", file=sys.stderr)
@@ -144,7 +156,7 @@ def cmd_probe_scrcpy(args):
     _apply_serial_override(args, cfg)
     report = run_scrcpy_probe(cfg.serial)
     print(report.to_json())
-    return 0 if report.observation_decision == ObservationDecision.RUNTIME_CONSUMABLE else 1
+    return 0 if report.observation_decision in {ObservationDecision.RUNTIME_CONSUMABLE, ObservationDecision.DEBUG_ONLY} else 1
 
 
 def cmd_probe_session(args):

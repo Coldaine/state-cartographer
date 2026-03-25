@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import time
+from pathlib import Path
 
 from state_cartographer.transport.adb import Adb, AdbError
 from state_cartographer.transport.config import TransportConfig
@@ -25,6 +26,15 @@ from state_cartographer.transport.models import (
 )
 
 log = logging.getLogger(__name__)
+
+
+def _preferred_maamcp_ready(cfg: TransportConfig, maamcp_available: bool) -> bool:
+    """Return True only when the preferred Maa path is actually configured."""
+    if cfg.primary_control.lower() != "maamcp":
+        return True
+    if not maamcp_available or not cfg.agent_path:
+        return False
+    return Path(cfg.agent_path).exists()
 
 
 def doctor(cfg: TransportConfig, adb_path: str = "adb") -> DoctorReport:
@@ -62,13 +72,15 @@ def doctor(cfg: TransportConfig, adb_path: str = "adb") -> DoctorReport:
         report.verdict = ProbeVerdict.FAIL
         return report
 
+    preferred_ready = _preferred_maamcp_ready(cfg, report.maamcp_available)
+
     report.readiness_tier = ReadinessTier.OPERABLE
     report.transport_layer = TransportLayerStatus.READY
     report.control_layer = ControlLayerStatus.PREFERRED
     report.observation_layer = ObservationLayerStatus.UNVERIFIED
     report.degradation_codes.append("observation_unverified")
 
-    if cfg.primary_control.lower() == "maamcp" and not report.maamcp_available:
+    if not preferred_ready:
         report.readiness_tier = ReadinessTier.DEGRADED
         report.control_layer = ControlLayerStatus.FALLBACK
         report.degradation_codes.append("preferred_stack_missing")

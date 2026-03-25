@@ -59,7 +59,7 @@ Current machine verdict:
 
 The pinned emulator path is currently described in:
 
-- [memu.json](/mnt/c/Users/pmacl/.codex/worktrees/4587/MasterStateMachine/configs/memu.json)
+- [memu.json](/mnt/d/_projects/MasterStateMachine/configs/memu.json)
 
 Current default serial in local config:
 
@@ -69,7 +69,8 @@ Any borrowed control tool used for the runtime must target that pinned instance 
 
 ## Local Setup Notes
 
-The repo does not vendor these tools.
+The repo does not vendor the runnable binaries for these tools.
+The branch does track `vendor/scrcpy` as a source-reference submodule, but local setup still needs a machine-installed executable path.
 Local setup should record:
 
 - executable path or installation method
@@ -123,7 +124,7 @@ After the spike, choose the observation path like this:
   - use `scrcpy` for observation
   - use `MaaMCP` for control primitives
 - if `scrcpy` is only useful for viewing/debug and not reliable for runtime frame consumption:
-  - keep `scrcpy` as the preferred operator/debug stream
+  - keep `scrcpy` as the accepted operator/debug stream
   - use `MaaMCP` screenshot access as the runtime observation path for the next slice
   - document that as a degraded but accepted first implementation
 
@@ -169,7 +170,7 @@ On this Windows + MEmu setup, scrcpy is excellent for operator visibility and de
 ## Current Recorded Outcome
 
 - `bootstrap` and `doctor` proved `adb` plus `scrcpy` discovery and confirmed the device was online
-- `doctor` still reported `fail` because native MaaFramework tooling was not installed locally
+- `doctor` now reports `pass` with `readiness_tier=degraded` when transport is healthy but native MaaFramework tooling is unavailable
 - the transport slice still passed in practice because `MaaAdapter` fell back to direct ADB control
 - Maa probe passed repeated capture, input, and reconnect checks
 - scrcpy probe attached and coexisted with Maa control, but failed the programmatic frame-path test

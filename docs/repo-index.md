@@ -135,6 +135,7 @@ These exist in the worktree but are not primary project knowledge or product sur
 
 - `tests/transport/test_transport.py`
   - 15 pure-code tests for transport config, models, discovery, and health logic
+  - 3 live transport smoke tests for doctor, control-adapter capture/input, and recovery
 - validation is presently test execution, script execution, corpus inspection, and documentation consistency checks
 
 ## Practical Rule

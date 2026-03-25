@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import json
 import tempfile
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
+from scripts import memu_transport
 from state_cartographer.transport.config import TransportConfig, load_config
 from state_cartographer.transport.health import doctor
 from state_cartographer.transport.models import (
@@ -171,7 +174,9 @@ def test_tool_entry_source_precedence():
 
 
 def test_doctor_operable_when_preferred_stack_available(monkeypatch: pytest.MonkeyPatch):
-    cfg = TransportConfig(primary_control="maamcp", preferred_visual="scrcpy")
+    with tempfile.NamedTemporaryFile(delete=False) as agent:
+        agent_path = agent.name
+    cfg = TransportConfig(primary_control="maamcp", preferred_visual="scrcpy", agent_path=agent_path)
     manifest = BootstrapManifest(
         all_required_found=True,
         tools=[
@@ -193,15 +198,17 @@ def test_doctor_operable_when_preferred_stack_available(monkeypatch: pytest.Monk
 
     monkeypatch.setattr("state_cartographer.transport.health.bootstrap", lambda _: manifest)
     monkeypatch.setattr("state_cartographer.transport.health.Adb", FakeAdb)
+    try:
+        report = doctor(cfg)
 
-    report = doctor(cfg)
-
-    assert report.readiness_tier == ReadinessTier.OPERABLE
-    assert report.transport_layer == TransportLayerStatus.READY
-    assert report.control_layer == ControlLayerStatus.PREFERRED
-    assert report.observation_layer == ObservationLayerStatus.UNVERIFIED
-    assert report.degradation_codes == ["observation_unverified"]
-    assert report.verdict == ProbeVerdict.PASS
+        assert report.readiness_tier == ReadinessTier.OPERABLE
+        assert report.transport_layer == TransportLayerStatus.READY
+        assert report.control_layer == ControlLayerStatus.PREFERRED
+        assert report.observation_layer == ObservationLayerStatus.UNVERIFIED
+        assert report.degradation_codes == ["observation_unverified"]
+        assert report.verdict == ProbeVerdict.PASS
+    finally:
+        Path(agent_path).unlink(missing_ok=True)
 
 
 def test_doctor_degraded_when_preferred_stack_missing(monkeypatch: pytest.MonkeyPatch):
@@ -239,6 +246,37 @@ def test_doctor_degraded_when_preferred_stack_missing(monkeypatch: pytest.Monkey
     assert report.verdict == ProbeVerdict.PASS
 
 
+def test_doctor_degraded_when_maamcp_found_but_agent_path_missing(monkeypatch: pytest.MonkeyPatch):
+    cfg = TransportConfig(primary_control="maamcp", preferred_visual="scrcpy", agent_path=None)
+    manifest = BootstrapManifest(
+        all_required_found=True,
+        tools=[
+            ToolEntry(name="maamcp", found=True),
+            ToolEntry(name="scrcpy", found=True),
+        ],
+    )
+
+    class FakeAdb:
+        def __init__(self, serial: str, adb_path: str = "adb"):
+            self.serial = serial
+            self.adb_path = adb_path
+
+        def is_device_online(self) -> bool:
+            return True
+
+        def connect(self) -> bool:
+            return True
+
+    monkeypatch.setattr("state_cartographer.transport.health.bootstrap", lambda _: manifest)
+    monkeypatch.setattr("state_cartographer.transport.health.Adb", FakeAdb)
+
+    report = doctor(cfg)
+
+    assert report.readiness_tier == ReadinessTier.DEGRADED
+    assert report.control_layer == ControlLayerStatus.FALLBACK
+    assert report.degradation_codes == ["observation_unverified", "preferred_stack_missing"]
+
+
 def test_doctor_unreachable_when_device_stays_offline(monkeypatch: pytest.MonkeyPatch):
     cfg = TransportConfig(primary_control="maamcp", preferred_visual="scrcpy")
     manifest = BootstrapManifest(
@@ -272,3 +310,65 @@ def test_doctor_unreachable_when_device_stays_offline(monkeypatch: pytest.Monkey
     assert report.observation_layer == ObservationLayerStatus.UNAVAILABLE
     assert report.degradation_codes == []
     assert report.verdict == ProbeVerdict.FAIL
+
+
+def test_cmd_probe_scrcpy_succeeds_for_debug_only(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
+    report = ScrcpyProbeReport(
+        serial="127.0.0.1:21503",
+        binary_found=True,
+        attached=True,
+        observation_decision=ObservationDecision.DEBUG_ONLY,
+    )
+
+    monkeypatch.setattr(memu_transport, "load_config", lambda _: TransportConfig())
+    monkeypatch.setattr(memu_transport, "run_scrcpy_probe", lambda *_args, **_kwargs: report)
+
+    rc = memu_transport.cmd_probe_scrcpy(SimpleNamespace(config=None, serial=None))
+
+    assert rc == 0
+    captured = capsys.readouterr()
+    assert '"observation_decision": "debug_only"' in captured.out
+
+
+@pytest.mark.parametrize(
+    ("input_action", "params", "expected_error"),
+    [
+        ("tap", ["10"], "tap requires X Y"),
+        ("swipe", ["1", "2", "3"], "swipe requires X1 Y1 X2 Y2"),
+        ("key", [], "key requires KEYCODE"),
+        ("text", [], "text requires at least one TEXT token"),
+    ],
+)
+def test_cmd_input_rejects_malformed_params(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    input_action: str,
+    params: list[str],
+    expected_error: str,
+):
+    class FakeAdapter:
+        def __init__(self, serial: str, adb_path: str = "adb", agent_path: str | None = None):
+            self.serial = serial
+            self.adb_path = adb_path
+            self.agent_path = agent_path
+
+        def connect(self) -> bool:
+            return True
+
+    monkeypatch.setattr(memu_transport, "load_config", lambda _: TransportConfig())
+    monkeypatch.setattr(memu_transport, "_adb_path_from_manifest", lambda _cfg: "adb")
+    monkeypatch.setattr(memu_transport, "MaaAdapter", FakeAdapter)
+
+    rc = memu_transport.cmd_input(
+        SimpleNamespace(
+            config=None,
+            serial=None,
+            input_action=input_action,
+            params=params,
+            duration=None,
+        )
+    )
+
+    assert rc == 2
+    captured = capsys.readouterr()
+    assert expected_error in captured.err

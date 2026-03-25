@@ -11,14 +11,14 @@ Thin tracker only.
 - live probe results captured on 2026-03-25 against pinned MEmu serial `127.0.0.1:21503`
 - accepted near-term runtime posture: Maa/ADB path for control plus `maamcp_screenshot` for observation
 - trusted active scripts: `scripts/corpus_cleanup.py`, `scripts/kimi_review.py`, `scripts/vlm_detector.py`, `scripts/memu_transport.py`
-- 15 pure-code tests passing (`tests/transport/test_transport.py`)
+- 15 pure-code transport tests plus 3 live transport smoke tests passing (`tests/transport/`)
 
 ## Next
 
 1. Strengthen post-action verification above the transport layer; keep raw frame diff as a cheap signal only.
 2. Build the thin multi-step runtime loop on top of the proven Maa-first transport slice.
 3. Persist structured step-by-step runtime events and screenshots before any semantic cache work.
-4. Add live readiness/capture/recovery tests from `dev/testingADB.md`.
+4. Expand the current live smoke tests toward the fuller evidence-emitting suite described in `dev/testingADB.md`.
 
 ## Blockers
 
