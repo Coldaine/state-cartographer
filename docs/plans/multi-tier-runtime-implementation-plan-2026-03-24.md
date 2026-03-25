@@ -1,11 +1,11 @@
-# Tiered Runtime Implementation Plan (Semantic Cache and VLM)
+# Tiered Runtime Implementation Plan (Borrowed Substrate and VLM)
 
 Status: design proposal, aligned to the repo’s current rebuild posture.
 
 See also:
-- [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md)
+- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
 - [memu-android-control-stack-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/memu-android-control-stack-2026-03-24.md)
-- [tiered-automation-stack.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/tiered-automation-stack.md)
+- [agent-control-tool-requirements.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/agent-control-tool-requirements.md)
 
 ## Purpose
 
@@ -16,22 +16,26 @@ Deliver a supervised Android/Unity automation runtime with three escalating tier
 
 The stack is conservative by design: correctness and verification are preferred over shortcut speed.
 
+The runtime should borrow the external control substrate for attachment, frame access, and input primitives instead of owning that transport itself.
+
 This document is the canonical owner of runtime architecture and phased implementation sequencing.
 
 ## Target Runtime Responsibilities
 
-- capture screenshot from emulator/device
-- route through tiered resolver
-- execute action primitives (currently ADB touch inputs)
+- receive frames and actions through borrowed control tools
+- package objective context
+- route through tiered resolver logic
+- validate proposed actions
+- execute actions through borrowed tools
 - validate post-action transition
 - escalate with structured context when uncertainty is high
 - recover from failure modes instead of continuing blindly
 
 ## Phase 1 — Baseline VLM loop (Tier 2 only)
 
-Goal: prove stable observe–act–observe loop on real device.
+Goal: prove stable observe-act-observe loop on real device using borrowed substrate.
 
-- Input: screenshot + task instruction
+- Input: frame plus task instruction
 - Model path: local VLM via OpenAI-compatible endpoint (e.g. Qwen-style local image model)
 - Output contract: strict geometry + confidence JSON (coordinates normalized 0-1)
 - Sanity checks:
@@ -44,10 +48,10 @@ Goal: prove stable observe–act–observe loop on real device.
   - attempt 2 with explicit full-screen search language if first attempt fails
 - Execution:
   - convert normalized coords to pixels
-  - ADB tap, optional small jitter
+  - use the borrowed control tool to tap, swipe, key, or text
   - capture follow-up frame and verify transition
 - Escalation:
-  - repeated fails or clear uncertainty packages structured context for Tier 3
+  - repeated fails or clear uncertainty package structured context for Tier 3
 - Success criteria:
   - per-action latency and failure profile baseline established
   - stable control on at least one real workflow
@@ -110,10 +114,10 @@ Start conservative and tune against real data:
 
 The near-term implementation order should be:
 
-1. stabilize the Phase 1 baseline
-   - transport abstraction for screenshot capture and action dispatch
-   - config-driven capture selection
-   - validated frame capture before VLM use
+1. stabilize the borrowed-substrate baseline
+   - prove the external control tool can attach and remain healthy
+   - prove the preferred visual substrate can provide current frames or a suitable operator/debug stream
+   - capture and action dispatch through borrowed tools
    - before/after artifact persistence per run
 2. turn Tier 2 into a stronger resolver
    - explicit request/response contracts
@@ -125,8 +129,7 @@ The near-term implementation order should be:
    - recovery primitives
    - structured JSONL run logs
 4. split implementation boundaries
-   - transport
-   - resolver
+   - actor
    - verifier
    - session/runtime
    - future cache layer
@@ -149,13 +152,10 @@ The near-term implementation order should be:
 
 Phase 1 should specifically deliver:
 
-- a capture provider interface with at least:
-  - `adb exec-out screencap -p`
-  - configured MEmu DroidCast capture
-- a thin execution adapter with:
-  - `tap`
-  - `swipe`
-  - `keyevent` support if needed
+- a borrowed-control-tool interface that can:
+  - attach to the pinned MEmu instance
+  - provide screenshot/frame access
+  - dispatch tap/swipe/key/text primitives
 - a Tier-2-first resolver path that:
   - uses strict geometry validation
   - retries once with broader search language
@@ -167,13 +167,13 @@ Phase 1 should specifically deliver:
   - captures again
   - verifies basic transition
 - artifact capture for debugging:
-  - before image
-  - after image
+  - before image/frame
+  - after image/frame
   - structured result JSON
 
 ## Concrete Next Steps After Current Slice
 
-After the current Tier-2-first scaffold lands, the next implementation steps should be:
+After the borrowed substrate is proven, the next implementation steps should be:
 
 1. replace cheap frame-diff verification with a stronger semantic verifier
 2. add a multi-step `run-objective` loop with retry and stuck handling
@@ -181,10 +181,36 @@ After the current Tier-2-first scaffold lands, the next implementation steps sho
 4. analyze real run artifacts to decide where semantic caching is justified
 5. implement semantic Tier 1 with hit/miss first, then hints if measurements justify them
 
+## Immediate Next Step
+
+The next implementation priority is:
+
+1. strengthen post-action verification in runtime code
+   - keep pixel diff as a cheap signal only
+   - add a semantic verifier path that can judge whether the intended UI change actually happened
+2. add a multi-step `run-objective` loop
+   - capture
+   - resolve
+   - execute
+   - verify
+   - retry
+   - detect stuck states
+   - emit structured JSONL run logs plus screenshots
+3. validate transport on a real MEmu session
+   - confirm whether the preferred visual substrate is runtime-consumable or debug-only
+   - confirm the borrowed control tool is the stable attach/action surface
+4. collect run artifacts before semantic cache work
+   - before/after screenshots
+   - chosen coordinates
+   - verification result
+   - latency and confidence signals
+
+This is the point where the borrowed-substrate scaffold becomes a real runtime slice rather than a single-action helper.
+
 ## Current Positioning
 
 This is a staged implementation target. The repo currently includes early scaffolding but not a full live trusted runtime.
 
 Companion docs:
 - the MEmu note owns emulator transport/integration constraints
-- the runtime status doc owns current prototype truth and alignment gaps
+- the runtime policy docs own current prototype truth and alignment gaps

@@ -1,4 +1,4 @@
-# Backend Hardening
+# Backend Lessons
 
 > Historical note: this document was previously `docs/execution/EXE-backend-hardening.md`. It now also absorbs the salvage guidance that was split into `pilot-bridge-rework.md`.
 
@@ -9,7 +9,7 @@ Retain the backend lessons learned from live emulator work without pretending th
 See also:
 - [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
 - [ALS-live-ops.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-live-ops.md)
-- [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
+- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
 
 ## Current Status
 

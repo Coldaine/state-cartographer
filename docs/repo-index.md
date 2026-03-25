@@ -7,7 +7,7 @@ Use this file when you need the fuller answer to `where does this live?`.
 
 See also:
 - [docs/AGENTS.md](/mnt/d/_projects/MasterStateMachine/docs/AGENTS.md)
-- [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
+- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
 - [architecture-overview.md](/mnt/d/_projects/MasterStateMachine/docs/architecture-overview.md)
 
 ## Root-Level Map
@@ -32,8 +32,6 @@ See also:
   - hook-related code and assets retained in the repo
 - `scripts/`
   - current active script surface
-- `runtime/`
-  - first-pass stream-first runtime scaffold for MEmu automation
 - `vendor/`
   - external reference code, including ALAS
 
@@ -56,7 +54,7 @@ These exist in the worktree but are not primary project knowledge or product sur
 ## Docs Map
 
 - `docs/todo.md`
-  - repo-wide execution tracker for active tasks, blockers, and immediate next actions
+  - repo-wide tracker for current truth, active tasks, blockers, and immediate next actions
 - `docs/AGENTS.md`
   - local index for the docs tree
 - `docs/ALS-reference/`
@@ -65,9 +63,12 @@ These exist in the worktree but are not primary project knowledge or product sur
   - research notes, synthesis, and experiments
 - `docs/architecture-overview.md`
   - architecture and organizing logic
-- `docs/project/`
-  - current reality, north star, repo indexing
-  - includes `documentation-playbook.md` for docs workflow rules
+- `docs/north-star.md`
+  - desired end state
+- `docs/repo-index.md`
+  - exhaustive high-level repo map
+- `docs/documentation-playbook.md`
+  - docs workflow rules
 - `docs/memory/`
   - dated lessons learned and preserved findings
 - `docs/workflows/`
@@ -77,16 +78,16 @@ These exist in the worktree but are not primary project knowledge or product sur
 - `docs/prework/`
   - corpus/data preparation procedures
 - `docs/runtime/`
-  - runtime boundaries, retained runtime design knowledge, draft event schema, and prototype runtime status
-  - includes `tiered-automation-stack.md` for current scaffold truth, not canonical architecture
+  - runtime boundaries, retained runtime design knowledge, external tool requirements, and borrowed-tool intake/setup notes
+  - includes `agent-control-tool-requirements.md` for borrowed substrate selection criteria
+  - includes `borrowed-control-tool-setup.md` for local setup and compatibility-spike procedure
 - `docs/dev/`
   - developer workflow docs (testing strategy, etc.)
 - `docs/vlm/`
   - VLM profiles, contracts, and prompt guidance
+  - includes `llama-swap-quickstart.md` for local model serving and endpoint usage
 - `docs/plans/`
-  - tactical planning docs, including the canonical multi-tier runtime plan and the MEmu transport companion
-- `docs/decisions/`
-  - ADR-style decision records
+  - tactical planning docs, including the canonical runtime plan and the MEmu transport companion
 - `docs/vendor-patches/`
   - existing patch/reference bucket retained as-is
 
@@ -98,17 +99,6 @@ These exist in the worktree but are not primary project knowledge or product sur
   - cheap Kimi-backed visible-first screenshot review
 - `scripts/vlm_detector.py`
   - VLM-backed offline detection and labeling tool
-- `scripts/tiered_automation.py`
-  - Phase-1 runtime scaffold with Tier-2-first resolution, ADB observe-act support, and an optional prototype template cache
-- `runtime/`
-  - first-pass stream-first runtime package
-  - `transport/`: ADB client, scrcpy substrate wrapper, frame validation, MEmu instance wiring
-  - `observation/`: frame health, compact context, frame sampling types
-  - `actor/`: prompt builder, schema validation, local actor router, post-action verifier, candidate ranking
-  - `controller/`: objective loop, retry policy, transition tracking, action execution, failure codes
-  - `replay/`: interface plus no-op implementation
-  - `teacher/`: interface plus no-op implementation
-  - `logging/`: artifact/event persistence
 
 ## Data Surface
 
@@ -123,16 +113,11 @@ These exist in the worktree but are not primary project knowledge or product sur
 
 ## Validation Surface
 
-- `tests/runtime/`
-  - first-pass pure-logic tests for frame health, actor schema, transition tracking, retry policy, and replay noop behavior
-- validation is now:
-  - runtime syntax checks
-  - unit tests for stable runtime helpers
-  - script execution
-  - documentation consistency checks
+- there are currently no committed automated checks in the repo
+- validation is presently script execution, corpus inspection, and documentation consistency checks
 
 ## Practical Rule
 
 If you need short orientation, use root `AGENTS.md`.
 If you need the exhaustive high-level map, use this file.
-If you need the rules for adding or updating docs, use `docs/project/documentation-playbook.md`.
+If you need the rules for adding or updating docs, use `docs/documentation-playbook.md`.

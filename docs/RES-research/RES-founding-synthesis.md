@@ -9,7 +9,7 @@ This is a synthesis document, not an implementation claim.
 It captures the durable research thesis behind the project and separates that thesis from repo reality.
 
 See also:
-- [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
+- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
 - [VLM-overview.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-overview.md)
 - [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
 

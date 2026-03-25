@@ -8,13 +8,13 @@ Its job is repo-level indexing, not explanation. Use it to find the right projec
 
 | Document | What It Covers |
 |---|---|
-| [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md) | Where the project actually stands right now. |
-| [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/project/repo-index.md) | Exhaustive high-level map of code, docs, data, and retained artifacts. |
+| [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md) | Where the project actually stands right now, active work, and blockers. |
+| [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/repo-index.md) | Exhaustive high-level map of code, docs, data, and retained artifacts. |
 | [architecture-overview.md](/mnt/d/_projects/MasterStateMachine/docs/architecture-overview.md) | How the repo is organized: domains, knowledge buckets, and implementation axes. |
-| [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md) | Current tactical plan and near-term rebuild priorities. |
+| [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md) | Active work, blockers, and near-term rebuild priorities. |
 | [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md) | Canonical runtime architecture and phased implementation plan. |
-| [north-star.md](/mnt/d/_projects/MasterStateMachine/docs/project/north-star.md) | Long-horizon goals and desired end-state behavior. |
-| [documentation-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/project/documentation-playbook.md) | How documentation is organized and what must be updated when docs change. |
+| [north-star.md](/mnt/d/_projects/MasterStateMachine/docs/north-star.md) | Long-horizon goals and desired end-state behavior. |
+| [documentation-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/documentation-playbook.md) | How documentation is organized and what must be updated when docs change. |
 
 ## Documentation Domains
 
@@ -44,7 +44,7 @@ This is the minimal filesystem map you should keep in mind:
 | `scripts/` | Current active script-shaped tooling |
 | `examples/` | Reference/example artifacts |
 
-For the expanded version, read [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/project/repo-index.md).
+For the expanded version, read [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/repo-index.md).
 
 ## Key Documentation Entry Points
 
@@ -56,7 +56,7 @@ For the expanded version, read [repo-index.md](/mnt/d/_projects/MasterStateMachi
 | [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md) | Canonical runtime architecture, tiering order, and phased build path |
 | [observation-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/observation-contracts.md) | Observation-side contracts and what is still only design guidance |
 | [azur-lane-workflows.md](/mnt/d/_projects/MasterStateMachine/docs/workflows/azur-lane-workflows.md) | Workflow/task inventory and substate complexity |
-| [alas-build-plan.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-build-plan.md) | Operational program for deriving artifacts from ALAS |
+| [alas-artifacts.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-artifacts.md) | What ALAS-derived artifacts and inventories still matter |
 | [2026-03-24-corpus-review-lessons.md](/mnt/d/_projects/MasterStateMachine/docs/memory/2026-03-24-corpus-review-lessons.md) | Compact lessons learned from the corpus review reset and first direct adjudication pass |
 | [testing-strategy.md](/mnt/d/_projects/MasterStateMachine/docs/dev/testing-strategy.md) | Testing policy: no mocks, no tests until files are mostly complete |
 

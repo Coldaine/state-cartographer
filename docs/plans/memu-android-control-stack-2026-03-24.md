@@ -1,41 +1,39 @@
 # MEmu Transport and Integration Note
 
-This document is the transport/integration companion for the emulator path.
+This document is the borrowed-tool intake note for the emulator path.
 
 It is not the canonical runtime architecture plan.
 
 For the runtime blueprint, use:
 - [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
 
-For current prototype status, use:
-- [tiered-automation-stack.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/tiered-automation-stack.md)
+For the external control-tool selection spec, use:
+- [agent-control-tool-requirements.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/agent-control-tool-requirements.md)
 
 ## Purpose
 
 This note answers only these questions:
 
-- how screenshots and actions move through the MEmu path
-- what baseline infrastructure is needed before higher-level runtime work
+- which borrowed tools should be used for MEmu 9 attachment and interaction
+- what baseline integration is needed before higher-level runtime work
 - which emulator-specific constraints shape that path
 
 It does not own tiering policy, semantic cache design, teacher escalation, or runtime architecture sequencing.
 
-## Baseline Recommendation
+## Tool Posture
 
-For the first MEmu path, keep the integration layer narrow:
+The borrowed substrate posture is:
 
-- `ADB` for connection, shell control, bootstrap, and recovery
-- screenshot transport that can be proven stable on the emulator path
-  - `DroidCast` is the current baseline mentioned in the near-term plan
-  - direct ADB screenshot capture remains a valid comparison or fallback path
-- repo runtime/VLM contracts for interpretation above the transport layer
+- `MaaMCP` is the primary agent-facing control tool for connect, screenshot, tap, swipe, key, text, and health/status if available
+- `scrcpy` is the preferred live visual substrate and operator/debug stream
+- `adbfriend` is installed and documented separately for your own use, but it is not part of the runtime path
 
-The baseline should prove only an observe-act-observe loop on one MEmu session.
+The runtime should borrow these tools rather than reimplementing attachment, capture, and input plumbing.
 
 ## What This Layer Owns
 
 - device connection and basic health checks
-- screenshot acquisition from the emulator
+- screenshot/frame access from the emulator path
 - action dispatch primitives
 - emulator-specific bootstrap and recovery commands
 - evidence needed to prove a frame/action loop is reliable enough for runtime work above it
@@ -48,7 +46,7 @@ The baseline should prove only an observe-act-observe loop on one MEmu session.
 - teacher escalation
 - workflow reasoning
 
-Those belong to the canonical runtime plan, not to this transport note.
+Those belong to the canonical runtime plan, not to this integration note.
 
 ## Unity Constraint
 
@@ -59,36 +57,37 @@ That means structured Android UI hierarchy tooling should not be treated as the 
 - `uiautomator2` may still be useful for diagnostics or limited Android shell interaction
 - it should not be treated as the core observation or semantics path for the live Unity workflow
 
-The runtime must be able to operate from screenshots and action verification rather than assuming a rich accessibility tree.
+The runtime must be able to operate from borrowed control-tool frames and action verification rather than assuming a rich accessibility tree.
 
 ## Practical Integration Shape
 
-The narrow transport loop is:
+The narrow integration loop is:
 
-1. connect to the MEmu instance over `adb`
-2. acquire a usable frame through the selected screenshot transport
-3. dispatch a primitive action through `adb`
+1. connect to the MEmu instance through the borrowed control tool
+2. attach the preferred visual substrate for observation and operator/debug visibility
+3. dispatch primitive actions through the borrowed control tool
 4. capture again
-5. verify that the transport path remains stable enough for the runtime layer above it
+5. verify that the loop is stable enough for the runtime layer above it
 
 This note intentionally stops there.
 
 ## Deferred Or Optional Tools
 
 - `scrcpy`
-  - useful comparison path if transport stability or latency needs to be evaluated
+  - useful as the preferred visual/debug substrate
   - not the semantic owner of the runtime
 - `uiautomator2`
   - optional diagnostic/helper tool
   - not the primary semantics path for Unity interaction
-- `DroidMind`, `MaaMCP`, and similar orchestration layers
+- `DroidMind` and similar orchestration layers
   - deferred until a concrete transport or runtime gap requires them
 
 ## Success Gate
 
 This note is satisfied when the emulator path can repeatedly:
 
-- capture usable screenshots
+- attach to the intended MEmu instance
+- capture usable current frames
 - dispatch actions
 - verify that the loop is stable on one real session
 

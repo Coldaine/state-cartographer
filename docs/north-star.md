@@ -7,8 +7,7 @@ This document describes the desired end state of the project.
 It is strategic target material, not a statement of current capability.
 
 For current truth and near-term movement, read:
-- [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
-- [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md)
+- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
 
 ## Desired End State
 

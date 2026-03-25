@@ -1,17 +1,16 @@
-# ALAS Build Plan
+# ALAS Artifacts
 
 > Historical note: this document was extracted from the research-oriented `docs/RES-research/RES-alas-build-plan.md` during the 2026 documentation realignment.
 
 ## Purpose
 
-This is the operational prework program for turning ALAS into repo-owned artifacts and inventories.
+This document says which ALAS-derived artifacts and inventories are still worth keeping.
 
-It is about extracting durable knowledge and datasets from ALAS. It is not a claim that ALAS should remain the operator.
+It is not an active build-plan owner.
 
 See also:
 - [ALS-overview.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-overview.md)
-- [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md)
-- [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
+- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
 - [corpus-review-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/prework/corpus-review-playbook.md)
 
 ## Why ALAS Is Still Used Here
@@ -27,9 +26,9 @@ It also provides:
 
 If the repo only preserves page/navigation artifacts, it loses a large part of the useful prior art.
 
-## Outputs
+## Still-Useful Outputs
 
-The prework should produce:
+The still-useful ALAS-derived outputs are:
 
 1. assignment inventory
 2. action inventory
@@ -38,7 +37,7 @@ The prework should produce:
 5. durable corpus artifacts for later labeling and analysis
 6. optional read-heavy collection artifacts such as ship census or roster snapshots
 
-## Core Workstreams
+## Artifact Areas
 
 ### 1. Assignment inventory
 
@@ -105,6 +104,6 @@ These findings should be preserved even as older scripts and plans are removed:
 
 ## Practical Rule
 
-Use this document as the executable ALAS-derived artifact program.
+Use this document as a statement of what ALAS-derived material is still worth preserving.
 
-Do not treat it as evidence that the old repo-side ALAS helper scripts still exist.
+Do not treat it as evidence that an old repo-side ALAS build program or helper-script surface still exists.

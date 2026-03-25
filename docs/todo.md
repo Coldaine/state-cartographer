@@ -1,33 +1,34 @@
 # Todo
 
-## Purpose
+Thin tracker only.
 
-This document is the repo-wide execution tracker.
+## Now
 
-It exists to track immediate work, blockers, and deferred items without duplicating plan rationale that belongs elsewhere.
+- borrowed-substrate rebuild phase
+- trusted active scripts: `scripts/corpus_cleanup.py`, `scripts/kimi_review.py`, `scripts/vlm_detector.py`
+- chosen control posture: `MaaMCP` + `scrcpy`, with `adbfriend` separate
 
-See also:
-- [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md)
-- [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
-- [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
+## Next
 
-## Current Focus
-
-- stabilize the Phase 1 runtime scaffold into a usable observe-act-observe baseline
-
-## Active Tasks
-
-- strengthen post-action verification beyond raw frame diff
-- add a multi-step `run-objective` loop with retry and stuck handling
-- validate capture transport on a real MEmu session
-- collect structured run artifacts before semantic cache work
+1. Prove `MaaMCP` on the pinned MEmu instance.
+2. Prove whether `scrcpy` is runtime-consumable or debug-only on that setup.
+3. Rebuild only the thin runtime brain on top.
 
 ## Blockers
 
-- no confirmed live MEmu transport baseline has been proven in this worktree session
-- no verified local VLM endpoint has been exercised end-to-end from the runtime scaffold
+- no confirmed `MaaMCP` + pinned MEmu baseline yet
+- no confirmed answer yet on `scrcpy` as runtime frame source
 
 ## Deferred
 
-- semantic Tier 1 cache
-- Tier 3 teacher escalation and distillation
+- replay and teacher layers
+- any repo-local transport ownership
+
+## See Also
+
+- runtime architecture: [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
+- tool requirements: [agent-control-tool-requirements.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/agent-control-tool-requirements.md)
+- tool setup and compatibility spike: [borrowed-control-tool-setup.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/borrowed-control-tool-setup.md)
+- runtime scope: [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
+- ALAS artifact guidance: [alas-artifacts.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-artifacts.md)
+- corpus review procedure: [corpus-review-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/prework/corpus-review-playbook.md)

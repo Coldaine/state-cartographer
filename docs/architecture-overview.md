@@ -8,9 +8,9 @@ This document explains how the repo is organized as knowledge, not just as code.
 
 See also:
 - [docs/AGENTS.md](/mnt/d/_projects/MasterStateMachine/docs/AGENTS.md)
-- [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/project/repo-index.md)
-- [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
-- [documentation-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/project/documentation-playbook.md)
+- [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/repo-index.md)
+- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
+- [documentation-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/documentation-playbook.md)
 
 The key distinction is:
 
@@ -37,7 +37,7 @@ Everything else in `docs/` is a knowledge bucket rather than a domain.
 
 | Bucket | Purpose |
 |---|---|
-| `project/` | current reality, north star, repo indexing, validation posture |
+| root `docs/*.md` | current truth, north star, repo indexing, and documentation rules |
 | `memory/` | dated lessons learned, salvage notes, and findings worth preserving |
 | `architecture-overview.md` | organizing principles and architectural map |
 | `workflows/` | assignment and workflow knowledge |
@@ -45,7 +45,6 @@ Everything else in `docs/` is a knowledge bucket rather than a domain.
 | `runtime/` | live-system contracts and retained runtime design constraints |
 | `vlm/` | multimodal model profiles, task contracts, prompt policy |
 | `plans/` | tactical and strategic planning documents |
-| `decisions/` | ADRs and stable project decisions |
 | `agentPrompts/` | code-linked prompt rationale for prompt-bearing LLM code |
 
 ## Code And Data Buckets

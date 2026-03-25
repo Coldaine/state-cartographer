@@ -34,22 +34,24 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - ALAS as reference system: overview, live-ops rules
 - `RES-research/`
   - durable research notes, synthesis, and analysis
-- `project/`
-  - current reality, north star, repo index
+- `north-star.md`
+  - desired end state
+- `repo-index.md`
+  - exhaustive repo map
+- `documentation-playbook.md`
+  - docs workflow rules
 - `memory/`
   - dated lessons learned and preserved findings that should not be re-learned
 - `prework/`
   - corpus alignment, cleanup, and ALAS-derived artifact building
 - `runtime/`
-  - live-system boundaries, observation contracts, backend hardening, draft event schema, prototype runtime status
+  - live-system boundaries, observation contracts, external tool requirements, and borrowed-tool intake/setup notes
 - `dev/`
   - developer workflow docs (testing strategy, etc.)
 - `vlm/`
   - model profiles, task contracts, prompt-layer guidance
 - `plans/`
   - tactical planning docs and the canonical runtime architecture plan
-- `decisions/`
-  - ADR-style decisions
 - `workflows/`
   - workflow inventory and operational task descriptions
 - `agentPrompts/`
@@ -62,10 +64,10 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
 ## Authoritative Starting Points By Question
 
 - `What is the repo trying to do?`
-  - `project/north-star.md`
-  - `project/current-reality.md`
+  - `north-star.md`
+  - `todo.md`
 - `What is the current tactical plan?`
-  - `plans/current-plan.md`
+  - `todo.md`
 - `What should we do next at the execution level?`
   - `todo.md`
 - `How is the repo organized?`
@@ -74,12 +76,11 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - `plans/multi-tier-runtime-implementation-plan-2026-03-24.md`
   - `runtime/runtime-overview.md`
   - `runtime/observation-contracts.md`
-  - `runtime/backend-hardening.md`
-- `What is implemented versus merely planned in the runtime area?`
-  - `runtime/tiered-automation-stack.md`
-- `Where is the first-pass stream-first runtime scaffold and its prompt contract?`
-  - `project/repo-index.md`
-  - `agentPrompts/runtime-local-actor.md`
+  - `runtime/backend-lessons.md`
+- `What must an external agent-facing emulator control tool already provide?`
+  - `runtime/agent-control-tool-requirements.md`
+- `How should the borrowed control tools be set up and evaluated locally?`
+  - `runtime/borrowed-control-tool-setup.md`
 - `How does the MEmu emulator path connect to the runtime work?`
   - `plans/memu-android-control-stack-2026-03-24.md`
 - `What is ALAS in this repo?`
@@ -92,17 +93,18 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - `vlm/VLM-model-profiles.md`
   - `vlm/VLM-task-contracts.md`
   - `vlm/VLM-prompts.md`
+  - `vlm/llama-swap-quickstart.md`
 - `How do we work with corpus/log data?`
-  - `prework/alas-build-plan.md`
+  - `prework/alas-artifacts.md`
   - `prework/corpus-review-playbook.md`
 - `What recent lessons should we not relearn?`
   - `memory/2026-03-24-corpus-review-lessons.md`
 - `What workflows exist?`
   - `workflows/azur-lane-workflows.md`
 - `Where is the fuller repo map?`
-  - `project/repo-index.md`
+  - `repo-index.md`
 - `How should docs be added or updated?`
-  - `project/documentation-playbook.md`
+  - `documentation-playbook.md`
 
 ## Known Overlap Hotspots
 
@@ -110,37 +112,35 @@ These are the main places where docs can drift into duplication.
 
 ### 1. Repo navigation overlap
 - `../AGENTS.md`
-- `project/repo-index.md`
+- `repo-index.md`
 
 Rule:
 - root `AGENTS.md` is the short repo entrypoint
-- `project/repo-index.md` is the exhaustive repo map
+- `repo-index.md` is the exhaustive repo map
 
 ### 2. Current truth vs strategy
 - `todo.md`
-- `project/current-reality.md`
-- `project/north-star.md`
-- `plans/current-plan.md`
+- `north-star.md`
 
 Rule:
-- `todo.md` owns repo-wide execution tracking only
-- `current-reality.md` owns what is true now
+- `todo.md` owns current truth, repo-wide execution tracking, and the near-term change program
 - `north-star.md` owns desired end state
-- `current-plan.md` owns near-term change program
 
 ### 3. Runtime boundary overlap
 - `runtime/runtime-overview.md`
 - `runtime/observation-contracts.md`
-- `runtime/backend-hardening.md`
+- `runtime/backend-lessons.md`
 - `plans/multi-tier-runtime-implementation-plan-2026-03-24.md`
-- `runtime/tiered-automation-stack.md`
+- `runtime/agent-control-tool-requirements.md`
+- `runtime/borrowed-control-tool-setup.md`
 
 Rule:
 - `runtime-overview.md` owns runtime scope and operator-facing boundary
 - `observation-contracts.md` owns observation contract shape
-- `backend-hardening.md` owns backend constraints and salvage notes
+- `backend-lessons.md` owns backend constraints and salvage notes
 - the multi-tier runtime plan owns canonical runtime architecture and phased sequencing
-- `tiered-automation-stack.md` owns current prototype status only
+- `agent-control-tool-requirements.md` owns external tool selection criteria
+- `borrowed-control-tool-setup.md` owns local intake/setup and compatibility spike procedure
 
 ### 4. VLM family drift
 - `vlm/VLM-overview.md`
@@ -179,5 +179,5 @@ If those answers are weak, the doc probably should not be added.
 
 - root [AGENTS.md](/mnt/d/_projects/MasterStateMachine/AGENTS.md) for repo-level entrypoint guidance
 - [architecture-overview.md](/mnt/d/_projects/MasterStateMachine/docs/architecture-overview.md) for the organizing model behind this tree
-- [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/project/repo-index.md) for the exhaustive repo map
-- [documentation-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/project/documentation-playbook.md) for documentation workflow rules
+- [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/repo-index.md) for the exhaustive repo map
+- [documentation-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/documentation-playbook.md) for documentation workflow rules

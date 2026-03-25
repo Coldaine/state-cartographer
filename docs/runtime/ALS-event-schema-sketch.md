@@ -1,4 +1,4 @@
-# Event Schema — Draft Inspiration
+# ALS Event Schema Sketch
 
 > **Status: Draft / inspiration only.** No code emits this. The final recording format will be shaped by what the runtime actually needs, not by this sketch. Treat it as one possible starting point, not a commitment.
 

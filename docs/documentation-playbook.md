@@ -10,7 +10,7 @@ See also:
 - [AGENTS.md](/mnt/d/_projects/MasterStateMachine/AGENTS.md)
 - [docs/AGENTS.md](/mnt/d/_projects/MasterStateMachine/docs/AGENTS.md)
 - [architecture-overview.md](/mnt/d/_projects/MasterStateMachine/docs/architecture-overview.md)
-- [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/project/repo-index.md)
+- [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/repo-index.md)
 
 ## Core Rule
 
@@ -30,13 +30,11 @@ Everything else in `docs/` is a knowledge bucket rather than a domain.
 Current buckets include:
 
 - `todo.md`
-- `project/`
 - `memory/`
 - `prework/`
 - `runtime/`
 - `vlm/`
 - `plans/`
-- `decisions/`
 - `workflows/`
 - `agentPrompts/`
 
@@ -56,12 +54,11 @@ If those answers are weak, the doc probably should not be added.
 Use these placement rules:
 
 - put the repo-wide execution tracker in `docs/todo.md`
-- put repo-wide status and orientation docs in `docs/project/`
+- put repo-wide status and orientation docs directly under `docs/`
 - put dated lessons and preserved findings in `docs/memory/`
 - put corpus preparation and cleanup procedures in `docs/prework/`
 - put runtime contracts and live-system boundaries in `docs/runtime/`
 - put model-family guidance and task contracts in `docs/vlm/`
-- put stable decisions in `docs/decisions/`
 - put workflow/task descriptions in `docs/workflows/`
 - put code-linked prompt rationale docs in `docs/agentPrompts/`
 
@@ -89,10 +86,8 @@ It should not contain:
 
 Use these boundaries:
 
-- `docs/todo.md` owns execution tracking only
-- `plans/current-plan.md` owns the near-term change program
+- `docs/todo.md` owns current truth, execution tracking, and the near-term change program
 - canonical plan docs own architecture and rationale
-- `project/current-reality.md` owns what is true now
 
 ## One Question, One Owner
 
@@ -102,14 +97,12 @@ Do not create multiple docs that answer the same question in slightly different 
 
 Use these existing ownership boundaries:
 
-- `todo.md` owns repo-wide execution tracking
-- `project/current-reality.md` owns what is true now
-- `project/north-star.md` owns desired end state
-- `plans/current-plan.md` owns the near-term change program
+- `todo.md` owns current truth, repo-wide execution tracking, and the near-term change program
+- `north-star.md` owns desired end state
 - `architecture-overview.md` owns the organizing model for the repo
-- `project/repo-index.md` owns the exhaustive repo map
+- `repo-index.md` owns the exhaustive repo map
 - `docs/AGENTS.md` owns fast navigation inside `docs/`
-- `project/documentation-playbook.md` owns documentation workflow rules
+- `documentation-playbook.md` owns documentation workflow rules
 
 ## What To Update When Docs Change
 
@@ -118,7 +111,7 @@ When a new doc changes the repo map or the docs map, update the indexes that poi
 At minimum, check:
 
 - [docs/AGENTS.md](/mnt/d/_projects/MasterStateMachine/docs/AGENTS.md)
-- [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/project/repo-index.md)
+- [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/repo-index.md)
 
 Also update these when applicable:
 
@@ -126,6 +119,12 @@ Also update these when applicable:
 - [AGENTS.md](/mnt/d/_projects/MasterStateMachine/AGENTS.md) if the new doc is a repo-level entrypoint
 
 Do not add or move docs and leave the indexes stale.
+
+Use this tighter default:
+
+- update `docs/AGENTS.md` and `repo-index.md` by default when docs placement or ownership changes
+- update root `AGENTS.md` only when something becomes true repo-level entrypoint material or required reading
+- do not add ordinary docs-map changes to root `AGENTS.md` just because a new doc exists
 
 ## Prompt-Bearing Code Rule
 

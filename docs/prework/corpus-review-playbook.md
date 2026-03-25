@@ -4,14 +4,13 @@
 
 This document defines how to select and review small "golden" corpus stretches from screenshots plus nearby ALAS logs.
 
-It answers a narrower question than [alas-build-plan.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-build-plan.md):
-- `alas-build-plan.md` says what artifacts prework should produce
+It answers a narrower question than [alas-artifacts.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-artifacts.md):
+- `alas-artifacts.md` says what ALAS-derived artifacts are still worth keeping
 - this playbook says how to choose and review frame windows so those artifacts are worth trusting
 
 See also:
-- [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
-- [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md)
-- [alas-build-plan.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-build-plan.md)
+- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
+- [alas-artifacts.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-artifacts.md)
 
 ## Observed Timestamp Model
 
