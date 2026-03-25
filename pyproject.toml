@@ -7,6 +7,7 @@ license = "MIT"
 dependencies = [
     "openai>=2.29.0",
     "requests>=2.32.0",
+    "adbutils>=0.11.0",
 ]
 
 [project.optional-dependencies]
@@ -31,7 +32,7 @@ requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = []
+packages = ["state_cartographer", "state_cartographer.transport"]
 
 [tool.ruff]
 target-version = "py311"
@@ -57,4 +58,4 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["scripts", "screenshot_mock", "locate", "pathfind", "session", "graph_utils", "schema_validator", "alas_log_parser", "alas_converter", "siphon", "observe", "calibrate", "adb_bridge"]
+known-first-party = ["state_cartographer", "scripts", "screenshot_mock", "locate", "pathfind", "session", "graph_utils", "schema_validator", "alas_log_parser", "alas_converter", "siphon", "observe", "calibrate", "adb_bridge"]

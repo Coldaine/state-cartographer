@@ -2,14 +2,9 @@
   "name": "MEmu Player",
   "emulator_type": "memu",
   "adb_serial": "127.0.0.1:21513",
-  "screenshot_method": "droidcast",
-  "backend": "pilot",
-  "description": "MEmu emulator with DroidCast screenshot cycle",
-  "ports": {
-    "atx_agent": 7912,
-    "droidcast": 53516
-  },
-  "paths": {
-    "droidcast_apk": "vendor/AzurLaneAutoScript/bin/DroidCast/DroidCast_raw-release-1.0.apk"
-  }
+  "primary_control": "maatouch",
+  "preferred_visual": "scrcpy",
+  "fallback_observation": "adb_screencap",
+  "agent_path": null,
+  "description": "MEmu 9 transport config — pinned serial, tool posture only. Machine-specific paths and probe state go in data/events/memu-transport/."
 }

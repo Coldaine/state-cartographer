@@ -1,101 +1,76 @@
 # Runtime Overview
 
-> Historical note: this document folds together material that previously lived in `OBS-overview.md`, `NAV-overview.md`, `EXE-overview.md`, `AUT-overview.md`, and the later standalone `operator-model.md`.
-
 ## Purpose
 
-Describe what the future live runtime is supposed to own, and what should count as operator-facing, without pretending that the current repo ships that runtime today.
+What the live runtime is supposed to own, stated plainly.
 
-See also:
-- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
-- [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
-- [observation-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/observation-contracts.md)
-- [backend-lessons.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/backend-lessons.md)
-- [agent-control-tool-requirements.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/agent-control-tool-requirements.md)
-- [borrowed-control-tool-setup.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/borrowed-control-tool-setup.md)
+## What We Are Building
 
-## What Runtime Means Here
+A supervised automation runtime for Azur Lane daily operations that:
+- Borrows emulator control from adbutils + MaaTouch (see [substrate-and-implementation-plan.md](../plans/substrate-and-implementation-plan.md))
+- Uses local VLM models for screen understanding (see [VLM-overview.md](../vlm/VLM-overview.md))
+- Owns the observe-decide-act-verify loop
+- Owns workflow planning, recovery, and escalation
+- Persists structured evidence for every action
 
-The runtime is the live supervised automation system.
+## What Runtime Means
 
-A re-earned runtime would be responsible for:
-- interacting with the live emulator or device
-- packaging observational context
-- choosing and executing trusted actions
-- verifying progress
-- recovering from known failures
-- escalating with structured context when it cannot continue safely
+The runtime is the live supervised automation system. It is responsible for:
+- Interacting with the live emulator through borrowed control tools
+- Packaging observational context for VLM classification
+- Choosing and executing actions
+- Verifying that actions had the intended effect
+- Recovering from known failures
+- Escalating with structured context when it cannot continue safely
 
 ## What Runtime Is Not
 
-- not the corpus pipeline
-- not the research archive
-- not the VLM profile library by itself
-- not ALAS
-- not previous bridge experiments
+- Not the corpus pipeline
+- Not the research archive
+- Not the VLM model library
+- Not ALAS
+- Not the transport layer (that's adbutils + MaaTouch)
 
-## Operator-Facing Model
+## Operator Model
 
-The intended long-term operator model is:
-- the runtime owns action validation, verification, recovery, and event recording
-- the runtime borrows stable attachment, screenshot, and input primitives from an external control substrate
-- the agent operates through higher-level control surfaces rather than micromanaging taps, screenshots, and retries directly
-- escalation should carry structured context rather than forcing the operator to rediscover the situation from scratch
-
-An operator-facing surface should:
-- clearly state what it is allowed to do
-- own its own preflight and verification requirements
-- expose explicit success and failure semantics
-- distinguish normal execution from escalation
-
-These do **not** count as operator-facing just because they exist:
-- reference-system tools
-- corpus cleanup scripts
-- ad hoc screenshot or labeling helpers
-- previous bridge experiments
-- historical or planned entrypoints
+- The runtime owns action validation, verification, recovery, and event recording
+- The runtime borrows attachment, screenshot, and input primitives from adbutils + MaaTouch
+- The agent operates through higher-level control surfaces, not micromanaging taps and retries
+- Escalation carries structured context so the operator does not have to rediscover the situation
 
 ## Current Status
 
-The repo does not currently ship a supported live runtime or a re-earned live operator path.
+The repo does not currently ship a working runtime.
 
-What remains today is mostly:
-- corpus and prework tooling
-- VLM labeling and adjudication tooling
-- retained documentation of runtime constraints, failure modes, and historical attempts
+What exists today:
+- Corpus and prework tooling (kimi_review.py, vlm_detector.py, corpus_cleanup.py)
+- Retained documentation of runtime constraints, failure modes, and lessons
+- The substrate decision and implementation plan
+- Empty transport directory ready for rebuild
 
-Historical docs that mention canonical runtime entrypoints should be treated as project memory, not current guarantee.
-
-## Runtime Concerns That Survive The Old Layering
-
-The old `OBS/NAV/EXE/AUT` split still names useful concerns, but they now survive as sub-concerns inside runtime design:
-- observation and context packaging
-- movement and transition logic
-- action execution and verification
-- scheduling, recovery, and escalation
+What needs to be built:
+1. Transport layer on adbutils + MaaTouch (Step 1-3 of the substrate plan)
+2. Tier 2 VLM grounding loop (observe-act-observe on real device)
+3. Multi-step workflow execution with stuck detection
+4. Structured NDJSON event logging
+5. Recovery ladder implementation
 
 ## Required Runtime Capabilities
 
-A rebuilt runtime should eventually own:
-- freshness/health proof over the observation path it borrows
-- action validation and verification hooks over the control tool it borrows
-- session and workflow context
-- state and substate grounding support
-- workflow execution and recovery
-- structured escalation payloads
-
-## Current Gaps
-
-- no supported live backend
-- no supported operator entrypoint
-- no trusted runtime contract between observation, VLM, and execution
-- no explicit assignment contract that tells the agent what to attempt and how success is judged
+A rebuilt runtime must own:
+- Freshness/health proof over the observation path
+- Action validation and verification hooks
+- Session and workflow context
+- State and substate grounding
+- Workflow execution and recovery
+- Structured escalation payloads
 
 ## Runtime Documents
 
-The runtime knowledge docs that remain after consolidation are:
-- [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
-- [observation-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/observation-contracts.md)
-- [backend-lessons.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/backend-lessons.md)
-- [agent-control-tool-requirements.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/agent-control-tool-requirements.md)
-- [borrowed-control-tool-setup.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/borrowed-control-tool-setup.md)
+- [substrate-and-implementation-plan.md](../plans/substrate-and-implementation-plan.md) — what tools we use and how to build on them
+- [multi-tier-runtime-implementation-plan-2026-03-24.md](../plans/multi-tier-runtime-implementation-plan-2026-03-24.md) — tiered architecture (Tier 2 VLM baseline, Tier 1 cache, Tier 3 teacher)
+- [observation-contracts.md](observation-contracts.md) — what the runtime asks of observation
+- [backend-lessons.md](backend-lessons.md) — lessons from past emulator work
+- [memu-reference.md](memu-reference.md) — MEmu architecture, ADB ports, capture methods, admin constraints
+- [health-heartbeat-logging.md](health-heartbeat-logging.md) — readiness tiers, heartbeats, event schema
+- [agent-control-tool-requirements.md](agent-control-tool-requirements.md) — acceptance criteria for borrowed tools

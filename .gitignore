@@ -41,3 +41,18 @@ data/raw_stream/
 data/corpus/
 data/backups/
 tmp/
+# Windows leftover from shell redirects
+nul
+# Test artifacts
+data/test_cap.png
+data/01_*.png
+data/02_*.png
+data/03_*.png
+data/04_*.png
+data/05_*.png
+data/06_*.png
+data/adb_tap_*.png
+data/current_state.png
+data/live_cap.png
+data/mis_*.png
+.vscode/

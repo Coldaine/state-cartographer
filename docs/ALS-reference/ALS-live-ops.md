@@ -6,7 +6,6 @@ These are the non-negotiable rules for live ALAS runs in this repo.
 
 See also:
 - [ALS-overview.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-overview.md)
-- [ALS-event-schema-sketch.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/ALS-event-schema-sketch.md)
 - [backend-lessons.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/backend-lessons.md)
 
 ## Hard Rules
@@ -32,6 +31,79 @@ See also:
    - Monitoring must detect duplicate controllers.
    - Monitoring must flag appended-log `Request human takeover` immediately.
    - Monitoring must record the last successful task and the last terminal recovery path.
+
+## Environment Setup
+
+ALAS lives at `D:\_projects\ALAS_original` with its own uv-managed venv (Python 3.9.25).
+It is separate from the MasterStateMachine repo and its Python 3.14 venv.
+
+### Python and venv
+
+```
+Location:   D:\_projects\ALAS_original\.venv
+Python:     3.9.25 (via uv — C:\Users\pmacl\AppData\Roaming\uv\python\cpython-3.9-windows-x86_64-none)
+Created by: uv 0.10.7
+```
+
+ALAS requires Python 3.9.x. It will not run on Python 3.14 (or 3.11+) due to mxnet/cnocr
+compatibility. The venv was created with `uv venv --python cpython-3.9`.
+
+### Critical dependency pins
+
+These packages must stay at specific versions. If the venv is rebuilt or deps are
+upgraded, these are the ones that break:
+
+| Package | Required | Why |
+|---|---|---|
+| `rich` | `==11.2.0` | ALAS pins this. 14.x uses a Windows console renderer that crashes on cp1252 with Unicode box-drawing characters |
+| `numpy` | `==1.23.5` | mxnet 1.6.0 uses `np.bool` and `np.PZERO`, removed in numpy 1.24+ and 2.0+ respectively |
+| `mxnet` | `==1.6.0` | Required by `cnocr==1.2.2`. Install with `--no-deps` to avoid pulling numpy 1.16 (won't build) |
+| `cnocr` | `==1.2.2` | ALAS's OCR engine. Install with `--no-deps` for the same reason |
+| `commonmark` | `==0.9.1` | Required by `rich==11.2.0` (newer rich uses `markdown-it-py` instead) |
+
+### Rebuilding the venv from scratch
+
+```bash
+cd D:\_projects\ALAS_original
+uv venv --python cpython-3.9
+# Install most deps from requirements.txt
+uv pip install --python .venv/Scripts/python.exe -r requirements.txt --no-deps
+# Then fix the problem packages manually:
+uv pip install --python .venv/Scripts/python.exe "rich==11.2.0" "commonmark==0.9.1"
+uv pip install --python .venv/Scripts/python.exe "numpy==1.23.5"
+uv pip install --python .venv/Scripts/python.exe "mxnet==1.6.0" --no-deps
+uv pip install --python .venv/Scripts/python.exe "cnocr==1.2.2" --no-deps
+```
+
+Note: `--no-deps` on mxnet and cnocr is mandatory — their declared numpy pins (1.16.6)
+cannot build on modern Windows. The pre-built wheels install fine; only the transitive
+numpy build fails.
+
+### Launch command
+
+```bash
+cd D:\_projects\ALAS_original
+PYTHONIOENCODING=utf-8 .venv/Scripts/python.exe gui.py
+```
+
+`PYTHONIOENCODING=utf-8` is required. Without it, rich's log formatter crashes when
+writing `│` and other box-drawing characters through the Windows cp1252 console codec.
+
+**Web UI:** http://localhost:22267
+
+### Killing stale processes
+
+ALAS's `EnableReload` mechanism spawns child processes that can survive a parent crash.
+Before restarting, check for orphans:
+
+```powershell
+# Find ALAS Python processes
+Get-Process python* | Where-Object { $_.Path -like '*cpython-3.9*' } | Select-Object Id, Path
+# Check what holds port 22267
+Get-NetTCPConnection -LocalPort 22267 -ErrorAction SilentlyContinue
+# Kill stale processes by PID
+Stop-Process -Id <PID> -Force
+```
 
 ## Current Repo Reality
 
@@ -76,6 +148,53 @@ other long battle sequences where ALAS would otherwise declare the device stuck 
 Adds a `not_start_count` counter so that `TACTICAL_CLASS_START` must be absent for **2 consecutive
 checks** before the function returns `False`. Prevents a single missed frame from aborting tactical
 class enrollment.
+
+## Log Files — Location and Format
+
+ALAS writes two kinds of logs under `vendor/AzurLaneAutoScript/log/`:
+
+| File pattern | What it contains |
+|---|---|
+| `{date}_gui.txt` | GUI process stdout — startup banner, webui launch, port conflicts |
+| `{date}_{config_name}.txt` | Task execution log — navigation, OCR decisions, ADB calls, recovery |
+
+The config name is whatever is selected in the UI or passed to `--run`. The launcher script (`vendor/launch_alas.ps1`) uses `PatrickCustom`, so the active task log is:
+
+```
+vendor/AzurLaneAutoScript/log/2026-03-25_PatrickCustom.txt
+```
+
+### Tail the live log (PowerShell)
+
+```powershell
+$today = Get-Date -Format 'yyyy-MM-dd'
+$log = "vendor\AzurLaneAutoScript\log\${today}_PatrickCustom.txt"
+Get-Content $log -Wait -Tail 50
+```
+
+If that file doesn't exist yet, ALAS hasn't executed a task — only the GUI started. Check `${today}_gui.txt` for the startup error.
+
+### What a healthy task log looks like
+
+```
+│ 10:05:32.001 │ INFO │ Campaign │ 3-4
+│ 10:05:32.415 │ INFO │ GOTO_MAIN │
+│ 10:05:33.120 │ INFO │ Page main detected
+│ 10:05:33.200 │ INFO │ Commission │ ...
+│ 10:05:34.001 │ INFO │ Click │ START_COMMISSION (200, 350)
+│ 10:05:36.823 │ INFO │ Screenshot │
+```
+
+Format: `│ {time} │ {level} │ {module} │ {message}`
+
+### Warning patterns to watch for
+
+| Pattern | Meaning |
+|---|---|
+| `Request human takeover` | **Hard failure — stop the run** |
+| `Wait too long` + repeated black screen | Stuck, recovery is failing |
+| Two `START` banners in `_gui.txt`, no task log | Startup crash before tasks ran |
+| `[Errno 10048]` in `_gui.txt` | Port 22267 occupied by previous instance |
 
 ## Practical Debug Sequence
 

@@ -1,123 +1,108 @@
 # Repo Index
 
-This document is the exhaustive high-level map of the repository.
+Exhaustive high-level map of the repository.
 
-Use root `AGENTS.md` for fast orientation.
-Use this file when you need the fuller answer to `where does this live?`.
-
-See also:
-- [docs/AGENTS.md](/mnt/d/_projects/MasterStateMachine/docs/AGENTS.md)
-- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
-- [architecture-overview.md](/mnt/d/_projects/MasterStateMachine/docs/architecture-overview.md)
+Use root `AGENTS.md` for fast orientation. Use this file for the full answer to "where does this live?"
 
 ## Root-Level Map
 
-- `AGENTS.md`
-  - mandatory repo entrypoint
-- `CLAUDE.md`
-  - pointer file that defers to `AGENTS.md`
-- `pyproject.toml`
-  - Python project configuration and tool configuration
-- `uv.lock`
-  - locked dependency state
-- `configs/`
-  - project configuration artifacts
-- `data/`
-  - screenshots, logs, labels, corpora, backups, and other working artifacts
-- `docs/`
-  - project knowledge layer
-- `examples/`
-  - example/reference artifacts
-- `hooks/`
-  - hook-related code and assets retained in the repo
-- `scripts/`
-  - current active script surface
-- `vendor/`
-  - external reference code, including ALAS
-
-## Root-Level Support And Generated Paths
-
-These exist in the worktree but are not primary project knowledge or product surfaces.
-
-- `.git/`
-- `.github/`
-- `.githooks/`
-- `.omc/`
-- `.ruff_cache/`
-- `.venv/`
-- `state_cartographer.egg-info/`
-- `.codexignore`
-- `.gitattributes`
-- `.gitignore`
-- `.gitmodules`
+| Path | Purpose |
+|---|---|
+| `AGENTS.md` | Mandatory repo entrypoint |
+| `CLAUDE.md` | Pointer to AGENTS.md |
+| `pyproject.toml` | Python project config |
+| `configs/` | Project configuration (emulator serial, tool posture) |
+| `data/` | Screenshots, logs, labels, corpora, working artifacts |
+| `docs/` | Project knowledge layer |
+| `examples/` | Example/reference artifacts |
+| `hooks/` | Hook-related code |
+| `scripts/` | Active script surface |
+| `state_cartographer/` | Python package: transport layer and future runtime |
+| `tests/` | Automated tests |
+| `vendor/` | External reference code (ALAS, scrcpy) |
 
 ## Docs Map
 
-- `docs/todo.md`
-  - repo-wide tracker for current truth, active tasks, blockers, and immediate next actions
-- `docs/AGENTS.md`
-  - local index for the docs tree
-- `docs/ALS-reference/`
-  - ALAS reference-system knowledge
-- `docs/RES-research/`
-  - research notes, synthesis, and experiments
-- `docs/architecture-overview.md`
-  - architecture and organizing logic
-- `docs/north-star.md`
-  - desired end state
-- `docs/repo-index.md`
-  - exhaustive high-level repo map
-- `docs/documentation-playbook.md`
-  - docs workflow rules
-- `docs/memory/`
-  - dated lessons learned and preserved findings
-- `docs/workflows/`
-  - workflow/task inventory
-- `docs/agentPrompts/`
-  - code-linked rationale docs for prompt-bearing LLM code
-- `docs/prework/`
-  - corpus/data preparation procedures
-- `docs/runtime/`
-  - runtime boundaries, retained runtime design knowledge, external tool requirements, and borrowed-tool intake/setup notes
-  - includes `agent-control-tool-requirements.md` for borrowed substrate selection criteria
-  - includes `borrowed-control-tool-setup.md` for local setup and compatibility-spike procedure
-- `docs/dev/`
-  - developer workflow docs (testing strategy, etc.)
-- `docs/vlm/`
-  - VLM profiles, contracts, and prompt guidance
-  - includes `llama-swap-quickstart.md` for local model serving and endpoint usage
-- `docs/plans/`
-  - tactical planning docs, including the canonical runtime plan and the MEmu transport companion
-- `docs/vendor-patches/`
-  - existing patch/reference bucket retained as-is
+| Path | Purpose |
+|---|---|
+| `docs/todo.md` | Current truth, active tasks, blockers |
+| `docs/AGENTS.md` | Navigation index for docs/ |
+| `docs/north-star.md` | Desired end state |
+| `docs/architecture-overview.md` | Organizing logic |
+| `docs/repo-index.md` | This file — exhaustive repo map |
+| `docs/documentation-playbook.md` | Doc workflow rules |
+| `docs/ALS-reference/` | ALAS reference-system knowledge |
+| `docs/RES-research/` | Research notes and synthesis |
+| `docs/memory/` | Dated lessons learned |
+| `docs/workflows/` | Workflow/task inventory |
+| `docs/agentPrompts/` | Prompt rationale for LLM code |
+| `docs/prework/` | Corpus/data preparation procedures |
+| `docs/runtime/` | Runtime contracts, backend lessons, health design, tool requirements, emulator reference |
+| `docs/dev/` | Developer workflow docs (testing) |
+| `docs/vlm/` | VLM profiles, contracts, prompt guidance |
+| `docs/plans/` | Active planning docs |
 
-## Active Code Surface
+## Active Plans
 
-- `scripts/corpus_cleanup.py`
-  - corpus hygiene: duplicate clustering and black-frame cleanup
-- `scripts/kimi_review.py`
-  - cheap Kimi-backed visible-first screenshot review
-- `scripts/vlm_detector.py`
-  - VLM-backed offline detection and labeling tool
+| Plan | What It Decides |
+|---|---|
+| `plans/substrate-and-implementation-plan.md` | What control tools we use (adbutils + MaaTouch) and how to build on them |
+| `plans/multi-tier-runtime-implementation-plan-2026-03-24.md` | Tiered runtime architecture (Tier 2 VLM baseline, Tier 1 cache, Tier 3 teacher) |
+
+## Deferred / Draft Plans
+
+| Plan | What It Covers |
+|---|---|
+| `plans/host-capture-shim-plan.md` | Parked fallback capture proposal (DXcam / PrintWindow); not current direction unless capture telemetry justifies it |
+
+## Active Script Surface
+
+| File | Purpose |
+|---|---|
+| `scripts/corpus_cleanup.py` | Corpus hygiene: duplicate clustering, black-frame cleanup |
+| `scripts/kimi_review.py` | Cheap Kimi-backed screenshot review |
+| `scripts/vlm_detector.py` | VLM-backed offline detection and labeling |
+
+## Support / Probe Surface
+
+| File | Purpose |
+|---|---|
+| `scripts/scrcpy_client_worker.py` | scrcpy helper/probe wrapper for debug capture and inspection |
+
+## Transport Package
+
+`state_cartographer/transport/` now contains the adbutils+MaaTouch implementation:
+
+| File | Purpose |
+|---|---|
+| `__init__.py` | Transport package exports |
+| `adb.py` | adbutils-based ADB client (no subprocess) |
+| `maatouch.py` | MaaTouch precision touch protocol |
+| `capture.py` | Screenshot capture methods |
+| `config.py` | Transport configuration loading |
+| `models.py` | Data models for reports and status |
+| `health.py` | Readiness checks and recovery |
+| `artifacts.py` | Event persistence |
+| `scrcpy_probe.py` | scrcpy coexistence verification |
+
+Legacy `maamcp.py` and `discovery.py` are not present in the current transport package tree.
+
+See [substrate-and-implementation-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/substrate-and-implementation-plan.md) for implementation steps.
 
 ## Data Surface
 
-- `data/`
-  - corpus, labels, screenshots, logs, backups, and other working artifacts
-  - preserve by default unless there is a strong reason not to
+`data/` holds truth artifacts, corpora, screenshots, logs. Preserve by default.
 
 ## Reference Code Surface
 
-- `vendor/AzurLaneAutoScript/`
-  - ALAS reference implementation and source of operational prior art
+`vendor/AzurLaneAutoScript/` — ALAS reference implementation. Source of operational prior art, adbutils patterns, MaaTouch binary, and screenshot method examples.
 
-## Validation Surface
+## Test Surface
 
-- there are currently no committed automated checks in the repo
-- validation is presently script execution, corpus inspection, and documentation consistency checks
+`tests/` — transport and runtime tests are present and are still being expanded alongside the transport/runtime rebuild.
 
 ## Practical Rule
 
-If you need short orientation, use root `AGENTS.md`.
-If you need the exhaustive high-level map, use this file.
-If you need the rules for adding or updating docs, use `docs/documentation-playbook.md`.
+Short orientation → root `AGENTS.md`.
+Exhaustive map → this file.
+Doc workflow rules → `docs/documentation-playbook.md`.
