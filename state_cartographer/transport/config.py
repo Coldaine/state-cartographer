@@ -32,6 +32,7 @@ class TransportConfig:
     primary_control: str = "maamcp"
     preferred_visual: str = "scrcpy"
     fallback_observation: str = "maamcp_screenshot"
+    agent_path: str | None = None
     raw: dict[str, Any] = field(default_factory=dict, repr=False)
 
     @property
@@ -67,6 +68,7 @@ def load_config(path: Path | str | None = None) -> TransportConfig:
         primary_control=raw.get("primary_control", "maamcp"),
         preferred_visual=raw.get("preferred_visual", "scrcpy"),
         fallback_observation=raw.get("fallback_observation", "maamcp_screenshot"),
+        agent_path=raw.get("agent_path", None),
         raw=raw,
     )
 

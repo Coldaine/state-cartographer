@@ -13,26 +13,34 @@ Public surface:
 from state_cartographer.transport.config import TransportConfig, load_config
 from state_cartographer.transport.models import (
     BootstrapManifest,
+    ControlLayerStatus,
     DoctorReport,
     MaaCaptureResult,
     MaaProbeReport,
     ObservationDecision,
+    ObservationLayerStatus,
     ProbeVerdict,
+    ReadinessTier,
     ScrcpyProbeReport,
     SessionProbeReport,
     ToolEntry,
+    TransportLayerStatus,
 )
 
 __all__ = [
     "BootstrapManifest",
+    "ControlLayerStatus",
     "DoctorReport",
     "MaaCaptureResult",
     "MaaProbeReport",
     "ObservationDecision",
+    "ObservationLayerStatus",
     "ProbeVerdict",
+    "ReadinessTier",
     "ScrcpyProbeReport",
     "SessionProbeReport",
     "ToolEntry",
     "TransportConfig",
+    "TransportLayerStatus",
     "load_config",
 ]

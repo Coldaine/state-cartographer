@@ -5,17 +5,24 @@ from __future__ import annotations
 import json
 import tempfile
 
+import pytest
+
 from state_cartographer.transport.config import TransportConfig, load_config
+from state_cartographer.transport.health import doctor
 from state_cartographer.transport.models import (
     BootstrapManifest,
+    ControlLayerStatus,
     DoctorReport,
     MaaCaptureResult,
     MaaProbeReport,
     ObservationDecision,
+    ObservationLayerStatus,
     ProbeVerdict,
+    ReadinessTier,
     ScrcpyProbeReport,
     SessionProbeReport,
     ToolEntry,
+    TransportLayerStatus,
 )
 
 # --- Config parsing ---
@@ -56,8 +63,6 @@ def test_config_serial_property():
 
 
 def test_config_missing_raises():
-    import pytest
-
     with pytest.raises(FileNotFoundError):
         load_config("/nonexistent/path.json")
 
@@ -94,6 +99,11 @@ def test_bootstrap_manifest_json():
 def test_doctor_report_json():
     r = DoctorReport(
         serial="127.0.0.1:21513",
+        readiness_tier=ReadinessTier.DEGRADED,
+        transport_layer=TransportLayerStatus.READY,
+        control_layer=ControlLayerStatus.FALLBACK,
+        observation_layer=ObservationLayerStatus.UNVERIFIED,
+        degradation_codes=["preferred_stack_missing", "observation_unverified"],
         adb_reachable=True,
         device_online=True,
         verdict=ProbeVerdict.PASS,
@@ -101,6 +111,9 @@ def test_doctor_report_json():
     parsed = json.loads(r.to_json())
     assert parsed["verdict"] == "pass"
     assert parsed["device_online"] is True
+    assert parsed["readiness_tier"] == "degraded"
+    assert parsed["control_layer"] == "fallback"
+    assert parsed["degradation_codes"] == ["preferred_stack_missing", "observation_unverified"]
 
 
 def test_maa_probe_report_json():
@@ -132,12 +145,14 @@ def test_scrcpy_probe_report_json():
 def test_session_probe_report_json():
     r = SessionProbeReport(
         serial="127.0.0.1:21513",
+        degradation_codes=["debug_only_visual"],
         verdict=ProbeVerdict.PASS,
         observation_decision=ObservationDecision.DEBUG_ONLY,
     )
     parsed = json.loads(r.to_json())
     assert parsed["verdict"] == "pass"
     assert parsed["observation_decision"] == "debug_only"
+    assert parsed["degradation_codes"] == ["debug_only_visual"]
 
 
 # --- Tool path resolution precedence ---
@@ -155,37 +170,105 @@ def test_tool_entry_source_precedence():
 # --- Doctor state aggregation ---
 
 
-def test_doctor_pass_requires_all():
-    """Doctor passes only when device online AND all required tools found."""
-    manifest = BootstrapManifest(all_required_found=True)
-    r = DoctorReport(
-        serial="127.0.0.1:21513",
-        adb_reachable=True,
-        device_online=True,
-        maamcp_available=True,
-        bootstrap=manifest,
-        verdict=ProbeVerdict.PASS,
+def test_doctor_operable_when_preferred_stack_available(monkeypatch: pytest.MonkeyPatch):
+    cfg = TransportConfig(primary_control="maamcp", preferred_visual="scrcpy")
+    manifest = BootstrapManifest(
+        all_required_found=True,
+        tools=[
+            ToolEntry(name="maamcp", found=True),
+            ToolEntry(name="scrcpy", found=True),
+        ],
     )
-    assert r.verdict == ProbeVerdict.PASS
+
+    class FakeAdb:
+        def __init__(self, serial: str, adb_path: str = "adb"):
+            self.serial = serial
+            self.adb_path = adb_path
+
+        def is_device_online(self) -> bool:
+            return True
+
+        def connect(self) -> bool:
+            return True
+
+    monkeypatch.setattr("state_cartographer.transport.health.bootstrap", lambda _: manifest)
+    monkeypatch.setattr("state_cartographer.transport.health.Adb", FakeAdb)
+
+    report = doctor(cfg)
+
+    assert report.readiness_tier == ReadinessTier.OPERABLE
+    assert report.transport_layer == TransportLayerStatus.READY
+    assert report.control_layer == ControlLayerStatus.PREFERRED
+    assert report.observation_layer == ObservationLayerStatus.UNVERIFIED
+    assert report.degradation_codes == ["observation_unverified"]
+    assert report.verdict == ProbeVerdict.PASS
 
 
-def test_doctor_fail_without_device():
-    r = DoctorReport(
-        serial="127.0.0.1:21513",
-        adb_reachable=True,
-        device_online=False,
-        verdict=ProbeVerdict.FAIL,
+def test_doctor_degraded_when_preferred_stack_missing(monkeypatch: pytest.MonkeyPatch):
+    cfg = TransportConfig(primary_control="maamcp", preferred_visual="scrcpy")
+    manifest = BootstrapManifest(
+        all_required_found=False,
+        missing=["maamcp"],
+        tools=[
+            ToolEntry(name="maamcp", found=False),
+            ToolEntry(name="scrcpy", found=True),
+        ],
     )
-    assert r.verdict == ProbeVerdict.FAIL
+
+    class FakeAdb:
+        def __init__(self, serial: str, adb_path: str = "adb"):
+            self.serial = serial
+            self.adb_path = adb_path
+
+        def is_device_online(self) -> bool:
+            return True
+
+        def connect(self) -> bool:
+            return True
+
+    monkeypatch.setattr("state_cartographer.transport.health.bootstrap", lambda _: manifest)
+    monkeypatch.setattr("state_cartographer.transport.health.Adb", FakeAdb)
+
+    report = doctor(cfg)
+
+    assert report.readiness_tier == ReadinessTier.DEGRADED
+    assert report.transport_layer == TransportLayerStatus.READY
+    assert report.control_layer == ControlLayerStatus.FALLBACK
+    assert report.observation_layer == ObservationLayerStatus.UNVERIFIED
+    assert report.degradation_codes == ["observation_unverified", "preferred_stack_missing"]
+    assert report.verdict == ProbeVerdict.PASS
 
 
-def test_doctor_fail_without_tools():
-    manifest = BootstrapManifest(all_required_found=False, missing=["maamcp"])
-    r = DoctorReport(
-        serial="127.0.0.1:21513",
-        adb_reachable=True,
-        device_online=True,
-        bootstrap=manifest,
-        verdict=ProbeVerdict.FAIL,
+def test_doctor_unreachable_when_device_stays_offline(monkeypatch: pytest.MonkeyPatch):
+    cfg = TransportConfig(primary_control="maamcp", preferred_visual="scrcpy")
+    manifest = BootstrapManifest(
+        all_required_found=False,
+        missing=["maamcp"],
+        tools=[
+            ToolEntry(name="maamcp", found=False),
+            ToolEntry(name="scrcpy", found=False),
+        ],
     )
-    assert r.verdict == ProbeVerdict.FAIL
+
+    class FakeAdb:
+        def __init__(self, serial: str, adb_path: str = "adb"):
+            self.serial = serial
+            self.adb_path = adb_path
+
+        def is_device_online(self) -> bool:
+            return False
+
+        def connect(self) -> bool:
+            return False
+
+    monkeypatch.setattr("state_cartographer.transport.health.bootstrap", lambda _: manifest)
+    monkeypatch.setattr("state_cartographer.transport.health.Adb", FakeAdb)
+
+    report = doctor(cfg)
+
+    assert report.readiness_tier == ReadinessTier.UNREACHABLE
+    assert report.transport_layer == TransportLayerStatus.UNREACHABLE
+    assert report.control_layer == ControlLayerStatus.UNAVAILABLE
+    assert report.observation_layer == ObservationLayerStatus.UNAVAILABLE
+    assert report.degradation_codes == []
+    assert report.verdict == ProbeVerdict.FAIL

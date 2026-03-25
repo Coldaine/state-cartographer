@@ -15,6 +15,32 @@ class ProbeVerdict(StrEnum):
     SKIP = "skip"
 
 
+class ReadinessTier(StrEnum):
+    """The overall tier of system readiness."""
+    UNREACHABLE = "unreachable"
+    DEGRADED = "degraded"
+    OPERABLE = "operable"
+
+
+class TransportLayerStatus(StrEnum):
+    """Status of the transport layer."""
+    UNREACHABLE = "unreachable"
+    READY = "ready"
+
+
+class ControlLayerStatus(StrEnum):
+    """Status of the control surface."""
+    UNAVAILABLE = "unavailable"
+    FALLBACK = "fallback"
+    PREFERRED = "preferred"
+
+
+class ObservationLayerStatus(StrEnum):
+    """Status of the observation surface."""
+    UNAVAILABLE = "unavailable"
+    UNVERIFIED = "unverified"
+
+
 class ObservationDecision(StrEnum):
     """Whether scrcpy is usable as a runtime frame source or debug-only."""
 
@@ -62,8 +88,13 @@ class DoctorReport:
     """Aggregated health/readiness report."""
 
     timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
-    adb_reachable: bool = False
+    readiness_tier: ReadinessTier = ReadinessTier.UNREACHABLE
+    transport_layer: TransportLayerStatus = TransportLayerStatus.UNREACHABLE
+    control_layer: ControlLayerStatus = ControlLayerStatus.UNAVAILABLE
+    observation_layer: ObservationLayerStatus = ObservationLayerStatus.UNAVAILABLE
+    degradation_codes: list[str] = field(default_factory=list)
     serial: str = ""
+    adb_reachable: bool = False
     device_online: bool = False
     maamcp_available: bool = False
     scrcpy_available: bool = False
@@ -73,6 +104,10 @@ class DoctorReport:
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
+        d["readiness_tier"] = self.readiness_tier.value
+        d["transport_layer"] = self.transport_layer.value
+        d["control_layer"] = self.control_layer.value
+        d["observation_layer"] = self.observation_layer.value
         d["verdict"] = self.verdict.value
         if self.bootstrap:
             d["bootstrap"] = self.bootstrap.to_dict()
@@ -168,6 +203,7 @@ class SessionProbeReport:
     doctor: DoctorReport | None = None
     maa: MaaProbeReport | None = None
     scrcpy: ScrcpyProbeReport | None = None
+    degradation_codes: list[str] = field(default_factory=list)
     observation_decision: ObservationDecision = ObservationDecision.UNDECIDED
     verdict: ProbeVerdict = ProbeVerdict.FAIL
     artifacts_dir: str | None = None
@@ -176,6 +212,7 @@ class SessionProbeReport:
         d: dict[str, Any] = {
             "timestamp": self.timestamp,
             "serial": self.serial,
+            "degradation_codes": self.degradation_codes,
             "observation_decision": self.observation_decision.value,
             "verdict": self.verdict.value,
             "artifacts_dir": self.artifacts_dir,

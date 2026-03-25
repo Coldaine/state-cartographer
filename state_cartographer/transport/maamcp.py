@@ -24,9 +24,10 @@ log = logging.getLogger(__name__)
 class MaaAdapter:
     """Wraps MaaMCP / MaaFramework or falls back to ADB-direct."""
 
-    def __init__(self, serial: str, adb_path: str = "adb"):
+    def __init__(self, serial: str, adb_path: str = "adb", agent_path: str | None = None):
         self.serial = serial
         self.adb = Adb(serial, adb_path)
+        self.agent_path = agent_path
         self._maa_controller = None
         self._backend = "adb_direct"
         self._try_maafw()
@@ -34,19 +35,26 @@ class MaaAdapter:
     def _try_maafw(self) -> None:
         """Attempt to import and initialize MaaFramework.
 
-        Uses the real maafw API:
+        MaaFramework requires an agent binary running on the Android device.
+        The agent_path must point to the compiled MaaAgent .so file.
+
+        Typical usage:
           from maa.controller import AdbController
           from maa.toolkit import Toolkit
-          AdbController(adb_path, address, ..., agent_path=...)
+          Toolkit.init_option("./")
+          controller = AdbController(
+              adb_path=self.adb.adb_path,
+              address=self.serial,
+              agent_path="/path/to/MaaAgent"  # Required
+          )
           controller.post_connection().wait()
           controller.post_screencap().wait().get() -> numpy.ndarray
-          controller.post_click(x, y).wait()
-          controller.post_swipe(x1, y1, x2, y2, duration).wait()
-          controller.post_click_key(keycode).wait()
-          controller.post_input_text(text).wait()
-          controller.connected -> bool
-          controller.resolution -> (w, h)
         """
+        if not self.agent_path:
+            log.info("MaaFramework agent_path not provided, skipping maafw init")
+            self._backend = "adb_direct"
+            return
+
         try:
             from maa.controller import AdbController
             from maa.toolkit import Toolkit
@@ -55,13 +63,18 @@ class MaaAdapter:
             controller = AdbController(
                 adb_path=self.adb.adb_path,
                 address=self.serial,
+                agent_path=self.agent_path,
             )
             controller.post_connection().wait()
             self._maa_controller = controller
             self._backend = "maafw"
             log.info("MaaFramework controller initialized on %s", self.serial)
+        except ImportError as e:
+            log.info("MaaFramework Python bindings not installed: %s", e)
+            self._maa_controller = None
+            self._backend = "adb_direct"
         except Exception as e:
-            log.info("MaaFramework not available, using ADB fallback: %s", e)
+            log.info("MaaFramework init failed, using ADB fallback: %s", e)
             self._maa_controller = None
             self._backend = "adb_direct"
 
@@ -87,9 +100,9 @@ class MaaAdapter:
     def reconnect(self) -> bool:
         self.disconnect()
         time.sleep(1)
-        if self._backend == "maafw":
-            self._try_maafw()
-            return self._maa_controller is not None
+        self._try_maafw()
+        if self._maa_controller is not None:
+            return True
         return self.adb.connect()
 
     def screenshot(self, output: Path | None = None) -> tuple[bytes, float]:
@@ -162,6 +175,7 @@ def _numpy_to_png(img) -> bytes:
     """Convert numpy array (BGR from maafw) to PNG bytes.
 
     Tries cv2 first (already a project dep), falls back to PIL.
+    PIL expects RGB so we must convert BGR->RGB before PIL fallback.
     """
     try:
         import cv2
@@ -171,11 +185,15 @@ def _numpy_to_png(img) -> bytes:
             return buf.tobytes()
     except ImportError:
         pass
-    # Fallback: PIL
+    # Fallback: PIL — requires RGB, maafw returns BGR
     import io
 
     from PIL import Image
 
+    if len(img.shape) == 3 and img.shape[2] == 3:
+        import cv2
+
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     pil_img = Image.fromarray(img)
     buf = io.BytesIO()
     pil_img.save(buf, format="PNG")
@@ -192,7 +210,7 @@ def _image_dimensions(png_data: bytes) -> tuple[int, int]:
     return w, h
 
 
-def run_maa_probe(serial: str, adb_path: str = "adb", capture_count: int = 3) -> MaaProbeReport:
+def run_maa_probe(serial: str, adb_path: str = "adb", agent_path: str | None = None, capture_count: int = 3) -> MaaProbeReport:
     """Full MaaMCP acceptance probe.
 
     1. Connect to serial
@@ -206,7 +224,7 @@ def run_maa_probe(serial: str, adb_path: str = "adb", capture_count: int = 3) ->
 
     # Connect
     try:
-        adapter = MaaAdapter(serial, adb_path)
+        adapter = MaaAdapter(serial, adb_path, agent_path=agent_path)
         ok = adapter.connect()
         report.connected = ok
         if not ok:

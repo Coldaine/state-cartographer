@@ -16,7 +16,14 @@ import time
 from state_cartographer.transport.adb import Adb, AdbError
 from state_cartographer.transport.config import TransportConfig
 from state_cartographer.transport.discovery import bootstrap
-from state_cartographer.transport.models import DoctorReport, ProbeVerdict
+from state_cartographer.transport.models import (
+    ControlLayerStatus,
+    DoctorReport,
+    ObservationLayerStatus,
+    ProbeVerdict,
+    ReadinessTier,
+    TransportLayerStatus,
+)
 
 log = logging.getLogger(__name__)
 
@@ -45,17 +52,33 @@ def doctor(cfg: TransportConfig, adb_path: str = "adb") -> DoctorReport:
         report.adb_reachable = False
         report.errors.append(f"ADB not reachable: {e}")
 
-    # MaaMCP availability
     report.maamcp_available = any(t.name == "maamcp" and t.found for t in manifest.tools)
-
-    # scrcpy availability
     report.scrcpy_available = any(t.name == "scrcpy" and t.found for t in manifest.tools)
 
-    # Verdict
-    if report.device_online and manifest.all_required_found:
-        report.verdict = ProbeVerdict.PASS
-    else:
+    if not report.adb_reachable or not report.device_online:
+        report.readiness_tier = ReadinessTier.UNREACHABLE
+        report.transport_layer = TransportLayerStatus.UNREACHABLE
+        report.control_layer = ControlLayerStatus.UNAVAILABLE
+        report.observation_layer = ObservationLayerStatus.UNAVAILABLE
         report.verdict = ProbeVerdict.FAIL
+        return report
+
+    report.readiness_tier = ReadinessTier.OPERABLE
+    report.transport_layer = TransportLayerStatus.READY
+    report.control_layer = ControlLayerStatus.PREFERRED
+    report.observation_layer = ObservationLayerStatus.UNVERIFIED
+    report.degradation_codes.append("observation_unverified")
+
+    if cfg.primary_control.lower() == "maamcp" and not report.maamcp_available:
+        report.readiness_tier = ReadinessTier.DEGRADED
+        report.control_layer = ControlLayerStatus.FALLBACK
+        report.degradation_codes.append("preferred_stack_missing")
+
+    if cfg.preferred_visual.lower() == "scrcpy" and not report.scrcpy_available:
+        report.readiness_tier = ReadinessTier.DEGRADED
+        report.degradation_codes.append("visual_tool_missing")
+
+    report.verdict = ProbeVerdict.PASS
 
     return report
 

@@ -5,5 +5,6 @@
   "primary_control": "maamcp",
   "preferred_visual": "scrcpy",
   "fallback_observation": "maamcp_screenshot",
+  "agent_path": null,
   "description": "MEmu 9 transport config — pinned serial, tool posture only. Machine-specific paths and probe state go in data/events/memu-transport/."
 }

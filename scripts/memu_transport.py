@@ -34,7 +34,12 @@ from state_cartographer.transport.config import load_config  # noqa: E402
 from state_cartographer.transport.discovery import bootstrap  # noqa: E402
 from state_cartographer.transport.health import doctor  # noqa: E402
 from state_cartographer.transport.maamcp import MaaAdapter, run_maa_probe  # noqa: E402
-from state_cartographer.transport.models import ObservationDecision, ProbeVerdict, SessionProbeReport  # noqa: E402
+from state_cartographer.transport.models import (  # noqa: E402
+    ObservationDecision,
+    ProbeVerdict,
+    ReadinessTier,
+    SessionProbeReport,
+)
 from state_cartographer.transport.scrcpy_probe import run_scrcpy_probe  # noqa: E402
 
 
@@ -67,14 +72,14 @@ def cmd_doctor(args):
     adb_path = _adb_path_from_manifest(cfg)
     report = doctor(cfg, adb_path)
     print(report.to_json())
-    return 0 if report.verdict == ProbeVerdict.PASS else 1
+    return 0 if report.readiness_tier != ReadinessTier.UNREACHABLE else 1
 
 
 def cmd_connect(args):
     cfg = load_config(args.config)
     _apply_serial_override(args, cfg)
     adb_path = _adb_path_from_manifest(cfg)
-    adapter = MaaAdapter(cfg.serial, adb_path)
+    adapter = MaaAdapter(cfg.serial, adb_path, agent_path=cfg.agent_path)
     ok = adapter.connect()
     print(json.dumps({"connected": ok, "serial": cfg.serial, "backend": adapter.backend}))
     return 0 if ok else 1
@@ -84,7 +89,7 @@ def cmd_capture(args):
     cfg = load_config(args.config)
     _apply_serial_override(args, cfg)
     adb_path = _adb_path_from_manifest(cfg)
-    adapter = MaaAdapter(cfg.serial, adb_path)
+    adapter = MaaAdapter(cfg.serial, adb_path, agent_path=cfg.agent_path)
     adapter.connect()
 
     out_dir = Path(args.output) if args.output else probe_run_dir("capture")
@@ -103,7 +108,7 @@ def cmd_input(args):
     cfg = load_config(args.config)
     _apply_serial_override(args, cfg)
     adb_path = _adb_path_from_manifest(cfg)
-    adapter = MaaAdapter(cfg.serial, adb_path)
+    adapter = MaaAdapter(cfg.serial, adb_path, agent_path=cfg.agent_path)
     adapter.connect()
 
     action = args.input_action
@@ -129,7 +134,7 @@ def cmd_probe_maa(args):
     cfg = load_config(args.config)
     _apply_serial_override(args, cfg)
     adb_path = _adb_path_from_manifest(cfg)
-    report = run_maa_probe(cfg.serial, adb_path, capture_count=args.captures or 3)
+    report = run_maa_probe(cfg.serial, adb_path, agent_path=cfg.agent_path, capture_count=args.captures or 3)
     print(report.to_json())
     return 0 if report.verdict == ProbeVerdict.PASS else 1
 
@@ -156,19 +161,20 @@ def cmd_probe_session(args):
     # Doctor
     doc = doctor(cfg, adb_path)
     session.doctor = doc
+    session.degradation_codes.extend(doc.degradation_codes)
 
-    if doc.verdict != ProbeVerdict.PASS:
-        if not doc.device_online:
-            # Hard gate: device must be reachable
-            session.verdict = ProbeVerdict.FAIL
-            write_json(run_dir, "session-probe-report.json", session.to_json())
-            print(session.to_json())
-            return 1
-        # Soft warning: missing tools but device online — continue with fallbacks
-        logging.warning("Doctor verdict=%s but device online, continuing with fallbacks", doc.verdict)
+    if doc.readiness_tier == ReadinessTier.UNREACHABLE:
+        # Hard gate: transport must be reachable
+        session.verdict = ProbeVerdict.FAIL
+        write_json(run_dir, "session-probe-report.json", session.to_json())
+        print(session.to_json())
+        return 1
+
+    if doc.readiness_tier == ReadinessTier.DEGRADED:
+        logging.warning("Doctor readiness=%s, continuing with degraded fallbacks", doc.readiness_tier)
 
     # MaaMCP probe
-    maa = run_maa_probe(cfg.serial, adb_path, capture_count=args.captures or 3)
+    maa = run_maa_probe(cfg.serial, adb_path, agent_path=cfg.agent_path, capture_count=args.captures or 3)
     session.maa = maa
 
     # scrcpy probe (with MaaMCP active)
@@ -177,6 +183,8 @@ def cmd_probe_session(args):
 
     # Observation decision
     session.observation_decision = scrcpy.observation_decision
+    if scrcpy.observation_decision == ObservationDecision.DEBUG_ONLY and "debug_only_visual" not in session.degradation_codes:
+        session.degradation_codes.append("debug_only_visual")
 
     # Overall verdict
     if maa.verdict == ProbeVerdict.PASS:
