@@ -9,6 +9,7 @@ dependencies = [
     "requests>=2.32.0",
     "adbutils>=0.11.0",
     "opencv-python>=4.13.0.92",
+    "lxml>=6.0.2",
 ]
 
 [project.optional-dependencies]

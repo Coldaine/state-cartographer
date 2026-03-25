@@ -5,11 +5,11 @@ Thin tracker. Current truth only.
 ## Now
 
 - Branch: `transport/memu-substrate-slice`
-- **ADB screencap is BROKEN on MEmu OpenGL** — returns 0 bytes (confirmed 2026-03-25)
-- `adbutils` works for shell commands but screencap returns empty
-- Need to test alternative capture methods: DroidCast, scrcpy stream, Win32 PrintWindow
+- **ADB screencap is BROKEN on MEmu OpenGL** — returns 0 bytes
+- **MaaFramework screenshot WORKS** — proven 2026-03-25, 100-140ms per capture
+- Pipeline should use MaaFramework as primary, not ADB screencap
 - Created comprehensive pipeline plan: `docs/plans/memu-transport-pipeline.md`
-- Pipeline uses **immediate retries** (no artificial delay — ADB RT ~100ms is delay enough)
+- **KEY:** Use `MaaAdapter` screenshot (not raw ADB screencap)
 
 ## Next
 
