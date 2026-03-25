@@ -26,7 +26,7 @@ Those remain owned by the runtime plan and runtime code.
 The repo has a currently accepted directional substrate decision:
 
 - `MaaMCP` is the primary agent-facing control tool
-- `scrcpy` is the preferred live visual/debug substrate
+- `scrcpy` is the accepted operator/debug visual substrate
 - `adbfriend` is installed separately and is not part of the runtime path
 
 What remains open is not broad unconstrained tool shopping.

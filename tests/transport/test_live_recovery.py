@@ -18,4 +18,3 @@ def test_live_recovery_ladder():
     recovered = recovery_ladder(cfg)
     assert recovered, "Recovery ladder should successfully reconnect"
     assert adb.is_device_online(), "Device should be online after recovery"
-

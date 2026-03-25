@@ -8,7 +8,7 @@ This document is operational, not architectural.
 It exists to support local intake and validation of:
 
 - `MaaMCP` as the primary agent-facing control tool
-- `scrcpy` as the preferred live visual/debug substrate
+- `scrcpy` as the accepted operator/debug visual substrate
 - `adbfriend` as a separately installed utility, not part of the runtime path
 
 See also:
@@ -21,7 +21,7 @@ See also:
 The substrate posture is currently accepted as the working direction:
 
 - `MaaMCP` for primary agent-facing control
-- `scrcpy` as the preferred live visual/debug substrate
+- `scrcpy` as the accepted operator/debug visual substrate
 - `adbfriend` as a separate installed utility
 
 This document does not casually reopen that decision.
@@ -47,7 +47,7 @@ Current machine verdict:
   - provide screenshot, tap, swipe, key, and text primitives
   - expose health/status if available
 - `scrcpy`
-  - preferred live visual substrate
+  - accepted operator/debug visual substrate
   - first use is attach proof and operator/debug visibility
   - runtime observation may use it only if the compatibility spike proves a consumable frame path
 - `adbfriend`

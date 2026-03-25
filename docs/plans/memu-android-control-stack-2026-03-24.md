@@ -25,7 +25,7 @@ It does not own tiering policy, semantic cache design, teacher escalation, or ru
 The borrowed substrate posture is:
 
 - `MaaMCP` is the primary agent-facing control tool for connect, screenshot, tap, swipe, key, text, and health/status if available
-- `scrcpy` is the preferred live visual substrate and operator/debug stream
+- `scrcpy` is the accepted operator/debug stream, not the runtime frame source on this Windows setup
 - `adbfriend` is installed and documented separately for your own use, but it is not part of the runtime path
 
 The runtime should borrow these tools rather than reimplementing attachment, capture, and input plumbing.
@@ -70,7 +70,7 @@ The runtime must be able to operate from borrowed control-tool frames and action
 The narrow integration loop is:
 
 1. connect to the MEmu instance through the borrowed control tool
-2. attach the preferred visual substrate for observation and operator/debug visibility
+2. attach the accepted debug visual substrate for operator visibility when useful
 3. dispatch primitive actions through the borrowed control tool
 4. capture again
 5. verify that the loop is stable enough for the runtime layer above it
@@ -80,7 +80,7 @@ This note intentionally stops there.
 ## Deferred Or Optional Tools
 
 - `scrcpy`
-  - useful as the preferred visual/debug substrate
+  - useful as the accepted visual/debug substrate
   - not the semantic owner of the runtime
 - `uiautomator2`
   - optional diagnostic/helper tool

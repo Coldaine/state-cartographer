@@ -33,4 +33,3 @@ def test_live_health_doctor():
         assert report.control_layer == ControlLayerStatus.UNAVAILABLE
         assert report.observation_layer == ObservationLayerStatus.UNAVAILABLE
         assert report.verdict == ProbeVerdict.FAIL
-

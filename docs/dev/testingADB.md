@@ -260,6 +260,7 @@ Suggested split:
 
 These do not all need to exist immediately.
 But this is the target shape.
+The current first-pass live smoke coverage lives under `tests/transport/` and can be split out later once the suite grows beyond transport-focused checks.
 
 ## Assertions that matter most first
 

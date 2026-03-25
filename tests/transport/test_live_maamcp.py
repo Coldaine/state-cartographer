@@ -29,4 +29,3 @@ def test_live_maamcp_smoke():
     assert adapter.tap(50, 50)
     time.sleep(0.5)
     assert adapter.swipe(100, 300, 100, 500, duration_ms=200)
-
