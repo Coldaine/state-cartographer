@@ -102,7 +102,7 @@ class Adb:
             return False
 
     def devices(self) -> list[str]:
-        return [d.serial for d in self._client.list_devices()]
+        return [d.serial for d in self._client.device_list()]
 
     def is_device_online(self) -> bool:
         try:

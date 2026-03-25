@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from scripts import memu_transport
+from state_cartographer.transport.adb import Adb
 from state_cartographer.transport.config import TransportConfig, load_config
 from state_cartographer.transport.health import doctor
 from state_cartographer.transport.models import (
@@ -168,6 +169,17 @@ def test_tool_entry_source_precedence():
     # Both valid, but PATH source ranks first in discovery logic
     assert path_tool.source == "PATH"
     assert dir_tool.source == "memu_install"
+
+
+def test_adb_devices_uses_adbutils_device_list():
+    class FakeClient:
+        def device_list(self):
+            return [SimpleNamespace(serial="127.0.0.1:21503"), SimpleNamespace(serial="emulator-5554")]
+
+    adb = Adb("127.0.0.1:21503")
+    adb._client = FakeClient()
+
+    assert adb.devices() == ["127.0.0.1:21503", "emulator-5554"]
 
 
 # --- Doctor state aggregation ---
