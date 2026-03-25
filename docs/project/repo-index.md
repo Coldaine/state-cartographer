@@ -32,6 +32,8 @@ See also:
   - hook-related code and assets retained in the repo
 - `scripts/`
   - current active script surface
+- `runtime/`
+  - first-pass stream-first runtime scaffold for MEmu automation
 - `vendor/`
   - external reference code, including ALAS
 
@@ -98,6 +100,15 @@ These exist in the worktree but are not primary project knowledge or product sur
   - VLM-backed offline detection and labeling tool
 - `scripts/tiered_automation.py`
   - Phase-1 runtime scaffold with Tier-2-first resolution, ADB observe-act support, and an optional prototype template cache
+- `runtime/`
+  - first-pass stream-first runtime package
+  - `transport/`: ADB client, scrcpy substrate wrapper, frame validation, MEmu instance wiring
+  - `observation/`: frame health, compact context, frame sampling types
+  - `actor/`: prompt builder, schema validation, local actor router, post-action verifier, candidate ranking
+  - `controller/`: objective loop, retry policy, transition tracking, action execution, failure codes
+  - `replay/`: interface plus no-op implementation
+  - `teacher/`: interface plus no-op implementation
+  - `logging/`: artifact/event persistence
 
 ## Data Surface
 
@@ -112,8 +123,13 @@ These exist in the worktree but are not primary project knowledge or product sur
 
 ## Validation Surface
 
-- there are currently no committed automated checks in the repo
-- validation is presently script execution, corpus inspection, and documentation consistency checks
+- `tests/runtime/`
+  - first-pass pure-logic tests for frame health, actor schema, transition tracking, retry policy, and replay noop behavior
+- validation is now:
+  - runtime syntax checks
+  - unit tests for stable runtime helpers
+  - script execution
+  - documentation consistency checks
 
 ## Practical Rule
 

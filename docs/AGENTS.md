@@ -77,6 +77,9 @@ Everything else in `docs/` is a knowledge bucket, not a domain.
   - `runtime/backend-hardening.md`
 - `What is implemented versus merely planned in the runtime area?`
   - `runtime/tiered-automation-stack.md`
+- `Where is the first-pass stream-first runtime scaffold and its prompt contract?`
+  - `project/repo-index.md`
+  - `agentPrompts/runtime-local-actor.md`
 - `How does the MEmu emulator path connect to the runtime work?`
   - `plans/memu-android-control-stack-2026-03-24.md`
 - `What is ALAS in this repo?`
