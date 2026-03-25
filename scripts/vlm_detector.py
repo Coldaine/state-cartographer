@@ -33,7 +33,6 @@ from typing import Any
 
 import requests
 
-
 DEFAULT_BASE_URL = os.getenv("SC_VLM_BASE_URL", "http://localhost:18900/v1")
 DEFAULT_MODEL = os.getenv("SC_VLM_MODEL", "local-vlm")
 

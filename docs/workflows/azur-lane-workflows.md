@@ -18,8 +18,7 @@ Use this file to answer:
 Do not use this file alone as evidence that the repo can execute the workflow today.
 
 See also:
-- [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
-- [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md)
+- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
 - [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
 
 ## Workflow Categories

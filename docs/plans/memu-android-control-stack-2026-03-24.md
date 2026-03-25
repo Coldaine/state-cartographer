@@ -1,135 +1,94 @@
-# MEmu Android Control Stack Proposal
+# MEmu Transport and Integration Note
 
-This document is the concrete proposal for the MEmu integration path.
+This document is the borrowed-tool intake note for the emulator path.
 
-It answers a narrow question:
+It is not the canonical runtime architecture plan.
 
-- what do we actually need for a working MEmu control stack?
-- what should be reused from the current repo?
-- what should remain deferred or excluded?
+For the runtime blueprint, use:
+- [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
 
-It intentionally does **not** revive `pilot_bridge` as a target. The previous bridge experiment is useful as prior art, but it is not the plan.
+For the external control-tool selection spec, use:
+- [agent-control-tool-requirements.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/agent-control-tool-requirements.md)
 
-## Recommendation
+## Purpose
 
-For the current MEmu path, keep the stack small:
+This note answers only these questions:
 
-- **ADB** for action dispatch
-  - taps
-  - swipes
-  - key events
-  - basic device queries
-- **DroidCast** for screenshots on MEmu DirectX
-  - this is the capture backend that matches the current emulator reality
-  - use it only as the observation plane, not as the whole runtime
-- **Current repo docs and ALAS prior art** for contracts and failure handling
-  - observation contracts
-  - workflow inventory
-  - recovery heuristics
-  - vendor patches and emulator notes
+- which borrowed tools should be used for MEmu 9 attachment and interaction
+- what baseline integration is needed before higher-level runtime work
+- which emulator-specific constraints shape that path
 
-## What we should reuse
+It does not own tiering policy, semantic cache design, teacher escalation, or runtime architecture sequencing.
 
-The useful reuse is mostly architectural and contractual, not a direct code transplant:
+## Tool Posture
 
-- `docs/runtime/observation-contracts.md`
-  - good shape for what the model should receive and return
-- `docs/workflows/azur-lane-workflows.md`
-  - useful task taxonomy and state/substate framing
-- `docs/ALS-reference/ALS-live-ops.md`
-  - useful recovery rules and operational hard constraints
-- `docs/vendor-patches/alas-memu-observation-snapshot-2026-03-19.patch`
-  - useful retry and black-frame resilience guidance
-- `configs/memu.json`
-  - confirms the MEmu-side screenshot path currently points at DroidCast
+The borrowed substrate posture is:
 
-The active scripts remain offline utilities, not the live emulator control plane.
+- `MaaMCP` is the primary agent-facing control tool for connect, screenshot, tap, swipe, key, text, and health/status if available
+- `scrcpy` is the preferred live visual substrate and operator/debug stream
+- `adbfriend` is installed and documented separately for your own use, but it is not part of the runtime path
 
-## What we do **not** need for the first MEmu pass
+The runtime should borrow these tools rather than reimplementing attachment, capture, and input plumbing.
 
-### scrcpy
+## What This Layer Owns
 
-scrcpy is **not required** for the current MEmu control plan.
+- device connection and basic health checks
+- screenshot/frame access from the emulator path
+- action dispatch primitives
+- emulator-specific bootstrap and recovery commands
+- evidence needed to prove a frame/action loop is reliable enough for runtime work above it
 
-Reason:
+## What This Layer Does Not Own
 
-- the current MEmu path is already oriented around ADB actions plus DroidCast observation
-- scrcpy is a real transport/control system, but it is a different integration choice
-- we should not add it unless we later decide that a scrcpy transport layer is specifically better for a new target or a different emulator profile
+- VLM task semantics
+- semantic cache policy
+- hit/hint/miss routing
+- teacher escalation
+- workflow reasoning
 
-### DroidMind
+Those belong to the canonical runtime plan, not to this integration note.
 
-DroidMind is **not required** for the first pass.
+## Unity Constraint
 
-It may still be useful later as a reference for:
+The target game is Unity-first.
 
-- an MCP-style Android management façade
-- device/app/file/shell orchestration patterns
-- operator-facing tooling
+That means structured Android UI hierarchy tooling should not be treated as the semantic layer for the runtime. In particular:
 
-But the MEmu plan does not need it to prove the basic observe-act-observe loop.
+- `uiautomator2` may still be useful for diagnostics or limited Android shell interaction
+- it should not be treated as the core observation or semantics path for the live Unity workflow
 
-### MaaMCP / MAA
+The runtime must be able to operate from borrowed control-tool frames and action verification rather than assuming a rich accessibility tree.
 
-MaaMCP is **not required** for the first pass.
+## Practical Integration Shape
 
-Its useful ideas are deferred to a later stage if and when we need:
+The narrow integration loop is:
 
-- OCR-heavy flows
-- pipeline orchestration
-- reusable automation chains
+1. connect to the MEmu instance through the borrowed control tool
+2. attach the preferred visual substrate for observation and operator/debug visibility
+3. dispatch primitive actions through the borrowed control tool
+4. capture again
+5. verify that the loop is stable enough for the runtime layer above it
 
-For the MEmu proposal, those are nice-to-have later, not day-one dependencies.
+This note intentionally stops there.
 
-## Why DroidCast is still in the plan
+## Deferred Or Optional Tools
 
-DroidCast stays in the proposal because it addresses the actual emulator constraint we have right now:
+- `scrcpy`
+  - useful as the preferred visual/debug substrate
+  - not the semantic owner of the runtime
+- `uiautomator2`
+  - optional diagnostic/helper tool
+  - not the primary semantics path for Unity interaction
+- `DroidMind` and similar orchestration layers
+  - deferred until a concrete transport or runtime gap requires them
 
-- MEmu DirectX does not reliably give us usable standard screenshots
-- the ALAS/MEmu prior art points to DroidCast as the working capture path
-- this is about observation, not about building a new general-purpose control framework
+## Success Gate
 
-So DroidCast is not here because it is elegant; it is here because it is the current working answer for capture on this emulator path.
+This note is satisfied when the emulator path can repeatedly:
 
-## Integration shape with MEmu
+- attach to the intended MEmu instance
+- capture usable current frames
+- dispatch actions
+- verify that the loop is stable on one real session
 
-The simplest useful loop is:
-
-1. connect to the MEmu instance over ADB
-2. capture a frame via DroidCast
-3. validate the frame is non-blank and usable
-4. decide the next action
-5. dispatch the action through ADB
-6. capture again and compare the result
-
-That keeps the responsibilities separate:
-
-- ADB owns actions
-- DroidCast owns observation
-- the runtime owns state interpretation and retries
-
-## What the proposal is really asking for
-
-The proposal should settle these questions before any larger build-out:
-
-- what is the minimum reliable MEmu stack?
-- which parts are contractual and reusable?
-- which parts are research-only references?
-- what counts as a valid screenshot?
-- what counts as a successful action?
-- where do retries live?
-- where does state interpretation live?
-
-## Suggested scope for the first implementation slice
-
-The first slice should prove only one thing:
-
-- a single MEmu session can be observed, acted on, and verified repeatedly without relying on previous bridge code
-
-That is enough to establish the capture/action contract.
-
-## Next-step gate
-
-Do not expand into scrcpy, DroidMind, or MaaMCP until the MEmu observe-act-observe loop is proven and stable.
-
-If a later phase needs richer transport or automation, those tools can be re-evaluated with a concrete gap to fill.
+Once that gate is met, the canonical runtime plan owns the next architectural step.

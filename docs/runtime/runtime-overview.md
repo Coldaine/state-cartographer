@@ -7,10 +7,12 @@
 Describe what the future live runtime is supposed to own, and what should count as operator-facing, without pretending that the current repo ships that runtime today.
 
 See also:
-- [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
-- [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md)
+- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
+- [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
 - [observation-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/observation-contracts.md)
-- [backend-hardening.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/backend-hardening.md)
+- [backend-lessons.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/backend-lessons.md)
+- [agent-control-tool-requirements.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/agent-control-tool-requirements.md)
+- [borrowed-control-tool-setup.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/borrowed-control-tool-setup.md)
 
 ## What Runtime Means Here
 
@@ -35,7 +37,8 @@ A re-earned runtime would be responsible for:
 ## Operator-Facing Model
 
 The intended long-term operator model is:
-- the runtime owns screenshot capture, action execution, verification, recovery, and event recording
+- the runtime owns action validation, verification, recovery, and event recording
+- the runtime borrows stable attachment, screenshot, and input primitives from an external control substrate
 - the agent operates through higher-level control surfaces rather than micromanaging taps, screenshots, and retries directly
 - escalation should carry structured context rather than forcing the operator to rediscover the situation from scratch
 
@@ -74,8 +77,8 @@ The old `OBS/NAV/EXE/AUT` split still names useful concerns, but they now surviv
 ## Required Runtime Capabilities
 
 A rebuilt runtime should eventually own:
-- screenshot capture and freshness proof
-- action execution primitives with verification hooks
+- freshness/health proof over the observation path it borrows
+- action validation and verification hooks over the control tool it borrows
 - session and workflow context
 - state and substate grounding support
 - workflow execution and recovery
@@ -91,5 +94,8 @@ A rebuilt runtime should eventually own:
 ## Runtime Documents
 
 The runtime knowledge docs that remain after consolidation are:
+- [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
 - [observation-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/observation-contracts.md)
-- [backend-hardening.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/backend-hardening.md)
+- [backend-lessons.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/backend-lessons.md)
+- [agent-control-tool-requirements.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/agent-control-tool-requirements.md)
+- [borrowed-control-tool-setup.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/borrowed-control-tool-setup.md)

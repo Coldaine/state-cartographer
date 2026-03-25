@@ -7,7 +7,7 @@ Use this file when you need the fuller answer to `where does this live?`.
 
 See also:
 - [docs/AGENTS.md](/mnt/d/_projects/MasterStateMachine/docs/AGENTS.md)
-- [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
+- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
 - [architecture-overview.md](/mnt/d/_projects/MasterStateMachine/docs/architecture-overview.md)
 
 ## Root-Level Map
@@ -53,6 +53,8 @@ These exist in the worktree but are not primary project knowledge or product sur
 
 ## Docs Map
 
+- `docs/todo.md`
+  - repo-wide tracker for current truth, active tasks, blockers, and immediate next actions
 - `docs/AGENTS.md`
   - local index for the docs tree
 - `docs/ALS-reference/`
@@ -61,9 +63,12 @@ These exist in the worktree but are not primary project knowledge or product sur
   - research notes, synthesis, and experiments
 - `docs/architecture-overview.md`
   - architecture and organizing logic
-- `docs/project/`
-  - current reality, north star, repo indexing, validation posture
-  - includes `documentation-playbook.md` for docs workflow rules
+- `docs/north-star.md`
+  - desired end state
+- `docs/repo-index.md`
+  - exhaustive high-level repo map
+- `docs/documentation-playbook.md`
+  - docs workflow rules
 - `docs/memory/`
   - dated lessons learned and preserved findings
 - `docs/workflows/`
@@ -73,13 +78,16 @@ These exist in the worktree but are not primary project knowledge or product sur
 - `docs/prework/`
   - corpus/data preparation procedures
 - `docs/runtime/`
-  - runtime boundaries and retained runtime design knowledge
+  - runtime boundaries, retained runtime design knowledge, external tool requirements, and borrowed-tool intake/setup notes
+  - includes `agent-control-tool-requirements.md` for borrowed substrate selection criteria
+  - includes `borrowed-control-tool-setup.md` for local setup and compatibility-spike procedure
+- `docs/dev/`
+  - developer workflow docs (testing strategy, etc.)
 - `docs/vlm/`
   - VLM profiles, contracts, and prompt guidance
+  - includes `llama-swap-quickstart.md` for local model serving and endpoint usage
 - `docs/plans/`
-  - tactical and strategic planning docs
-- `docs/decisions/`
-  - ADR-style decision records
+  - tactical planning docs, including the canonical runtime plan and the MEmu transport companion
 - `docs/vendor-patches/`
   - existing patch/reference bucket retained as-is
 
@@ -112,4 +120,4 @@ These exist in the worktree but are not primary project knowledge or product sur
 
 If you need short orientation, use root `AGENTS.md`.
 If you need the exhaustive high-level map, use this file.
-If you need the rules for adding or updating docs, use `docs/project/documentation-playbook.md`.
+If you need the rules for adding or updating docs, use `docs/documentation-playbook.md`.

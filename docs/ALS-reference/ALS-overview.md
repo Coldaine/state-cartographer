@@ -8,8 +8,8 @@ ALAS (AzurLaneAutoScript) is a long-lived automation framework for Azur Lane. In
 
 See also:
 - [ALS-live-ops.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-live-ops.md)
-- [ALS-event-schema.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-event-schema.md)
-- [alas-build-plan.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-build-plan.md)
+- [ALS-event-schema-sketch.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/ALS-event-schema-sketch.md)
+- [alas-artifacts.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-artifacts.md)
 
 ## Role in State Cartographer
 
@@ -66,7 +66,7 @@ Do not assume older repo-side ALAS helper scripts still exist just because older
 - active config is typically under `vendor/AzurLaneAutoScript/config/`
 - logs are under `vendor/AzurLaneAutoScript/log/`
 - live-run handling rules are in `ALS-live-ops.md`
-- schema guidance for ALAS-derived event recording is in `ALS-event-schema.md`
+- any future ALAS-derived event recording should be treated as unsettled until the runtime proves it needs a concrete schema
 
 ## How To Use ALAS Correctly
 

@@ -1,18 +1,10 @@
-# ALAS Execution Event Schema
+# ALS Event Schema Sketch
 
-> Historical note: moved from `docs/alas/ALS-event-schema.md` during the 2026 documentation realignment.
+> **Status: Draft / inspiration only.** No code emits this. The final recording format will be shaped by what the runtime actually needs, not by this sketch. Treat it as one possible starting point, not a commitment.
 
-This document defines a schema worth preserving for ALAS-derived execution recording and later runtime analysis.
+This document sketches a possible NDJSON event format for recording what happens during automation runs — taps, screenshots, recoveries, assignment lifecycle, etc.
 
-It is a schema/reference document. It is **not** evidence that the currently active repo code emits this event stream today.
-
-The purpose is to bridge:
-
-- assignable ALAS commands/tasks
-- primitive emulator actions
-- semantic UI actions
-- page/state observations
-- takeover-runtime replay and analysis
+It was originally derived from thinking about how to bridge ALAS concepts into a future runtime recording layer. The actual schema should be designed when the runtime exists and the real requirements are known.
 
 See also:
 - [ALS-overview.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-overview.md)

@@ -8,11 +8,12 @@
 
 This document explains the prompt text embedded in `vlm_detector.py` and how each prompt block is intended to support offline labeling and adjudication.
 
-This tool is for offline corpus work, not live runtime control.
+This tool is for offline corpus work only.
+It is not a live runtime control primitive.
 
 ## Prompt Families In This File
 
-`vlm_detector.py` contains three prompt blocks:
+`vlm_detector.py` currently contains three prompt blocks:
 
 - `SYSTEM_PROMPT`
 - `PAGE_DETECT_PROMPT`

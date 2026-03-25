@@ -10,8 +10,8 @@ It is a hypothesis supported by observed evidence. It is not a closed proof.
 
 See also:
 - [ALS-live-ops.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-live-ops.md)
-- [backend-hardening.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/backend-hardening.md)
-- [current-reality.md](/mnt/d/_projects/MasterStateMachine/docs/project/current-reality.md)
+- [backend-lessons.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/backend-lessons.md)
+- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
 
 ## Problem Statement
 

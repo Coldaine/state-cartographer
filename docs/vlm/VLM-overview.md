@@ -9,11 +9,12 @@
 This bucket is for capability framing and contract boundaries, not for pretending a live runtime already exists.
 
 See also:
-- [current-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/current-plan.md)
+- [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
 - [observation-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/observation-contracts.md)
 - [VLM-model-profiles.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-model-profiles.md)
 - [VLM-task-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-task-contracts.md)
 - [VLM-prompts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-prompts.md)
+- [llama-swap-quickstart.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/llama-swap-quickstart.md)
 
 ## What VLM Is For Here
 
@@ -57,3 +58,5 @@ The intended defaults are:
   - task schemas, expected inputs, and outputs
 - [VLM-prompts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-prompts.md)
   - prompt-layer guidance only
+- [llama-swap-quickstart.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/llama-swap-quickstart.md)
+  - local model serving and endpoint quickstart
