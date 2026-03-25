@@ -47,9 +47,9 @@ Everything else in `docs/` is a knowledge bucket.
 
 ## Current Implementation State
 
-- `state_cartographer/transport/` is empty — transport layer is being rebuilt
+- `state_cartographer/transport/` is implemented — adb, maatouch, capture, health, models, pilot facade
 - Active scripts: `corpus_cleanup.py`, `kimi_review.py`, `vlm_detector.py`
-- No live runtime exists yet
+- No live runtime exists yet (transport layer done; runtime above being built)
 - Substrate decision made: adbutils + MaaTouch (see [substrate-and-implementation-plan.md](plans/substrate-and-implementation-plan.md))
 
 ## Organizing Principles

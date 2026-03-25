@@ -65,12 +65,15 @@ class Adb:
 
     def _get_device(self) -> AdbDevice:
         if self._device is None:
-            devices = self._client.device_list()
-            for d in devices:
-                if d.serial == self.serial:
-                    self._device = d
-                    return self._device
-            raise AdbError(f"Device {self.serial} not found")
+            try:
+                devices = self._client.device_list()
+                for d in devices:
+                    if d.serial == self.serial:
+                        self._device = d
+                        return self._device
+                raise AdbError(f"Device {self.serial} not found")
+            except AdbutilsError as e:
+                raise AdbError(f"ADB error listing devices: {e}")
         return self._device
 
     @property

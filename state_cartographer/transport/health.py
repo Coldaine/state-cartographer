@@ -35,6 +35,7 @@ def _preferred_control_ready(cfg: TransportConfig) -> bool:
     ctrl = cfg.primary_control.lower()
     if ctrl == "maatouch":
         from state_cartographer.transport.maatouch import DEFAULT_LOCAL_PATH
+
         return DEFAULT_LOCAL_PATH.exists()
     return True
 
@@ -60,6 +61,7 @@ def doctor(cfg: TransportConfig, adb_path: str = "adb") -> DoctorReport:
         report.errors.append(f"ADB not reachable: {e}")
 
     from state_cartographer.transport.maatouch import DEFAULT_LOCAL_PATH
+
     report.maatouch_available = DEFAULT_LOCAL_PATH.exists()
 
     if not report.adb_reachable or not report.device_online:
@@ -81,7 +83,7 @@ def doctor(cfg: TransportConfig, adb_path: str = "adb") -> DoctorReport:
     if not preferred_ready:
         report.readiness_tier = ReadinessTier.DEGRADED
         report.control_layer = ControlLayerStatus.FALLBACK
-        report.degradation_codes.append("preferred_stack_missing")
+        report.degradation_codes.append("preferred_input_missing")
 
     report.verdict = ProbeVerdict.PASS
 

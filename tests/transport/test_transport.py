@@ -102,7 +102,7 @@ def test_bootstrap_manifest_json():
         transport_layer=TransportLayerStatus.READY,
         control_layer=ControlLayerStatus.FALLBACK,
         observation_layer=ObservationLayerStatus.UNVERIFIED,
-        degradation_codes=["preferred_stack_missing", "observation_unverified"],
+        degradation_codes=["preferred_input_missing", "observation_unverified"],
         adb_reachable=True,
         device_online=True,
         verdict=ProbeVerdict.PASS,
@@ -122,7 +122,7 @@ def test_doctor_report_json():
         transport_layer=TransportLayerStatus.READY,
         control_layer=ControlLayerStatus.FALLBACK,
         observation_layer=ObservationLayerStatus.UNVERIFIED,
-        degradation_codes=["preferred_stack_missing", "observation_unverified"],
+        degradation_codes=["preferred_input_missing", "observation_unverified"],
         adb_reachable=True,
         device_online=True,
         verdict=ProbeVerdict.PASS,
@@ -132,7 +132,7 @@ def test_doctor_report_json():
     assert parsed["device_online"] is True
     assert parsed["readiness_tier"] == "degraded"
     assert parsed["control_layer"] == "fallback"
-    assert parsed["degradation_codes"] == ["preferred_stack_missing", "observation_unverified"]
+    assert parsed["degradation_codes"] == ["preferred_input_missing", "observation_unverified"]
 
 
 def test_scrcpy_probe_report_json():
@@ -231,13 +231,15 @@ def test_doctor_degraded_when_maatouch_binary_missing(monkeypatch: pytest.Monkey
     def fake_ensure_installed():
         return False
 
+    import state_cartographer.transport.maatouch as maatouch_module
+
     monkeypatch.setattr("state_cartographer.transport.health.Adb", FakeAdb)
-    monkeypatch.setattr("state_cartographer.transport.maatouch.DEFAULT_LOCAL_PATH", Path("/nonexistent"))
+    monkeypatch.setattr(maatouch_module, "DEFAULT_LOCAL_PATH", Path("/nonexistent"))
 
     report = doctor(cfg)
 
     assert report.readiness_tier == ReadinessTier.DEGRADED
     assert report.transport_layer == TransportLayerStatus.READY
     assert report.control_layer == ControlLayerStatus.FALLBACK
-    assert "preferred_stack_missing" in report.degradation_codes
+    assert "preferred_input_missing" in report.degradation_codes
     assert report.verdict == ProbeVerdict.PASS

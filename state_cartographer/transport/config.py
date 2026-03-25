@@ -65,9 +65,9 @@ def load_config(path: Path | str | None = None) -> TransportConfig:
         name=raw.get("name", "MEmu Player"),
         emulator_type=raw.get("emulator_type", "memu"),
         adb_serial=raw.get("adb_serial", "127.0.0.1:21513"),
-        primary_control=raw.get("primary_control", "maamcp"),
+        primary_control=raw.get("primary_control", "maatouch"),
         preferred_visual=raw.get("preferred_visual", "scrcpy"),
-        fallback_observation=raw.get("fallback_observation", "maamcp_screenshot"),
+        fallback_observation=raw.get("fallback_observation", "adb_screencap"),
         agent_path=raw.get("agent_path", None),
         raw=raw,
     )
