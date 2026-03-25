@@ -282,6 +282,9 @@ If only a few live tests get written first, prioritize these:
 
 ## Evidence requirements for every live test
 
+This is the target bar for the mature live suite.
+The current first-pass smoke tests in `tests/transport/` prove attach/capture/recovery behavior, but they do not yet emit the full evidence bundle below.
+
 Every live test should emit or link:
 - `session_id`
 - `serial`

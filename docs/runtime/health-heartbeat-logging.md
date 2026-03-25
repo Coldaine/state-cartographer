@@ -34,13 +34,14 @@ Use three exclusive tiers:
 
 ### Degradation flags
 
-Degradation codes are explicit reasons attached to the current report. A truthful transport-side report on the current pinned machine looks like:
+Degradation codes are explicit reasons attached to the current report. A truthful `doctor()` report on the current pinned machine looks like:
 
 ```
 tier = degraded
-degradation_codes = [observation_unverified, preferred_stack_missing, debug_only_visual]
+degradation_codes = [observation_unverified, preferred_stack_missing]
 ```
 
+The later session probe may append `debug_only_visual` once `scrcpy` has been exercised and classified.
 This is much more useful than a sad `fail`.
 
 ### Required degradation codes
@@ -64,7 +65,8 @@ Transport-facing `DoctorReport` layers should be reported independently:
 
 Runtime-level heartbeats may later add richer semantic status on top of those transport-layer values, but the base transport report should not collapse them into a single generic label.
 
-Each layer record also carries:
+The richer per-layer metadata below is a target for later heartbeat/event work, not something `DoctorReport` fully implements today.
+Each layer record should eventually carry:
 - `checked_at`
 - `evidence_age_ms`
 - `reason_codes`

@@ -2,10 +2,9 @@
 
 Recovery scope is transport-only:
 1. Reconnect ADB to pinned serial
-2. Restart tool process
-3. Reattach
-4. Revalidate frame freshness
-5. Fail with structured status
+2. Verify device comes back online
+3. Revalidate frame freshness
+4. Fail with structured status
 """
 
 from __future__ import annotations
