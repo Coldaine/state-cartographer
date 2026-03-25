@@ -13,7 +13,7 @@ See also:
 - date: `2026-03-25`
 - pinned serial: `127.0.0.1:21503`
 - tracked config: [memu.json](/mnt/d/_projects/MasterStateMachine/configs/memu.json)
-- CLI entrypoint: [memu_transport.py](/mnt/d/_projects/MasterStateMachine/scripts/memu_transport.py)
+- Historical CLI wrapper: `scripts/memu_transport.py` (deleted)
 
 ## Observed Results
 

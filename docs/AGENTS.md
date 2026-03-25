@@ -2,6 +2,8 @@
 
 Navigation index for `docs/`. Helps agents find the right document fast.
 
+Active direction is currently anchored by `todo.md`, `plans/substrate-and-implementation-plan.md`, and `plans/multi-tier-runtime-implementation-plan-2026-03-24.md`. `plans/host-capture-shim-plan.md` is parked and should be treated as deferred unless telemetry changes that decision.
+
 ## Docs Tree
 
 | Path | Purpose |
@@ -30,6 +32,7 @@ Navigation index for `docs/`. Helps agents find the right document fast.
 | What should I work on right now? | `todo.md` |
 | What control tools do we use? | `plans/substrate-and-implementation-plan.md` |
 | What is the runtime architecture? | `plans/multi-tier-runtime-implementation-plan-2026-03-24.md` |
+| What capture fallback idea is parked? | `plans/host-capture-shim-plan.md` |
 | What does the runtime own? | `runtime/runtime-overview.md` |
 | What must a control tool provide? | `runtime/agent-control-tool-requirements.md` |
 | How does health/heartbeat work? | `runtime/health-heartbeat-logging.md` |

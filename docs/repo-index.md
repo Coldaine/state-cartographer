@@ -49,7 +49,13 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 | `plans/substrate-and-implementation-plan.md` | What control tools we use (adbutils + MaaTouch) and how to build on them |
 | `plans/multi-tier-runtime-implementation-plan-2026-03-24.md` | Tiered runtime architecture (Tier 2 VLM baseline, Tier 1 cache, Tier 3 teacher) |
 
-## Active Code Surface
+## Deferred / Draft Plans
+
+| Plan | What It Covers |
+|---|---|
+| `plans/host-capture-shim-plan.md` | Parked fallback capture proposal (DXcam / PrintWindow); not current direction unless capture telemetry justifies it |
+
+## Active Script Surface
 
 | File | Purpose |
 |---|---|
@@ -57,22 +63,29 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 | `scripts/kimi_review.py` | Cheap Kimi-backed screenshot review |
 | `scripts/vlm_detector.py` | VLM-backed offline detection and labeling |
 
+## Support / Probe Surface
+
+| File | Purpose |
+|---|---|
+| `scripts/scrcpy_client_worker.py` | scrcpy helper/probe wrapper for debug capture and inspection |
+
 ## Transport Package
 
 `state_cartographer/transport/` now contains the adbutils+MaaTouch implementation:
 
 | File | Purpose |
 |---|---|
+| `__init__.py` | Transport package exports |
 | `adb.py` | adbutils-based ADB client (no subprocess) |
 | `maatouch.py` | MaaTouch precision touch protocol |
 | `capture.py` | Screenshot capture methods |
-| `maamcp.py` | Legacy MaaMCP adapter (deferred, kept for reference) |
 | `config.py` | Transport configuration loading |
 | `models.py` | Data models for reports and status |
 | `health.py` | Readiness checks and recovery |
-| `discovery.py` | Tool discovery |
 | `artifacts.py` | Event persistence |
 | `scrcpy_probe.py` | scrcpy coexistence verification |
+
+Legacy `maamcp.py` and `discovery.py` are not present in the current transport package tree.
 
 See [substrate-and-implementation-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/substrate-and-implementation-plan.md) for implementation steps.
 
@@ -86,7 +99,7 @@ See [substrate-and-implementation-plan.md](/mnt/d/_projects/MasterStateMachine/d
 
 ## Test Surface
 
-`tests/` — currently empty. Will be rebuilt alongside transport implementation.
+`tests/` — transport and runtime tests are present and are still being expanded alongside the transport/runtime rebuild.
 
 ## Practical Rule
 

@@ -9,16 +9,18 @@ Thin tracker. Current truth only.
   - `adb.py` — **DONE**: adbutils-based, no subprocess
   - `maatouch.py` — **DONE**: precision touch protocol
   - `capture.py` — **DONE**: screenshot methods
-  - `maamcp.py` — kept for reference but not used (MaaMCP deferred)
+- Legacy MaaFramework / MaaMCP transport is deferred and not part of the current package
+- Stale transport probe wrapper is gone; live work now goes through package code and tests
 - `adbutils` added to `pyproject.toml`
 - Substrate decision: adbutils + MaaTouch + ADB screencap
+- Repo venv now has `adbutils` installed via `uv pip install -e .`
 
 ## Next
 
 1. **Step 1:** ~~Replace subprocess ADB with adbutils~~ ✅ DONE
 2. **Step 2:** ~~Add MaaTouch support~~ ✅ DONE
 3. **Step 3:** ~~Add screenshot methods~~ ✅ DONE
-4. **Step 4:** Run `pip install -e .` to install adbutils
+4. **Step 4:** ~~Run `pip install -e .` to install adbutils~~ ✅ DONE
 5. **Step 5:** Write and run live integration tests against MEmu
 6. **Step 6:** Build Tier 2 VLM grounding loop (observe-act-observe on real device)
 7. **Step 7:** Add multi-step workflow execution with stuck detection
@@ -27,11 +29,11 @@ Thin tracker. Current truth only.
 ## Blockers
 
 - MaaTouch binary needs to be deployed to MEmu device (`/data/local/tmp/maatouchsync`)
-- Need to verify `pip install -e .` installs adbutils correctly
 
 ## Deferred
 
 - MaaFramework / MaaMCP (requires full MAA Windows DLL installation)
+- Host-side capture shim (DXcam / PrintWindow) — parked draft fallback, revisit only if black-frame telemetry justifies it
 - Semantic embedding cache (Tier 1) — no data yet to justify it
 - Teacher escalation (Tier 3) — not until Tier 2 baseline works
 - Replay and teacher layers

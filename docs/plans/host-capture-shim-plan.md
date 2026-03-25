@@ -1,7 +1,7 @@
 # Host-Side Window Capture Shim + Screenshot Pipeline Hardening
 
 **Date:** 2026-03-25
-**Status:** DRAFT — ralplan consensus pending
+**Status:** DEFERRED — parked fallback proposal; not current direction unless capture telemetry justifies it
 **Branch:** transport/memu-substrate-slice
 
 ## Problem Statement
