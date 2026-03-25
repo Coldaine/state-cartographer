@@ -1,7 +1,7 @@
 {
   "name": "MEmu Player",
   "emulator_type": "memu",
-  "adb_serial": "127.0.0.1:21513",
+  "adb_serial": "127.0.0.1:21503",
   "primary_control": "maamcp",
   "preferred_visual": "scrcpy",
   "fallback_observation": "maamcp_screenshot",

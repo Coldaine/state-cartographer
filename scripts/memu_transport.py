@@ -47,8 +47,15 @@ def _adb_path_from_manifest(cfg):
     return "adb"
 
 
+def _apply_serial_override(args, cfg):
+    """Apply --serial CLI override to config if provided."""
+    if getattr(args, "serial", None):
+        cfg.adb_serial = args.serial
+
+
 def cmd_bootstrap(args):
     cfg = load_config(args.config)
+    _apply_serial_override(args, cfg)
     manifest = bootstrap(cfg)
     print(manifest.to_json())
     return 0 if manifest.all_required_found else 1
@@ -56,6 +63,7 @@ def cmd_bootstrap(args):
 
 def cmd_doctor(args):
     cfg = load_config(args.config)
+    _apply_serial_override(args, cfg)
     adb_path = _adb_path_from_manifest(cfg)
     report = doctor(cfg, adb_path)
     print(report.to_json())
@@ -64,6 +72,7 @@ def cmd_doctor(args):
 
 def cmd_connect(args):
     cfg = load_config(args.config)
+    _apply_serial_override(args, cfg)
     adb_path = _adb_path_from_manifest(cfg)
     adapter = MaaAdapter(cfg.serial, adb_path)
     ok = adapter.connect()
@@ -73,6 +82,7 @@ def cmd_connect(args):
 
 def cmd_capture(args):
     cfg = load_config(args.config)
+    _apply_serial_override(args, cfg)
     adb_path = _adb_path_from_manifest(cfg)
     adapter = MaaAdapter(cfg.serial, adb_path)
     adapter.connect()
@@ -91,6 +101,7 @@ def cmd_capture(args):
 
 def cmd_input(args):
     cfg = load_config(args.config)
+    _apply_serial_override(args, cfg)
     adb_path = _adb_path_from_manifest(cfg)
     adapter = MaaAdapter(cfg.serial, adb_path)
     adapter.connect()
@@ -116,6 +127,7 @@ def cmd_input(args):
 
 def cmd_probe_maa(args):
     cfg = load_config(args.config)
+    _apply_serial_override(args, cfg)
     adb_path = _adb_path_from_manifest(cfg)
     report = run_maa_probe(cfg.serial, adb_path, capture_count=args.captures or 3)
     print(report.to_json())
@@ -124,6 +136,7 @@ def cmd_probe_maa(args):
 
 def cmd_probe_scrcpy(args):
     cfg = load_config(args.config)
+    _apply_serial_override(args, cfg)
     report = run_scrcpy_probe(cfg.serial)
     print(report.to_json())
     return 0 if report.observation_decision == ObservationDecision.RUNTIME_CONSUMABLE else 1
@@ -131,6 +144,7 @@ def cmd_probe_scrcpy(args):
 
 def cmd_probe_session(args):
     cfg = load_config(args.config)
+    _apply_serial_override(args, cfg)
     adb_path = _adb_path_from_manifest(cfg)
 
     run_dir = probe_run_dir("session")
@@ -144,10 +158,14 @@ def cmd_probe_session(args):
     session.doctor = doc
 
     if doc.verdict != ProbeVerdict.PASS:
-        session.verdict = ProbeVerdict.FAIL
-        write_json(run_dir, "session-probe-report.json", session.to_json())
-        print(session.to_json())
-        return 1
+        if not doc.device_online:
+            # Hard gate: device must be reachable
+            session.verdict = ProbeVerdict.FAIL
+            write_json(run_dir, "session-probe-report.json", session.to_json())
+            print(session.to_json())
+            return 1
+        # Soft warning: missing tools but device online — continue with fallbacks
+        logging.warning("Doctor verdict=%s but device online, continuing with fallbacks", doc.verdict)
 
     # MaaMCP probe
     maa = run_maa_probe(cfg.serial, adb_path, capture_count=args.captures or 3)
@@ -176,6 +194,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="MEmu transport layer CLI")
     parser.add_argument("--config", type=str, default=None, help="Path to transport config (default: configs/memu.json)")
+    parser.add_argument("--serial", type=str, default=None, help="Override ADB serial from config")
     sub = parser.add_subparsers(dest="command", required=True)
 
     # bootstrap
