@@ -71,5 +71,6 @@ A rebuilt runtime must own:
 - [multi-tier-runtime-implementation-plan-2026-03-24.md](../plans/multi-tier-runtime-implementation-plan-2026-03-24.md) — tiered architecture (Tier 2 VLM baseline, Tier 1 cache, Tier 3 teacher)
 - [observation-contracts.md](observation-contracts.md) — what the runtime asks of observation
 - [backend-lessons.md](backend-lessons.md) — lessons from past emulator work
+- [memu-reference.md](memu-reference.md) — MEmu architecture, ADB ports, capture methods, admin constraints
 - [health-heartbeat-logging.md](health-heartbeat-logging.md) — readiness tiers, heartbeats, event schema
 - [agent-control-tool-requirements.md](agent-control-tool-requirements.md) — acceptance criteria for borrowed tools

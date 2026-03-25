@@ -34,6 +34,7 @@ Navigation index for `docs/`. Helps agents find the right document fast.
 | What must a control tool provide? | `runtime/agent-control-tool-requirements.md` |
 | How does health/heartbeat work? | `runtime/health-heartbeat-logging.md` |
 | What are the backend lessons? | `runtime/backend-lessons.md` |
+| How does MEmu work and what ports does it use? | `runtime/memu-reference.md` |
 | What does observation return? | `runtime/observation-contracts.md` |
 | What is ALAS in this repo? | `ALS-reference/ALS-overview.md` |
 | What are the ALAS live-run rules? | `ALS-reference/ALS-live-ops.md` |

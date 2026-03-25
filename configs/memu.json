@@ -1,10 +1,10 @@
 {
   "name": "MEmu Player",
   "emulator_type": "memu",
-  "adb_serial": "127.0.0.1:21503",
-  "primary_control": "maamcp",
+  "adb_serial": "127.0.0.1:21513",
+  "primary_control": "maatouch",
   "preferred_visual": "scrcpy",
-  "fallback_observation": "maamcp_screenshot",
+  "fallback_observation": "adb_screencap",
   "agent_path": null,
   "description": "MEmu 9 transport config — pinned serial, tool posture only. Machine-specific paths and probe state go in data/events/memu-transport/."
 }

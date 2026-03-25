@@ -37,7 +37,7 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 | `docs/workflows/` | Workflow/task inventory |
 | `docs/agentPrompts/` | Prompt rationale for LLM code |
 | `docs/prework/` | Corpus/data preparation procedures |
-| `docs/runtime/` | Runtime contracts, backend lessons, health design, tool requirements |
+| `docs/runtime/` | Runtime contracts, backend lessons, health design, tool requirements, emulator reference |
 | `docs/dev/` | Developer workflow docs (testing) |
 | `docs/vlm/` | VLM profiles, contracts, prompt guidance |
 | `docs/plans/` | Active planning docs |
@@ -59,12 +59,20 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 
 ## Transport Package
 
-`state_cartographer/transport/` is currently **empty**. All prior implementation was deleted (commit ef52c12).
+`state_cartographer/transport/` now contains the adbutils+MaaTouch implementation:
 
-Rebuild will produce:
-- `adb.py` — adbutils-based ADB client (replacing subprocess wrapper)
-- `maatouch.py` — MaaTouch protocol for precision input
-- `capture.py` — screenshot methods with fallback chain
+| File | Purpose |
+|---|---|
+| `adb.py` | adbutils-based ADB client (no subprocess) |
+| `maatouch.py` | MaaTouch precision touch protocol |
+| `capture.py` | Screenshot capture methods |
+| `maamcp.py` | Legacy MaaMCP adapter (deferred, kept for reference) |
+| `config.py` | Transport configuration loading |
+| `models.py` | Data models for reports and status |
+| `health.py` | Readiness checks and recovery |
+| `discovery.py` | Tool discovery |
+| `artifacts.py` | Event persistence |
+| `scrcpy_probe.py` | scrcpy coexistence verification |
 
 See [substrate-and-implementation-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/substrate-and-implementation-plan.md) for implementation steps.
 

@@ -5,26 +5,29 @@ Thin tracker. Current truth only.
 ## Now
 
 - Branch: `transport/memu-substrate-slice`
-- `state_cartographer/transport/` is **empty** — all prior implementation deleted (commit ef52c12)
-- Substrate decision made: adbutils + MaaTouch + ADB screencap
-- Implementation plan: [substrate-and-implementation-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/substrate-and-implementation-plan.md)
-- Active scripts: `scripts/corpus_cleanup.py`, `scripts/kimi_review.py`, `scripts/vlm_detector.py`
-- No live runtime exists
+- `state_cartographer/transport/` now has:
+  - `adb.py` — **DONE**: adbutils-based, no subprocess
+  - `maatouch.py` — **DONE**: precision touch protocol
+  - `capture.py` — **DONE**: screenshot methods
+  - `maamcp.py` — kept for reference but not used (MaaMCP deferred)
+- `adbutils` added to `pyproject.toml`
+- Substrate decision: adbutils + MaaTouch + ADB screencap
 
 ## Next
 
-1. **Step 1:** Replace subprocess ADB with adbutils in `state_cartographer/transport/adb.py`
-2. **Step 2:** Add MaaTouch support in `state_cartographer/transport/maatouch.py`
-3. **Step 3:** Add screenshot methods in `state_cartographer/transport/capture.py`
-4. **Step 4:** Write and run live integration tests against MEmu
-5. **Step 5:** Build Tier 2 VLM grounding loop (observe-act-observe on real device)
-6. **Step 6:** Add multi-step workflow execution with stuck detection
-7. **Step 7:** Structured NDJSON event logging
+1. **Step 1:** ~~Replace subprocess ADB with adbutils~~ ✅ DONE
+2. **Step 2:** ~~Add MaaTouch support~~ ✅ DONE
+3. **Step 3:** ~~Add screenshot methods~~ ✅ DONE
+4. **Step 4:** Run `pip install -e .` to install adbutils
+5. **Step 5:** Write and run live integration tests against MEmu
+6. **Step 6:** Build Tier 2 VLM grounding loop (observe-act-observe on real device)
+7. **Step 7:** Add multi-step workflow execution with stuck detection
+8. **Step 8:** Structured NDJSON event logging
 
 ## Blockers
 
 - MaaTouch binary needs to be deployed to MEmu device (`/data/local/tmp/maatouchsync`)
-- `adbutils` needs to be added to `pyproject.toml` dependencies and installed
+- Need to verify `pip install -e .` installs adbutils correctly
 
 ## Deferred
 

@@ -1,17 +1,53 @@
-"""ADB primitives for transport-level device interaction.
+"""ADB primitives using adbutils library.
 
-Thin subprocess wrapper — no game logic, no workflow reasoning.
+No subprocess calls. All ADB operations go through adbutils AdbClient.
 """
 
 from __future__ import annotations
 
 import logging
-import subprocess
+import time
+from functools import wraps
 from pathlib import Path
+
+from adbutils import AdbClient, AdbDevice
+from adbutils.errors import AdbError as AdbutilsError
 
 log = logging.getLogger(__name__)
 
 _DEFAULT_TIMEOUT = 15
+_RETRY_TRIES = 3
+
+
+def retry(func):
+    @wraps(func)
+    def retry_wrapper(self, *args, **kwargs):
+        init = None
+        for attempt in range(_RETRY_TRIES):
+            try:
+                if callable(init):
+                    time.sleep(0.5 * (attempt + 1))
+                    init()
+                return func(self, *args, **kwargs)
+            except AdbutilsError as e:
+                log.warning(f"AdbError on attempt {attempt + 1}: {e}")
+
+                def init():
+                    self._reconnect()
+            except ConnectionResetError as e:
+                log.error(f"Connection reset: {e}")
+
+                def init():
+                    self._reconnect()
+            except Exception as e:
+                log.exception(f"Unexpected error: {e}")
+
+                def init():
+                    pass
+
+        raise AdbError(f"Retry {func.__name__}() failed after {_RETRY_TRIES} attempts")
+
+    return retry_wrapper
 
 
 class AdbError(Exception):
@@ -19,80 +55,128 @@ class AdbError(Exception):
 
 
 class Adb:
-    """Thin ADB subprocess wrapper scoped to a single serial."""
+    """adbutils-based ADB client scoped to a single serial."""
 
-    def __init__(self, serial: str, adb_path: str = "adb"):
+    def __init__(self, serial: str, adb_path: str | None = None):
         self.serial = serial
-        self.adb_path = adb_path
+        self._client = AdbClient()
+        self._device: AdbDevice | None = None
+        self._adb_path = adb_path
 
-    def _run(self, args: list[str], timeout: int = _DEFAULT_TIMEOUT) -> subprocess.CompletedProcess[str]:
-        cmd = [self.adb_path, "-s", self.serial, *args]
-        log.debug("adb: %s", " ".join(cmd))
-        try:
-            return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-        except subprocess.TimeoutExpired as e:
-            raise AdbError(f"adb timed out after {timeout}s: {' '.join(cmd)}") from e
-        except FileNotFoundError as e:
-            raise AdbError(f"adb executable not found at {self.adb_path}") from e
+    def _get_device(self) -> AdbDevice:
+        if self._device is None:
+            devices = self._client.list_devices()
+            for d in devices:
+                if d.serial == self.serial:
+                    self._device = d
+                    return self._device
+            raise AdbError(f"Device {self.serial} not found")
+        return self._device
 
-    def _run_bytes(self, args: list[str], timeout: int = _DEFAULT_TIMEOUT) -> bytes:
-        cmd = [self.adb_path, "-s", self.serial, *args]
-        try:
-            r = subprocess.run(cmd, capture_output=True, timeout=timeout)
-            if r.returncode != 0:
-                raise AdbError(f"adb failed ({r.returncode}): {r.stderr.decode(errors='replace')}")
-            return r.stdout
-        except subprocess.TimeoutExpired as e:
-            raise AdbError(f"adb timed out after {timeout}s") from e
+    @property
+    def device(self) -> AdbDevice:
+        return self._get_device()
+
+    def _reconnect(self) -> bool:
+        self._device = None
+        return self.connect()
 
     def connect(self) -> bool:
-        r = self._run(["connect", self.serial])
-        out = r.stdout.strip()
-        return "connected" in out.lower() or "already" in out.lower()
+        try:
+            self._client.connect(self.serial)
+            self._device = None
+            _ = self.device
+            log.info(f"Connected to {self.serial}")
+            return True
+        except Exception as e:
+            log.error(f"Failed to connect to {self.serial}: {e}")
+            return False
 
     def disconnect(self) -> bool:
-        r = self._run(["disconnect", self.serial])
-        return r.returncode == 0
+        try:
+            self._client.disconnect(self.serial)
+            self._device = None
+            return True
+        except Exception as e:
+            log.error(f"Failed to disconnect: {e}")
+            return False
 
     def devices(self) -> list[str]:
-        r = self._run(["devices"])
-        lines = r.stdout.strip().split("\n")[1:]  # skip header
-        return [line.split("\t")[0] for line in lines if "\tdevice" in line]
+        return [d.serial for d in self._client.list_devices()]
 
     def is_device_online(self) -> bool:
-        return self.serial in self.devices()
+        try:
+            _ = self.device
+            return True
+        except AdbError:
+            return False
 
+    @retry
     def screenshot_png(self) -> bytes:
         """Capture screenshot via exec-out screencap -p."""
-        return self._run_bytes(["exec-out", "screencap", "-p"], timeout=30)
+        data = self.device.shell(["screencap", "-p"], encoding=None)
+        return data
 
     def screenshot_to_file(self, path: Path) -> Path:
         data = self.screenshot_png()
         path.write_bytes(data)
         return path
 
+    @retry
     def tap(self, x: int, y: int) -> bool:
-        r = self._run(["shell", "input", "tap", str(x), str(y)])
-        return r.returncode == 0
+        self.device.shell(["input", "tap", str(x), str(y)])
+        return True
 
+    @retry
     def swipe(self, x1: int, y1: int, x2: int, y2: int, duration_ms: int = 300) -> bool:
-        r = self._run(["shell", "input", "swipe", str(x1), str(y1), str(x2), str(y2), str(duration_ms)])
-        return r.returncode == 0
+        self.device.shell(["input", "swipe", str(x1), str(y1), str(x2), str(y2), str(duration_ms)])
+        return True
 
+    @retry
     def keyevent(self, keycode: int | str) -> bool:
-        r = self._run(["shell", "input", "keyevent", str(keycode)])
-        return r.returncode == 0
+        self.device.shell(["input", "keyevent", str(keycode)])
+        return True
 
+    @retry
     def input_text(self, text: str) -> bool:
-        # ADB input text only handles ASCII without spaces well
         safe = text.replace(" ", "%s")
-        r = self._run(["shell", "input", "text", safe])
-        return r.returncode == 0
+        self.device.shell(["input", "text", safe])
+        return True
 
-    def shell(self, cmd: str, timeout: int = _DEFAULT_TIMEOUT) -> str:
-        r = self._run(["shell", cmd], timeout=timeout)
-        return r.stdout.strip()
+    @retry
+    def shell(self, cmd: str | list[str], timeout: int = _DEFAULT_TIMEOUT) -> str:
+        if isinstance(cmd, str):
+            result = self.device.shell(cmd, timeout=timeout)
+        else:
+            result = self.device.shell(cmd, timeout=timeout)
+        return result.strip() if isinstance(result, str) else result
 
     def get_state(self) -> str:
-        r = self._run(["get-state"])
-        return r.stdout.strip()
+        try:
+            return "device" if self.is_device_online() else "offline"
+        except Exception:
+            return "unknown"
+
+    def forward(self, local: int, remote: int) -> bool:
+        try:
+            self.device.forward(f"tcp:{local}", f"tcp:{remote}")
+            return True
+        except Exception as e:
+            log.error(f"Forward failed: {e}")
+            return False
+
+    def forward_remove(self, local: int) -> bool:
+        try:
+            self.device.forward_remove(f"tcp:{local}")
+            return True
+        except Exception as e:
+            log.error(f"Forward remove failed: {e}")
+            return False
+
+    def push(self, local_path: Path, remote_path: str) -> bool:
+        try:
+            self.device.sync.push(local_path, remote_path)
+            return True
+        except Exception as e:
+            log.error(f"Push failed: {e}")
+            return False

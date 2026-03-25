@@ -29,9 +29,9 @@ class TransportConfig:
     name: str = "MEmu Player"
     emulator_type: str = "memu"
     adb_serial: str = "127.0.0.1:21513"
-    primary_control: str = "maamcp"
+    primary_control: str = "maatouch"
     preferred_visual: str = "scrcpy"
-    fallback_observation: str = "maamcp_screenshot"
+    fallback_observation: str = "adb_screencap"
     agent_path: str | None = None
     raw: dict[str, Any] = field(default_factory=dict, repr=False)
 

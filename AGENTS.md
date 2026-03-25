@@ -13,12 +13,14 @@ This file is the mandatory starting point.
 | [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md) | Tiered runtime architecture |
 | [north-star.md](/mnt/d/_projects/MasterStateMachine/docs/north-star.md) | Long-horizon goals and desired end-state |
 | [documentation-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/documentation-playbook.md) | How docs are organized and updated |
+| [ALS-overview.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-overview.md) | ALAS: the original automation, how to run it, why we're replacing it |
+| [ALS-live-ops.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-live-ops.md) | Operational rules and vendor patches for running ALAS |
 
 ## Documentation Domains
 
 Only two explicit domains in the docs tree:
 
-- `ALS` — ALAS as reference system, corpus source, and comparison point
+- `ALS` — ALAS: the original automation this project supersedes (still running daily until the runtime replaces it)
 - `RES` — research, synthesis, hypotheses, and technical investigations
 
 These live under:
@@ -48,7 +50,7 @@ For the expanded version, read [repo-index.md](/mnt/d/_projects/MasterStateMachi
 
 | Document | Why It Matters |
 |---|---|
-| [ALS-overview.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-overview.md) | Why ALAS matters and how to use it as reference |
+| [ALS-overview.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-overview.md) | ALAS: the original automation we're superseding, how to run it |
 | [VLM-overview.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-overview.md) | What multimodal models do in this project |
 | [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md) | What the runtime is supposed to own |
 | [substrate-and-implementation-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/substrate-and-implementation-plan.md) | Tool selection decision and implementation steps |

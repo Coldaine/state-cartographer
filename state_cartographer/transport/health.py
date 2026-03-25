@@ -11,11 +11,9 @@ from __future__ import annotations
 
 import logging
 import time
-from pathlib import Path
 
 from state_cartographer.transport.adb import Adb, AdbError
 from state_cartographer.transport.config import TransportConfig
-from state_cartographer.transport.discovery import bootstrap
 from state_cartographer.transport.models import (
     ControlLayerStatus,
     DoctorReport,
@@ -28,22 +26,22 @@ from state_cartographer.transport.models import (
 log = logging.getLogger(__name__)
 
 
-def _preferred_maamcp_ready(cfg: TransportConfig, maamcp_available: bool) -> bool:
-    """Return True only when the preferred Maa path is actually configured."""
-    if cfg.primary_control.lower() != "maamcp":
-        return True
-    if not maamcp_available or not cfg.agent_path:
-        return False
-    return Path(cfg.agent_path).exists()
+def _preferred_control_ready(cfg: TransportConfig) -> bool:
+    """Return True when the preferred input method is available.
+
+    maatouch: binary must exist at the expected local path.
+    adb_input: always available (falls back to adb shell input).
+    """
+    ctrl = cfg.primary_control.lower()
+    if ctrl == "maatouch":
+        from state_cartographer.transport.maatouch import DEFAULT_LOCAL_PATH
+        return DEFAULT_LOCAL_PATH.exists()
+    return True
 
 
 def doctor(cfg: TransportConfig, adb_path: str = "adb") -> DoctorReport:
     """Run readiness checks and produce a doctor report."""
     report = DoctorReport(serial=cfg.serial)
-
-    # Bootstrap check
-    manifest = bootstrap(cfg)
-    report.bootstrap = manifest
 
     # ADB reachability
     adb = Adb(cfg.serial, adb_path)
@@ -61,8 +59,8 @@ def doctor(cfg: TransportConfig, adb_path: str = "adb") -> DoctorReport:
         report.adb_reachable = False
         report.errors.append(f"ADB not reachable: {e}")
 
-    report.maamcp_available = any(t.name == "maamcp" and t.found for t in manifest.tools)
-    report.scrcpy_available = any(t.name == "scrcpy" and t.found for t in manifest.tools)
+    from state_cartographer.transport.maatouch import DEFAULT_LOCAL_PATH
+    report.maatouch_available = DEFAULT_LOCAL_PATH.exists()
 
     if not report.adb_reachable or not report.device_online:
         report.readiness_tier = ReadinessTier.UNREACHABLE
@@ -72,7 +70,7 @@ def doctor(cfg: TransportConfig, adb_path: str = "adb") -> DoctorReport:
         report.verdict = ProbeVerdict.FAIL
         return report
 
-    preferred_ready = _preferred_maamcp_ready(cfg, report.maamcp_available)
+    preferred_ready = _preferred_control_ready(cfg)
 
     report.readiness_tier = ReadinessTier.OPERABLE
     report.transport_layer = TransportLayerStatus.READY
@@ -84,10 +82,6 @@ def doctor(cfg: TransportConfig, adb_path: str = "adb") -> DoctorReport:
         report.readiness_tier = ReadinessTier.DEGRADED
         report.control_layer = ControlLayerStatus.FALLBACK
         report.degradation_codes.append("preferred_stack_missing")
-
-    if cfg.preferred_visual.lower() == "scrcpy" and not report.scrcpy_available:
-        report.readiness_tier = ReadinessTier.DEGRADED
-        report.degradation_codes.append("visual_tool_missing")
 
     report.verdict = ProbeVerdict.PASS
 

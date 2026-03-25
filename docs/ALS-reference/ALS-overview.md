@@ -1,30 +1,82 @@
-# ALS — ALAS Reference System
+# ALS — ALAS: The Original Automation
 
 > Historical note: moved from `docs/alas/ALS-overview.md` during the 2026 documentation realignment.
 
-**Status: Active reference system and corpus source, not the shipped runtime**
+**Status: Active operational automation — runs daily until State Cartographer's runtime supersedes it**
 
-ALAS (AzurLaneAutoScript) is a long-lived automation framework for Azur Lane. In this repo it is not the runtime being built. It is a reference implementation, an operational evidence base, and a source of screenshots, logs, patches, and learned failure cases.
+ALAS (AzurLaneAutoScript) is the original automation framework for Azur Lane. It is a mature, working system that already handles daily tasks, navigation, scheduling, and recovery. **This repo is building its replacement.**
+
+Until State Cartographer ships a working runtime, ALAS is the only automation running. It is not a passive reference — it is the live system that performs the daily loop on the local MEmu emulator.
 
 See also:
-- [ALS-live-ops.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-live-ops.md)
-- [alas-artifacts.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-artifacts.md)
+- [ALS-live-ops.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-live-ops.md) — operational rules for running ALAS
+- [alas-artifacts.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-artifacts.md) — what ALAS-derived artifacts matter
 
-## Role in State Cartographer
+## What ALAS Is
 
-- **Reference implementation**: ALAS already solved page detection, deterministic navigation, scheduling, and recovery for one concrete game.
-- **Corpus source**: ALAS runs can produce screenshots and logs that remain useful for offline analysis and labeling.
-- **Operational prior art**: ALAS exposes real workflow complexity, real failure handling, and real naming conventions.
-- **Not the live control plane**: this repo should not pretend that using ALAS is equivalent to shipping State Cartographer runtime behavior.
+ALAS is a Python automation framework that:
+- Uses **template matching** (OpenCV) for screen state detection
+- Has a full **page/navigation graph** with deterministic goto logic
+- Runs a **task scheduler** that cycles through dailies, commissions, research, OpSi, etc.
+- Handles **recovery**: popups, loading screens, crashes, stuck detection
+- Controls the emulator via **ADB** (screenshots, taps, swipes)
+- Exposes a **web UI** (pywebio + uvicorn) for configuration and monitoring
+
+It has years of operational maturity. It works. The question is not whether ALAS can automate the game — it already does. The question is whether a VLM-driven replacement can do it better: more inspectable, more adaptable, with progressive determinism and structured escalation.
+
+## Why We're Replacing It
+
+ALAS works, but it has fundamental limitations this project aims to overcome:
+- **Template matching is brittle** — asset updates, resolution changes, and UI variations require manual template maintenance
+- **No visual understanding** — ALAS matches pixels, it doesn't comprehend what's on screen
+- **Opaque failure modes** — when ALAS fails, diagnosis requires reading code, not structured context
+- **No progressive learning** — every interaction costs the same whether it's the first time or the thousandth
+- **Escalation is binary** — either it works or "Request human takeover" with minimal context
+
+State Cartographer aims to replace these with VLM-driven state detection, structured event logging, progressive determinism, and decision-ready escalation.
+
+## Role in This Repo
+
+ALAS serves three roles simultaneously:
+
+1. **Active operational system** — it runs the daily automation right now, today, on the local MEmu emulator
+2. **Reference implementation** — its architecture (page graphs, recovery ladders, multi-backend device control) informs how State Cartographer should be built
+3. **Corpus source** — its runs produce screenshots and logs used for offline analysis and VLM training
+
+## Running ALAS
+
+**Location:** `vendor/AzurLaneAutoScript/`
+
+**Entry point:** `python gui.py` from the vendor directory
+
+**Web UI:** `http://localhost:22267` (configurable in `config/deploy.yaml` under `Deploy.Webui`)
+
+**Logs:** `vendor/AzurLaneAutoScript/log/{date}_gui.txt` for the GUI process, `{date}_{config_name}.txt` for task execution
+
+**Healthy startup sequence:**
+```
+START (banner)
+START (banner)                          ← EnableReload spawns a child process
+Launcher config: Host, Port, SSL...
+Webui configs: Theme, Language...
+Started server process [PID]
+Application startup complete.
+```
+
+If you see `[Errno 10048]` on port 22267 — a previous instance is still holding the port. Kill it first.
+
+**Config:** `config/deploy.yaml` controls git, python, ADB, OCR, update, and webui settings. The active game config lives under `config/alas.json` (or whatever config name is selected in the UI).
+
+**Vendor patches:** Three local patches are applied directly in the vendor dir (documented in [ALS-live-ops.md](ALS-live-ops.md)). These are unstaged edits that survive normal use but are wiped by `git submodule update --force`.
 
 ## Why ALAS Matters
 
 ALAS matters because it proves the problem is real and tractable.
 
 It gives the repo:
+- a **working baseline** to run while the replacement is built
 - mature operational prior art
-- real workflow complexity
-- real recovery patterns
+- real workflow complexity and recovery patterns
 - a concrete target for comparison
 - evidence about what breaks in live automation, not just what looks clean on paper
 

@@ -41,3 +41,7 @@ data/raw_stream/
 data/corpus/
 data/backups/
 tmp/
+# Windows leftover from shell redirects
+nul
+# Test artifacts
+data/test_cap.png

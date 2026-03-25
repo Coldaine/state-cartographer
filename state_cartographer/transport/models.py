@@ -96,9 +96,7 @@ class DoctorReport:
     serial: str = ""
     adb_reachable: bool = False
     device_online: bool = False
-    maamcp_available: bool = False
-    scrcpy_available: bool = False
-    bootstrap: BootstrapManifest | None = None
+    maatouch_available: bool = False
     errors: list[str] = field(default_factory=list)
     verdict: ProbeVerdict = ProbeVerdict.FAIL
 
@@ -109,8 +107,6 @@ class DoctorReport:
         d["control_layer"] = self.control_layer.value
         d["observation_layer"] = self.observation_layer.value
         d["verdict"] = self.verdict.value
-        if self.bootstrap:
-            d["bootstrap"] = self.bootstrap.to_dict()
         return d
 
     def to_json(self) -> str:
