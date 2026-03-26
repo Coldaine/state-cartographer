@@ -58,3 +58,5 @@ data/mis_*.png
 data/stress_test/
 data/test_raw.bin
 .vscode/
+# Dead ALAS copy — broken imports, never used
+state_cartographer/base/

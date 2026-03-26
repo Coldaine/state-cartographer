@@ -9,7 +9,7 @@ This file is the mandatory starting point.
 | [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md) | Current truth, active work, blockers |
 | [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/repo-index.md) | Exhaustive repo map |
 | [architecture-overview.md](/mnt/d/_projects/MasterStateMachine/docs/architecture-overview.md) | How the repo is organized |
-| [substrate-and-implementation-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/substrate-and-implementation-plan.md) | What control tools we use and how to build on them |
+| [decisions.md](/mnt/d/_projects/MasterStateMachine/docs/decisions.md) | Decision log: Vulkan, pull architecture, capture deferral |
 | [multi-tier-runtime-implementation-plan-2026-03-24.md](/mnt/d/_projects/MasterStateMachine/docs/plans/multi-tier-runtime-implementation-plan-2026-03-24.md) | Tiered runtime architecture |
 | [north-star.md](/mnt/d/_projects/MasterStateMachine/docs/north-star.md) | Long-horizon goals and desired end-state |
 | [documentation-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/documentation-playbook.md) | How docs are organized and updated |
@@ -35,13 +35,12 @@ For the docs-only map, read [docs/AGENTS.md](/mnt/d/_projects/MasterStateMachine
 
 | Path | Purpose |
 |---|---|
-| `vendor/` | External reference code (ALAS, scrcpy) |
+| `vendor/` | External reference code (ALAS) |
 | `data/` | Corpora, logs, screenshots, labels, truth artifacts |
 | `docs/` | Agent knowledge layer |
-| `scripts/` | Active scripts (corpus_cleanup, kimi_review, vlm_detector) |
+| `scripts/` | Active scripts (corpus_cleanup, kimi_review, vlm_detector, stress_test_adb) |
 | `state_cartographer/` | Python package: transport substrate (adb, maatouch, capture, health, models, pilot facade) |
 | `tests/` | Automated tests (transport unit tests + live smoke tests) |
-| `examples/` | Reference/example artifacts |
 | `configs/` | Project configuration (emulator serial, tool posture) |
 
 For the expanded version, read [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/repo-index.md).

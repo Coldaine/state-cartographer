@@ -14,12 +14,10 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 | `configs/` | Project configuration (emulator serial, tool posture) |
 | `data/` | Screenshots, logs, labels, corpora, working artifacts |
 | `docs/` | Project knowledge layer |
-| `examples/` | Example/reference artifacts |
-| `hooks/` | Hook-related code |
 | `scripts/` | Active script surface |
 | `state_cartographer/` | Python package: transport layer and future runtime |
 | `tests/` | Automated tests |
-| `vendor/` | External reference code (ALAS, scrcpy) |
+| `vendor/` | External reference code (ALAS) |
 
 ## Docs Map
 
@@ -31,6 +29,7 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 | `docs/architecture-overview.md` | Organizing logic |
 | `docs/repo-index.md` | This file — exhaustive repo map |
 | `docs/documentation-playbook.md` | Doc workflow rules |
+| `docs/decisions.md` | Decision log with rationale |
 | `docs/ALS-reference/` | ALAS reference-system knowledge |
 | `docs/RES-research/` | Research notes and synthesis |
 | `docs/memory/` | Dated lessons learned |
@@ -46,14 +45,7 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 
 | Plan | What It Decides |
 |---|---|
-| `plans/substrate-and-implementation-plan.md` | What control tools we use (adbutils + MaaTouch) and how to build on them |
 | `plans/multi-tier-runtime-implementation-plan-2026-03-24.md` | Tiered runtime architecture (Tier 2 VLM baseline, Tier 1 cache, Tier 3 teacher) |
-
-## Deferred / Draft Plans
-
-| Plan | What It Covers |
-|---|---|
-| `plans/host-capture-shim-plan.md` | Parked fallback capture proposal (DXcam / PrintWindow); not current direction unless capture telemetry justifies it |
 
 ## Active Script Surface
 
@@ -62,16 +54,11 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 | `scripts/corpus_cleanup.py` | Corpus hygiene: duplicate clustering, black-frame cleanup |
 | `scripts/kimi_review.py` | Cheap Kimi-backed screenshot review |
 | `scripts/vlm_detector.py` | VLM-backed offline detection and labeling |
-
-## Support / Probe Surface
-
-| File | Purpose |
-|---|---|
-| `scripts/scrcpy_client_worker.py` | scrcpy helper/probe wrapper for debug capture and inspection |
+| `scripts/stress_test_adb.py` | ADB screencap stress test and validation |
 
 ## Transport Package
 
-`state_cartographer/transport/` now contains the adbutils+MaaTouch implementation:
+`state_cartographer/transport/` — adbutils + MaaTouch implementation:
 
 | File | Purpose |
 |---|---|
@@ -82,16 +69,11 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 | `config.py` | Transport configuration loading |
 | `models.py` | Data models for reports and status |
 | `health.py` | Readiness checks and recovery |
-| `artifacts.py` | Event persistence |
-| `scrcpy_probe.py` | scrcpy coexistence verification |
-
-Legacy `maamcp.py` and `discovery.py` are not present in the current transport package tree.
-
-See [substrate-and-implementation-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/substrate-and-implementation-plan.md) for implementation steps.
+| `pilot.py` | Unified facade (recommended entry point) |
 
 ## Data Surface
 
-`data/` holds truth artifacts, corpora, screenshots, logs. Preserve by default.
+`data/` holds truth artifacts, corpora, screenshots, logs. Most subdirectories are gitignored (events, stress_test, raw_stream). Preserve committed files by default.
 
 ## Reference Code Surface
 
@@ -99,7 +81,7 @@ See [substrate-and-implementation-plan.md](/mnt/d/_projects/MasterStateMachine/d
 
 ## Test Surface
 
-`tests/` — transport and runtime tests are present and are still being expanded alongside the transport/runtime rebuild.
+`tests/` — transport tests (unit + live smoke tests).
 
 ## Practical Rule
 

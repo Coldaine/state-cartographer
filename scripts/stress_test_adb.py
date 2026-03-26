@@ -32,9 +32,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scripts.vlm_detector import VLMClient, detect_page
 from state_cartographer.transport.adb import Adb, AdbError
-from state_cartographer.transport.capture import Capture
 
-SERIAL = "127.0.0.1:21513"
+SERIAL = "127.0.0.1:21503"
 VLM_BASE_URL = "http://localhost:18900/v1"
 VLM_MODEL = "local-vlm"
 
@@ -80,7 +79,7 @@ def analyze_with_vlm(image_path: Path, client: VLMClient) -> dict:
     return result
 
 
-def stress_test_burst(adb: Adb, capture: Capture, count: int, output_dir: Path) -> dict:
+def stress_test_burst(adb: Adb, count: int, output_dir: Path) -> dict:
     """Capture N screenshots in rapid succession."""
     output_dir.mkdir(parents=True, exist_ok=True)
     results = []
@@ -88,7 +87,7 @@ def stress_test_burst(adb: Adb, capture: Capture, count: int, output_dir: Path) 
 
     for i in range(count):
         try:
-            data = capture.screenshot_png()
+            data = adb.screenshot_png()
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
             path = output_dir / f"burst_{timestamp}_{i:03d}.png"
             path.write_bytes(data)
@@ -126,7 +125,7 @@ def stress_test_burst(adb: Adb, capture: Capture, count: int, output_dir: Path) 
     }
 
 
-def stress_test_timed(adb: Adb, capture: Capture, interval_ms: int, duration_s: int, output_dir: Path) -> dict:
+def stress_test_timed(adb: Adb, interval_ms: int, duration_s: int, output_dir: Path) -> dict:
     """Capture screenshots at fixed intervals."""
     output_dir.mkdir(parents=True, exist_ok=True)
     results = []
@@ -136,7 +135,7 @@ def stress_test_timed(adb: Adb, capture: Capture, interval_ms: int, duration_s: 
     count = 0
     while time.time() - start < duration_s:
         try:
-            data = capture.screenshot_png()
+            data = adb.screenshot_png()
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
             path = output_dir / f"timed_{timestamp}_{count:03d}.png"
             path.write_bytes(data)
@@ -179,14 +178,14 @@ def stress_test_timed(adb: Adb, capture: Capture, interval_ms: int, duration_s: 
     }
 
 
-def stress_test_vlm_evaluation(capture: Capture, output_dir: Path, vlm_client: VLMClient) -> dict:
+def stress_test_vlm_evaluation(adb: Adb, output_dir: Path, vlm_client: VLMClient) -> dict:
     """Capture screenshots and evaluate with VLM."""
     output_dir.mkdir(parents=True, exist_ok=True)
     results = []
 
     for i in range(20):
         try:
-            data = capture.screenshot_png()
+            data = adb.screenshot_png()
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
             path = output_dir / f"vlm_{timestamp}_{i:03d}.png"
             path.write_bytes(data)
@@ -261,7 +260,6 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         adb = Adb(serial=args.serial)
-        capture = Capture(adb)
         print(f"Connected to {args.serial}")
     except AdbError as e:
         print(f"ADB connection failed: {e}")
@@ -269,30 +267,30 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.burst:
         print(f"Running burst test: {args.count} captures")
-        results["burst"] = stress_test_burst(adb, capture, args.count, output_dir / "burst")
+        results["burst"] = stress_test_burst(adb, args.count, output_dir / "burst")
         print(f"Burst complete: {results['burst']['failure_rate'] * 100:.1f}% failure rate")
 
     if args.timed:
         print(f"Running timed test: {args.interval}ms interval, {args.duration}s duration")
-        results["timed"] = stress_test_timed(adb, capture, args.interval, args.duration, output_dir / "timed")
+        results["timed"] = stress_test_timed(adb, args.interval, args.duration, output_dir / "timed")
         print(f"Timed complete: {results['timed']['failure_rate'] * 100:.1f}% failure rate")
 
     if args.vlm:
         print("Running VLM evaluation test")
         vlm_client = VLMClient(base_url=args.vlm_url, model=args.vlm_model)
-        results["vlm"] = stress_test_vlm_evaluation(capture, output_dir / "vlm", vlm_client)
+        results["vlm"] = stress_test_vlm_evaluation(adb, output_dir / "vlm", vlm_client)
         print("VLM evaluation complete")
 
     if not (args.burst or args.timed or args.vlm):
         print("Running all tests")
-        results["burst"] = stress_test_burst(adb, capture, args.count, output_dir / "burst")
+        results["burst"] = stress_test_burst(adb, args.count, output_dir / "burst")
         print(f"Burst: {results['burst']['failure_rate'] * 100:.1f}% failure rate")
 
-        results["timed"] = stress_test_timed(adb, capture, args.interval, args.duration, output_dir / "timed")
+        results["timed"] = stress_test_timed(adb, args.interval, args.duration, output_dir / "timed")
         print(f"Timed: {results['timed']['failure_rate'] * 100:.1f}% failure rate")
 
         vlm_client = VLMClient(base_url=args.vlm_url, model=args.vlm_model)
-        results["vlm"] = stress_test_vlm_evaluation(capture, output_dir / "vlm", vlm_client)
+        results["vlm"] = stress_test_vlm_evaluation(adb, output_dir / "vlm", vlm_client)
         print("VLM evaluation complete")
 
     def _json_default(obj):
