@@ -10,7 +10,7 @@ Thin tracker. Current truth only.
 - ADB screencap on Vulkan: ~1MB/frame, ~7.6 FPS, rock solid
 - OpenGL screencap was broken (0 bytes). DirectX won't launch Azur Lane. **Vulkan is the answer.**
 - MaaFramework as primary capture is NO LONGER NEEDED — plain ADB screencap works
-- Frame ring buffer designed and implemented: `state_cartographer/base/frame_ring.py`
+- Frame ring buffer design exists; implementation is still pending (`docs/RES-research/RES-frame-ring-design.md`)
 - Stress test proven: `scripts/stress_test_adb.py`
 - Research docs complete: `docs/RES-research/RES-adb-screencap-fps-analysis.md`, `RES-frame-ring-design.md`
 
@@ -46,7 +46,7 @@ Thin tracker. Current truth only.
 
 ## See Also
 
-- stress test results: `data/stress_test/vulkan_run1/`
+- stress test results (local-only, not committed): `data/stress_test/vulkan_run1/`
 - FPS analysis: [RES-adb-screencap-fps-analysis.md](RES-research/RES-adb-screencap-fps-analysis.md)
 - frame ring design: [RES-frame-ring-design.md](RES-research/RES-frame-ring-design.md)
 - pipeline plan: [memu-transport-pipeline.md](plans/memu-transport-pipeline.md) (capture order updated)

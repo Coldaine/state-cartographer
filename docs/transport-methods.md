@@ -6,37 +6,32 @@ Single source of truth for all capture and input methods. Updated as we learn.
 
 | Method | How It Works | Status | Notes |
 |--------|-------------|--------|-------|
-| **ADB screencap** | Reads `/dev/graphics/fb0` framebuffer | ❌ BROKEN on MEmu OpenGL | Returns 0 bytes when GPU emulation enabled |
-| **MaaFramework screenshot** | Uses MAA's internal capture path (not framebuffer) | ✅ WORKS | 100-140ms per capture, proven 2026-03-25 |
-| **DroidCast** | SurfaceFlinger API via HTTP server APK | ⚠️ UNTESTED | APK exists in vendor, needs integration |
-| **DroidCast_raw** | Raw RGB565 via HTTP | ⚠️ UNTESTED | Same as above but raw bitmap |
-| **scrcpy stream** | MediaCodec encoder via video stream | ⚠️ UNTESTED | Need to decode H.264 frame |
-| **aScreenCap** | Custom binary with LZ4 compression | ⚠️ UNTESTED | Binary exists in vendor/bin/ascreencap/ |
-| **nemu_ipc** | MEmu shared memory via DLL | ⚠️ UNTESTED | MEmu-specific, MuMu12 only |
-| **ldopengl** | LDPlayer OpenGL capture | ❌ REJECTED | LDPlayer-specific |
-| **Win32 PrintWindow** | Host-side window capture | ⚠️ UNTESTED | Last resort fallback |
+| **ADB screencap** | Reads framebuffer via `screencap` binary | **PRIMARY** | 100% reliable on Vulkan. ~132ms/call, ~1MB/frame. Stress tested: 316 frames, 0 failures. |
+| **MaaFramework screenshot** | Uses MAA's internal capture path (not framebuffer) | Fallback only | 100-140ms per capture. Demoted after Vulkan solved the screencap problem. |
+| **DroidCast** | SurfaceFlinger API via HTTP server APK | Deferred | APK exists in vendor, needs integration |
+| **DroidCast_raw** | Raw RGB565 via HTTP | Deferred | Same as above but raw bitmap |
+| **scrcpy stream** | MediaCodec encoder via video stream | Deferred | Need to decode H.264 frame |
+| **aScreenCap** | Custom binary with LZ4 compression | Deferred | Binary exists in vendor/bin/ascreencap/ |
+| **nemu_ipc** | MEmu shared memory via DLL | Deferred | MEmu-specific, MuMu12 only |
+| **Win32 PrintWindow** | Host-side window capture | Last resort | Deferred indefinitely unless telemetry justifies |
 
-### Research Findings (2026-03-25)
+### Why Vulkan Matters
 
-**Why ADB screencap fails on MEmu OpenGL:**
-- MEmu with `-gpu on` (OpenGL) bypasses the framebuffer
-- Rendering goes directly to GPU, framebuffer contains stale/empty data
-- Docs state: "When GPU emulation is enabled, the framebuffer will typically only be used during boot"
-- Sometimes works (race condition with double buffering) — explains mixed results
+- **OpenGL:** ADB screencap returns 0 bytes — MEmu bypasses framebuffer when GPU emulation enabled
+- **DirectX:** Azur Lane won't launch (stuck at 59%, GLES→DX translation breaks Unity shaders)
+- **Vulkan:** Game runs perfectly, ADB screencap returns valid frames 100% of the time
 
-**Why MaaFramework works:**
-- Uses different capture path than direct framebuffer read
-- Not affected by OpenGL framebuffer bypass
+See `docs/decisions.md` for the full decision record and evidence.
 
 ## Input/Touch Methods
 
 | Method | How It Works | Status | Notes |
 |--------|-------------|--------|-------|
-| **ADB input** | `adb shell input tap/swipe` | ✅ WORKS | Basic, slow (~100ms latency) |
-| **MaaTouch** | Precision touch protocol via socket | ✅ WORKS | Fast, low latency, needs binary deployed |
-| **minitouch** | minitouch protocol | ⚠️ UNTESTED | Similar to MaaTouch |
-| **Hermit** | Hermit framework | ❌ REJECTED | Different emulator |
-| **uiautomator2** | UI Automator 2 | ❌ BROKEN | Doesn't work on Unity games |
+| **ADB input** | `adb shell input tap/swipe` | Fallback | Basic, slow (~100ms latency) |
+| **MaaTouch** | Precision touch protocol via socket | **PRIMARY** | Fast, low latency, needs binary deployed |
+| **minitouch** | minitouch protocol | Deferred | Similar to MaaTouch |
+| **Hermit** | Hermit framework | Rejected | Different emulator |
+| **uiautomator2** | UI Automator 2 | Rejected | Doesn't work on Unity games |
 
 ### MaaTouch Notes
 
@@ -48,14 +43,11 @@ Single source of truth for all capture and input methods. Updated as we learn.
 ## Method Selection Logic
 
 ```
-1. Try MaaFramework screenshot (primary capture)
-2. If fails → try ADB screencap
-3. If fails → try DroidCast
-4. If fails → try scrcpy stream
-5. If fails → Win32 PrintWindow (last resort)
-
-Input always: MaaTouch > ADB input fallback
+Capture: ADB screencap (Vulkan) — single method, no fallback chain needed
+Input:   MaaTouch > ADB input fallback
 ```
+
+The 5-method CaptureManager fallback chain was designed for the OpenGL era when screencap was broken. Vulkan eliminates that problem. Fallback methods are retained in this doc for reference but are not part of the current architecture.
 
 ## Unknowns / Need Testing
 
@@ -71,14 +63,15 @@ Input always: MaaTouch > ADB input fallback
 
 From `docs/memory/2026-03-25-memu-transport-probe-results.md`:
 
-- ✅ ADB shell commands work
-- ✅ MaaAdapter screenshot works (100-140ms)
-- ✅ tap, swipe, key, text via ADB
-- ✅ scrcpy attaches for debug viewing
-- ✅ Reconnection works
+- ADB shell commands work
+- tap, swipe, key, text via ADB
+- scrcpy attaches for debug viewing
+- Reconnection works
+- ADB screencap on Vulkan: 316 frames, 0 failures, 0 black frames, 0 corruption
 
 ## See Also
 
+- Vulkan decision: `docs/decisions.md`
 - Pipeline plan: `docs/plans/memu-transport-pipeline.md`
 - Substrate decision: `docs/plans/substrate-and-implementation-plan.md`
 - Probe results: `docs/memory/2026-03-25-memu-transport-probe-results.md`

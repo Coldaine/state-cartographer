@@ -1,13 +1,17 @@
-# Plan: MEmu Transport Pipeline with Multi-Method Capture
+# Plan: MEmu Transport Pipeline
+
+> **Superseded by Vulkan decision (2026-03-25).**
+> This plan was written when ADB screencap was broken on OpenGL and a multi-method fallback chain was necessary. Switching MEmu to Vulkan rendering makes ADB screencap 100% reliable, eliminating the need for the CaptureManager fallback chain. See `docs/decisions.md` for the full decision and evidence.
+>
+> The emulator daemon, health check, and telemetry components below remain valid. The multi-method capture manager is simplified to ADB screencap only. See `docs/transport-methods.md` for the current method selection logic.
 
 ## Goal
 
 Build a robust transport pipeline that:
 1. Monitors emulator state (MEmu daemon)
 2. Verifies connectivity before attempting capture
-3. Uses multi-method fallback (screencap → DroidCast → scrcpy → Win32 capture)
-4. Has a backup host-side vision capture as last resort
-5. Can launch MEmu with admin privileges when needed
+3. Uses ADB screencap as primary capture (Vulkan makes this 100% reliable)
+4. Can launch MEmu with admin privileges when needed
 
 ## Architecture
 
@@ -35,18 +39,7 @@ Build a robust transport pipeline that:
 │                              │                                         │
 │                              ▼                                         │
 │  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │ 3. CAPTURE MANAGER (Multi-Method Fallback)                     │   │
-│  │                                                                 │   │
-│  │    Method 1: MaaFramework screenshot ← PRIMARY (proven to work) │   │
-│  │      ↓ fails                                                    │   │
-│  │    Method 2: ADB screencap                                     │   │
-│  │      ↓ fails (0 bytes or black)                                 │   │
-│  │    Method 3: DroidCast_raw APK                                │   │
-│  │      ↓ fails (connection error)                                 │   │
-│  │    Method 4: scrcpy stream (decode frame)                     │   │
-│  │      ↓ fails (stream error)                                     │   │
-│  │    Method 5: Win32 PrintWindow (host-side) ← LAST RESORT       │   │
-│  │                                                                 │   │
+│  │ 3. CAPTURE (ADB screencap on Vulkan — 100% reliable)            │   │
 │  └─────────────────────────────────────────────────────────────────┘   │
 │                              │                                         │
 │                              ▼                                         │
@@ -68,88 +61,23 @@ Build a robust transport pipeline that:
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Critical Finding (2026-03-25)
+## Critical Finding (2026-03-25): Vulkan Solves Capture
 
-From probe results (`docs/memory/2026-03-25-memu-transport-probe-results.md`):
+The original blocker was specific to MEmu OpenGL. Once MEmu is configured for Vulkan, plain ADB screencap becomes reliable enough to serve as the primary capture path.
 
-> "MaaAdapter succeeded via ADB fallback"
-> "repeated screenshot capture passed"
-> "three captures succeeded at 1280x720"
-> "observed capture times were about 100-140 ms"
+From the probe and stress-test evidence:
 
-**MaaFramework screenshot capture WORKS on MEmu.** ADB screencap is broken, but MaaFramework's screenshot (which uses a different capture path internally) succeeds. This was proven YESTERDAY but we lost track of it.
+- On **OpenGL**, ADB screencap can return empty or stale frames
+- On **Vulkan**, ADB screencap produced 316/316 good frames with zero failures, black frames, or corruption
+- MaaFramework remains a useful reference and possible fallback, but it is no longer the architectural center
 
-**Capture order should be:**
-1. **MaaFramework** (proven to work, 100-140ms)
-2. ADB screencap (broken on OpenGL)
-3. DroidCast (needs integration)
-4. scrcpy (debug only per probe)
-5. Win32 PrintWindow (last resort)
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         TRANSPORT PIPELINE                              │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │ 1. EMULATOR DAEMON                                              │   │
-│  │    - Monitor MEmu process state                                 │   │
-│  │    - Auto-launch MEmu if not running                            │   │
-│  │    - Request admin elevation when needed                         │   │
-│  │    - Track emulator serial, port, render mode (OpenGL/DX)      │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-│                              │                                         │
-│                              ▼                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │ 2. HEALTH CHECK                                                │   │
-│  │    - Is ADB daemon running?                                     │   │
-│  │    - Is emulator accessible? (verify serial)                    │   │
-│  │    - Is game running? (check package)                           │   │
-│  │    - Network ADB enabled? (port 5555)                           │   │
-│  │    - Rendering mode known? (OpenGL/DirectX/Vulkan)              │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-│                              │                                         │
-│                              ▼                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │ 3. CAPTURE MANAGER (Multi-Method Fallback)                     │   │
-│  │                                                                 │   │
-│  │    Method 1: ADB screencap                                     │   │
-│  │      ↓ fails (0 bytes or black)                                 │   │
-│  │    Method 2: DroidCast_raw APK                                │   │
-│  │      ↓ fails (connection error)                                 │   │
-│  │    Method 3: scrcpy stream (decode frame)                      │   │
-│  │      ↓ fails (stream error)                                     │   │
-│  │    Method 4: Win32 PrintWindow (host-side) ← LAST RESORT       │   │
-│  │                                                                 │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-│                              │                                         │
-│                              ▼                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │ 4. CAPTURE VERIFICATION                                         │   │
-│  │    - Verify non-zero bytes                                      │   │
-│  │    - Verify valid PNG header                                    │   │
-│  │    - Pixel analysis: black frame detection                       │   │
-│  │    - Retry N times with small delays before declaring failure    │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-│                              │                                         │
-│                              ▼                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │ 5. LOGGING / TELEMETRY                                          │   │
-│  │    - Every attempt logged with: timestamp, method, result       │   │
-│  │    - Failure modes categorized                                   │   │
-│  │    - Correlation data for analysis                              │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+**Current capture order:**
+1. **ADB screencap** on Vulkan
+2. MaaFramework only if Vulkan assumptions are violated or later telemetry proves a gap
 
-## Why Sometimes Works, Sometimes Doesn't
+## Historical Note
 
-| Factor | Explanation |
-|--------|-------------|
-| **Double buffering timing** | Race condition — sometimes front buffer has valid content |
-| **Game state varies** | Menus vs battles vs cutscenes use different rendering paths |
-| **UI overlay compositing** | Small 3KB frames = system chrome without game content |
-| **Warmup phase** | Early session may sync framebuffer before OpenGL fully takes over |
-| **Hybrid rendering** | MEmu sometimes maintains software framebuffer alongside OpenGL |
-
-**Solution:** The retry-with-fallback pattern, not a single capture attempt.
+This document originally centered on a multi-method CaptureManager because the repo was still operating under OpenGL-era assumptions. Keep those archived ideas as reference only. The active architecture is documented in `docs/transport-methods.md` and `docs/decisions.md`.
 
 ## Component Specifications
 
@@ -208,7 +136,13 @@ def health_check(adb: Adb, serial: str, package: str) -> HealthReport:
     pass
 ```
 
-### 3. Capture Manager with Fallback
+### 3. Capture (Simplified — Vulkan)
+
+> The multi-method CaptureManager was designed for the OpenGL era. On Vulkan, ADB screencap is 100% reliable. The existing `state_cartographer/transport/capture.py` handles this with no fallback chain needed.
+
+See `docs/transport-methods.md` for the current capture architecture.
+
+### ~~3. Capture Manager with Fallback~~ (Archived — OpenGL era)
 
 ```python
 class CaptureManager:
@@ -349,12 +283,10 @@ def printwindow(hwnd: int) -> bytes | None:
 3. Detect render mode (OpenGL/DirectX/Vulkan)
 4. Verify game package presence
 
-### Phase 3: Capture Manager
-1. Create `state_cartographer/transport/capture_manager.py`
-2. Implement screencap with retry
-3. Implement DroidCast integration
-4. Implement scrcpy frame extraction
-5. Implement Win32 PrintWindow fallback
+### Phase 3: Capture (already exists)
+1. `state_cartographer/transport/capture.py` — ADB screencap on Vulkan
+2. Capture verification (black frame detection) in `scripts/stress_test_adb.py`
+3. Multi-method fallback chain — deferred (see `docs/transport-methods.md`)
 
 ### Phase 4: Integration
 1. Update `state_cartographer/transport/__init__.py`
@@ -393,10 +325,10 @@ state_cartographer/
 │   ├── __init__.py
 │   └── emulator.py          # NEW: EmulatorDaemon
 ├── transport/
-│   ├── health.py             # NEW: HealthCheck
-│   ├── capture_manager.py    # NEW: Multi-method CaptureManager
-│   ├── adb.py               # MODIFY: Add health check methods
-│   └── pilot.py             # MODIFY: Wire in CaptureManager
+│   ├── health.py             # DONE: HealthCheck
+│   ├── capture.py            # DONE: ADB screencap
+│   ├── adb.py                # DONE: adbutils wrapper
+│   └── pilot.py             # MODIFY: Wire observation layer
 ```
 
 ## Testing
@@ -410,8 +342,8 @@ print(d.get_state())
 "
 
 # Test health check
-uv run python scripts/health_check.py --serial 127.0.0.1:21503
+uv run python -m state_cartographer.transport.health --serial 127.0.0.1:21513
 
-# Test capture with fallback
-uv run python scripts/test_capture.py --burst --count 10
+# Test capture (stress test)
+uv run python scripts/stress_test_adb.py --burst --count 10
 ```

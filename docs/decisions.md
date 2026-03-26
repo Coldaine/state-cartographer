@@ -12,7 +12,7 @@
 **Evidence:**
 - Stress test: 316 frames (50 burst + 266 timed over 2 minutes), zero failures, zero black frames, zero corruption
 - Frame sizes: 493KB–1529KB (real game content, not black/white/empty)
-- Data: `data/stress_test/vulkan_run1/report_20260325_223419.json`
+- Data (local-only, not committed; see summary above): `data/stress_test/vulkan_run1/report_20260325_223419.json`
 
 **Impact:**
 - MaaFramework demoted from "primary capture" to "optional fallback"

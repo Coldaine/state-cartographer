@@ -1,8 +1,8 @@
 # RES: Frame Ring Buffer Design
 
 **Date:** 2026-03-25
-**Status:** Implemented
-**Implementation:** `state_cartographer/base/frame_ring.py`
+**Status:** Proposed
+**Implementation target:** `state_cartographer/transport/frame_ring.py` (or future observation-layer package)
 
 ## Problem
 
