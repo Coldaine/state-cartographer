@@ -69,7 +69,6 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 | `config.py` | Transport configuration loading |
 | `models.py` | Data models for reports and status |
 | `health.py` | Readiness checks and recovery |
-| `artifacts.py` | Event persistence |
 | `pilot.py` | Unified facade (recommended entry point) |
 
 ## Data Surface
