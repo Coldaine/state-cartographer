@@ -1,8 +1,8 @@
 # RES: Frame Ring Buffer Design
 
 **Date:** 2026-03-25
-**Status:** Proposed
-**Implementation target:** `state_cartographer/transport/frame_ring.py` (or future observation-layer package)
+**Status:** Deferred (2026-03-26) — Vulkan eliminated the capture failure mode this was designed for. Design is shelf-ready; revisit if ADB screencap starts failing again. See `docs/decisions.md`.
+**Implementation target:** `state_cartographer/transport/frame_ring.py` (if/when needed)
 
 ## Problem
 

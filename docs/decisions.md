@@ -1,5 +1,32 @@
 # Decision Log
 
+## 2026-03-26: Defer capture engineering — Vulkan eliminated the need
+
+**Decision:** Defer FrameRing, ring buffer, capture thread, and all further capture-side engineering until real problems arise. Use synchronous `adb.screenshot_png()` directly.
+
+**Context:**
+- FrameRing (ring buffer + background capture thread) was designed to handle black frames, capture failures, and decoupled VLM consumption
+- Vulkan rendering eliminated the failure mode entirely: 316/316 frames, 0 failures, 0 black frames
+- Synchronous ADB screencap at ~7.6 FPS is fast enough — game state transitions take 200-500ms
+- The FrameRing design is valid research but solves a problem that no longer exists
+- Building it now would be over-engineering against a hypothetical
+
+**What is deferred:**
+- FrameRing implementation (`state_cartographer/transport/frame_ring.py`)
+- Background capture thread
+- Half-res BGRA ring buffer
+- Anomaly pre-roll deque
+- Host-side capture shim (DXcam/PrintWindow)
+- MaaFramework as capture fallback
+
+**What remains ready if needed:**
+- Design doc: `docs/RES-research/RES-frame-ring-design.md` (benchmarks, API, architecture all documented)
+- Stress test: `scripts/stress_test_adb.py` (can re-validate at any time)
+
+**Trigger to revisit:** If ADB screencap starts failing again (renderer change, emulator update, new device), revisit FrameRing. The design is shelf-ready.
+
+---
+
 ## 2026-03-25: Vulkan rendering mode is the substrate answer
 
 **Decision:** Switch MEmu to Vulkan rendering. ADB screencap becomes the primary (and likely only) capture method needed.

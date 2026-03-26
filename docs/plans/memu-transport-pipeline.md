@@ -283,10 +283,11 @@ def printwindow(hwnd: int) -> bytes | None:
 3. Detect render mode (OpenGL/DirectX/Vulkan)
 4. Verify game package presence
 
-### Phase 3: Capture (already exists)
-1. `state_cartographer/transport/capture.py` — ADB screencap on Vulkan
+### Phase 3: Capture (done — further engineering deferred)
+1. `state_cartographer/transport/capture.py` — ADB screencap on Vulkan, synchronous, sufficient
 2. Capture verification (black frame detection) in `scripts/stress_test_adb.py`
-3. Multi-method fallback chain — deferred (see `docs/transport-methods.md`)
+3. FrameRing / ring buffer / capture thread — deferred 2026-03-26 (Vulkan eliminated the failure mode). Design in `docs/RES-research/RES-frame-ring-design.md` if needed later.
+4. Multi-method fallback chain — deferred (see `docs/transport-methods.md`)
 
 ### Phase 4: Integration
 1. Update `state_cartographer/transport/__init__.py`

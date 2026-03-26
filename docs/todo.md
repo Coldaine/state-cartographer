@@ -4,15 +4,9 @@ Thin tracker. Current truth only.
 
 ## Now
 
-- Branch: `next-steps`
-- **VULKAN SOLVES EVERYTHING** — switching MEmu to Vulkan rendering makes ADB screencap 100% reliable
-- Proven 2026-03-25: 316 frames, 0 failures, 0 black frames, 0 corruption
-- ADB screencap on Vulkan: ~1MB/frame, ~7.6 FPS, rock solid
-- OpenGL screencap was broken (0 bytes). DirectX won't launch Azur Lane. **Vulkan is the answer.**
-- MaaFramework as primary capture is NO LONGER NEEDED — plain ADB screencap works
-- Frame ring buffer design exists; implementation is still pending (`docs/RES-research/RES-frame-ring-design.md`)
-- Stress test proven: `scripts/stress_test_adb.py`
-- Research docs complete: `docs/RES-research/RES-adb-screencap-fps-analysis.md`, `RES-frame-ring-design.md`
+- **Transport layer is done.** Vulkan + ADB screencap is 100% reliable. MaaTouch handles input. Pilot facade unifies both.
+- Capture engineering is deferred — synchronous `adb.screenshot_png()` is sufficient until proven otherwise (see `docs/decisions.md`, 2026-03-26)
+- Next work is on the **runtime and VLM side** — what to do with the screenshots, not how to get them
 
 ## Next
 
@@ -20,10 +14,10 @@ Thin tracker. Current truth only.
 2. ~~**Step 2:** Add MaaTouch support~~ ✅ DONE
 3. ~~**Step 3:** Add screenshot methods~~ ✅ SOLVED — Vulkan + ADB screencap = 100% reliable
 4. ~~**Step 4:** Run `pip install -e .` to install adbutils~~ ✅ DONE
-5. **Step 5:** Build FrameRing-backed observation layer (ring buffer + capture thread)
-6. **Step 6:** Wire VLM classification on top of FrameRing (local llama-swap + KIMI spot-check)
-7. **Step 7:** Build Tier 2 VLM grounding loop (observe-act-observe on real device)
-8. **Step 8:** Clean up dead code paths that existed only to work around OpenGL capture failure
+5. ~~**Step 5:** Build FrameRing-backed observation layer~~ ⏸️ DEFERRED — Vulkan eliminated the failure mode this solved
+6. **Step 5 (new):** Wire VLM page classification using synchronous capture (local llama-swap + KIMI spot-check)
+7. **Step 6:** Build Tier 2 VLM grounding loop (observe-act-observe on real device)
+8. **Step 7:** Clean up dead code paths that existed only to work around OpenGL capture failure
 
 ## Blockers
 
@@ -39,6 +33,7 @@ Thin tracker. Current truth only.
 
 ## Deferred
 
+- FrameRing / ring buffer / capture thread — Vulkan eliminated the failure mode; design is shelf-ready in `docs/RES-research/RES-frame-ring-design.md`
 - MaaFramework / MaaMCP — fallback only, not primary
 - Host-side capture (DXcam/PrintWindow) — fallback only, not primary
 - Semantic embedding cache (Tier 1) — no data yet to justify it
