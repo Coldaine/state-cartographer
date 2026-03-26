@@ -7,7 +7,6 @@ Public surface:
     - maatouch: MaaTouch precision touch controller
     - health: readiness checks and recovery ladder
     - models: probe result / report types
-    - artifacts: write structured results to data/events/memu-transport/
 """
 
 from state_cartographer.transport.adb import Adb, AdbError
