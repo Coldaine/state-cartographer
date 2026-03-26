@@ -35,13 +35,12 @@ For the docs-only map, read [docs/AGENTS.md](/mnt/d/_projects/MasterStateMachine
 
 | Path | Purpose |
 |---|---|
-| `vendor/` | External reference code (ALAS, scrcpy) |
+| `vendor/` | External reference code (ALAS) |
 | `data/` | Corpora, logs, screenshots, labels, truth artifacts |
 | `docs/` | Agent knowledge layer |
-| `scripts/` | Active scripts (corpus_cleanup, kimi_review, vlm_detector) |
+| `scripts/` | Active scripts (corpus_cleanup, kimi_review, vlm_detector, stress_test_adb) |
 | `state_cartographer/` | Python package: transport substrate (adb, maatouch, capture, health, models, pilot facade) |
 | `tests/` | Automated tests (transport unit tests + live smoke tests) |
-| `examples/` | Reference/example artifacts |
 | `configs/` | Project configuration (emulator serial, tool posture) |
 
 For the expanded version, read [repo-index.md](/mnt/d/_projects/MasterStateMachine/docs/repo-index.md).
