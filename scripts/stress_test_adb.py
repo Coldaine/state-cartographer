@@ -295,9 +295,14 @@ def main(argv: list[str] | None = None) -> int:
         results["vlm"] = stress_test_vlm_evaluation(capture, output_dir / "vlm", vlm_client)
         print("VLM evaluation complete")
 
+    def _json_default(obj):
+        if hasattr(obj, "item"):  # numpy scalar (bool_, int64, float64, etc.)
+            return obj.item()
+        raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
     report_path = output_dir / f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     with open(report_path, "w") as f:
-        json.dump(results, f, indent=2)
+        json.dump(results, f, indent=2, default=_json_default)
     print(f"Report saved to {report_path}")
 
     return 0
