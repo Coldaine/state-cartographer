@@ -14,11 +14,9 @@ from state_cartographer.transport.health import doctor
 from state_cartographer.transport.models import (
     ControlLayerStatus,
     DoctorReport,
-    ObservationDecision,
     ObservationLayerStatus,
     ProbeVerdict,
     ReadinessTier,
-    ScrcpyProbeReport,
     SessionProbeReport,
     ToolEntry,
     TransportLayerStatus,
@@ -27,7 +25,7 @@ from state_cartographer.transport.models import (
 
 def test_load_config_defaults():
     cfg = load_config()
-    assert cfg.adb_serial == "127.0.0.1:21513"
+    assert cfg.adb_serial == "127.0.0.1:21503"
     assert cfg.emulator_type == "memu"
 
 
@@ -37,7 +35,7 @@ def test_load_config_custom(tmp_path: Path):
         "emulator_type": "memu",
         "adb_serial": "127.0.0.1:5555",
         "primary_control": "maatouch",
-        "preferred_visual": "scrcpy",
+        "primary_observation": "adb_screencap",
     }
     cfg_path = tmp_path / "memu-custom.json"
     cfg_path.write_text(json.dumps(data), encoding="utf-8")
@@ -132,28 +130,15 @@ def test_doctor_report_json():
     assert parsed["degradation_codes"] == ["preferred_input_missing", "observation_unverified"]
 
 
-def test_scrcpy_probe_report_json():
-    r = ScrcpyProbeReport(
-        serial="127.0.0.1:21513",
-        binary_found=True,
-        attached=True,
-        observation_decision=ObservationDecision.DEBUG_ONLY,
-    )
-    parsed = json.loads(r.to_json())
-    assert parsed["observation_decision"] == "debug_only"
-
-
 def test_session_probe_report_json():
     r = SessionProbeReport(
-        serial="127.0.0.1:21513",
-        degradation_codes=["debug_only_visual"],
+        serial="127.0.0.1:21503",
+        degradation_codes=["observation_unverified"],
         verdict=ProbeVerdict.PASS,
-        observation_decision=ObservationDecision.DEBUG_ONLY,
     )
     parsed = json.loads(r.to_json())
     assert parsed["verdict"] == "pass"
-    assert parsed["observation_decision"] == "debug_only"
-    assert parsed["degradation_codes"] == ["debug_only_visual"]
+    assert parsed["degradation_codes"] == ["observation_unverified"]
 
 
 def test_doctor_unreachable_when_device_stays_offline(monkeypatch: pytest.MonkeyPatch):
