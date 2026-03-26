@@ -55,4 +55,6 @@ data/adb_tap_*.png
 data/current_state.png
 data/live_cap.png
 data/mis_*.png
+data/stress_test/
+data/test_raw.bin
 .vscode/
