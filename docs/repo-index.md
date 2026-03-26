@@ -45,15 +45,7 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 
 | Plan | What It Decides |
 |---|---|
-| `plans/substrate-and-implementation-plan.md` | What control tools we use (adbutils + MaaTouch) and how to build on them |
 | `plans/multi-tier-runtime-implementation-plan-2026-03-24.md` | Tiered runtime architecture (Tier 2 VLM baseline, Tier 1 cache, Tier 3 teacher) |
-| `plans/memu-transport-pipeline.md` | Transport pipeline — substantially complete (2026-03-26) |
-
-## Deferred / Draft Plans
-
-| Plan | What It Covers |
-|---|---|
-| `plans/host-capture-shim-plan.md` | Parked fallback capture proposal (DXcam / PrintWindow); deferred indefinitely |
 
 ## Active Script Surface
 

@@ -31,7 +31,6 @@ Thin tracker. Current truth only.
 ## See Also
 
 - decisions log: [decisions.md](decisions.md)
-- stress test results (local-only): `data/stress_test/vulkan_run1/`
+- runtime plan: [multi-tier-runtime-implementation-plan-2026-03-24.md](plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
 - FPS analysis: [RES-adb-screencap-fps-analysis.md](RES-research/RES-adb-screencap-fps-analysis.md)
-- frame ring design: [RES-frame-ring-design.md](RES-research/RES-frame-ring-design.md)
-- pipeline plan: [memu-transport-pipeline.md](plans/memu-transport-pipeline.md)
+- frame ring design (deferred): [RES-frame-ring-design.md](RES-research/RES-frame-ring-design.md)

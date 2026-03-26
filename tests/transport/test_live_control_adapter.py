@@ -3,12 +3,9 @@
 These require a running MEmu emulator. They are skipped if the device is offline.
 """
 
-import time
-
 import pytest
 
 from state_cartographer.transport.adb import Adb
-from state_cartographer.transport.capture import Capture
 from state_cartographer.transport.config import load_config
 from state_cartographer.transport.maatouch import MaaTouch
 
@@ -46,20 +43,6 @@ def test_live_adb_input_methods():
     assert adb.is_device_online()
     assert adb.connect()
     assert adb.devices() is not None
-
-
-def test_live_capture_screenshot():
-    cfg = load_config()
-    adb = Adb(cfg.serial)
-
-    if not adb.is_device_online():
-        pytest.skip("Device offline, skipping live test")
-
-    capture = Capture(adb)
-    data = capture.screenshot_png()
-
-    assert data is not None
-    assert len(data) > 100
 
 
 def test_live_maatouch_tap():

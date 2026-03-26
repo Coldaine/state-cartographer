@@ -10,7 +10,6 @@ import logging
 from pathlib import Path
 
 from state_cartographer.transport.adb import Adb
-from state_cartographer.transport.capture import Capture
 from state_cartographer.transport.config import load_config
 from state_cartographer.transport.health import DoctorReport, doctor, recovery_ladder
 from state_cartographer.transport.maatouch import MaaTouch
@@ -21,7 +20,7 @@ log = logging.getLogger(__name__)
 class Pilot:
     """Unified transport facade.
 
-    Wraps adb + maatouch + capture into a single interface.
+    Wraps adb + maatouch into a single interface.
     Use this as the primary entry point for transport operations.
     """
 
@@ -32,7 +31,6 @@ class Pilot:
 
         self.adb = Adb(self.config.serial)
         self._maatouch: MaaTouch | None = None
-        self.capture = Capture(self.adb)
 
     @property
     def serial(self) -> str:
