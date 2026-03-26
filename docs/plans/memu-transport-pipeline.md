@@ -1,9 +1,9 @@
 # Plan: MEmu Transport Pipeline
 
-> **Superseded by Vulkan decision (2026-03-25).**
-> This plan was written when ADB screencap was broken on OpenGL and a multi-method fallback chain was necessary. Switching MEmu to Vulkan rendering makes ADB screencap 100% reliable, eliminating the need for the CaptureManager fallback chain. See `docs/decisions.md` for the full decision and evidence.
+> **Status: Substantially complete (2026-03-26).**
+> Health check, capture, and integration phases are done. Emulator daemon (Phase 1) is deferred — not needed until unattended ops. Capture engineering (FrameRing, fallback chain) deferred — Vulkan eliminated the failure mode. See `docs/decisions.md` for the full rationale.
 >
-> The emulator daemon, health check, and telemetry components below remain valid. The multi-method capture manager is simplified to ADB screencap only. See `docs/transport-methods.md` for the current method selection logic.
+> This plan was written when ADB screencap was broken on OpenGL. The multi-method fallback chain is no longer needed. See `docs/transport-methods.md` for the current method selection logic.
 
 ## Goal
 
