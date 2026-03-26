@@ -39,8 +39,8 @@ For the docs-only map, read [docs/AGENTS.md](/mnt/d/_projects/MasterStateMachine
 | `data/` | Corpora, logs, screenshots, labels, truth artifacts |
 | `docs/` | Agent knowledge layer |
 | `scripts/` | Active scripts (corpus_cleanup, kimi_review, vlm_detector) |
-| `state_cartographer/` | Python package: transport layer (currently empty, being rebuilt) |
-| `tests/` | Automated tests (currently empty, being rebuilt) |
+| `state_cartographer/` | Python package: transport substrate (adb, maatouch, capture, health, models, pilot facade) |
+| `tests/` | Automated tests (transport unit tests + live smoke tests) |
 | `examples/` | Reference/example artifacts |
 | `configs/` | Project configuration (emulator serial, tool posture) |
 

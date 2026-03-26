@@ -2,7 +2,3 @@
 	path = vendor/AzurLaneAutoScript
 	url = https://github.com/LmeSzinc/AzurLaneAutoScript.git
 	ignore = untracked
-[submodule "vendor/scrcpy"]
-	path = vendor/scrcpy
-	url = https://github.com/Genymobile/scrcpy.git
-	ignore = untracked

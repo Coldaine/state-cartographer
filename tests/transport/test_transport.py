@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -11,16 +10,13 @@ import pytest
 
 from state_cartographer.transport.adb import Adb
 from state_cartographer.transport.config import TransportConfig, load_config
-from state_cartographer.transport.health import doctor, recovery_ladder
+from state_cartographer.transport.health import doctor
 from state_cartographer.transport.models import (
     ControlLayerStatus,
     DoctorReport,
-    MaaCaptureResult,
-    ObservationDecision,
     ObservationLayerStatus,
     ProbeVerdict,
     ReadinessTier,
-    ScrcpyProbeReport,
     SessionProbeReport,
     ToolEntry,
     TransportLayerStatus,
@@ -29,22 +25,21 @@ from state_cartographer.transport.models import (
 
 def test_load_config_defaults():
     cfg = load_config()
-    assert cfg.adb_serial == "127.0.0.1:21513"
+    assert cfg.adb_serial == "127.0.0.1:21503"
     assert cfg.emulator_type == "memu"
 
 
-def test_load_config_custom():
+def test_load_config_custom(tmp_path: Path):
     data = {
         "name": "Test",
         "emulator_type": "memu",
         "adb_serial": "127.0.0.1:5555",
         "primary_control": "maatouch",
-        "preferred_visual": "scrcpy",
+        "primary_observation": "adb_screencap",
     }
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-        json.dump(data, f)
-        f.flush()
-        cfg = load_config(f.name)
+    cfg_path = tmp_path / "memu-custom.json"
+    cfg_path.write_text(json.dumps(data), encoding="utf-8")
+    cfg = load_config(cfg_path)
     assert cfg.serial == "127.0.0.1:5555"
     assert cfg.host == "127.0.0.1"
     assert cfg.port == 5555
@@ -135,37 +130,23 @@ def test_doctor_report_json():
     assert parsed["degradation_codes"] == ["preferred_input_missing", "observation_unverified"]
 
 
-def test_scrcpy_probe_report_json():
-    r = ScrcpyProbeReport(
-        serial="127.0.0.1:21513",
-        binary_found=True,
-        attached=True,
-        observation_decision=ObservationDecision.DEBUG_ONLY,
-    )
-    parsed = json.loads(r.to_json())
-    assert parsed["observation_decision"] == "debug_only"
-
-
 def test_session_probe_report_json():
     r = SessionProbeReport(
-        serial="127.0.0.1:21513",
-        degradation_codes=["debug_only_visual"],
+        serial="127.0.0.1:21503",
+        degradation_codes=["observation_unverified"],
         verdict=ProbeVerdict.PASS,
-        observation_decision=ObservationDecision.DEBUG_ONLY,
     )
     parsed = json.loads(r.to_json())
     assert parsed["verdict"] == "pass"
-    assert parsed["observation_decision"] == "debug_only"
-    assert parsed["degradation_codes"] == ["debug_only_visual"]
+    assert parsed["degradation_codes"] == ["observation_unverified"]
 
 
 def test_doctor_unreachable_when_device_stays_offline(monkeypatch: pytest.MonkeyPatch):
     cfg = TransportConfig(primary_control="maatouch")
 
     class FakeAdb:
-        def __init__(self, serial: str, adb_path: str = "adb"):
+        def __init__(self, serial: str):
             self.serial = serial
-            self.adb_path = adb_path
 
         def is_device_online(self) -> bool:
             return False
@@ -184,13 +165,12 @@ def test_doctor_unreachable_when_device_stays_offline(monkeypatch: pytest.Monkey
     assert report.verdict == ProbeVerdict.FAIL
 
 
-def test_doctor_operable_when_device_online(monkeypatch: pytest.MonkeyPatch):
+def test_doctor_operable_when_device_online(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     cfg = TransportConfig(primary_control="maatouch")
 
     class FakeAdb:
-        def __init__(self, serial: str, adb_path: str = "adb"):
+        def __init__(self, serial: str):
             self.serial = serial
-            self.adb_path = adb_path
 
         def is_device_online(self) -> bool:
             return True
@@ -198,11 +178,12 @@ def test_doctor_operable_when_device_online(monkeypatch: pytest.MonkeyPatch):
         def connect(self) -> bool:
             return True
 
-    class FakeMaaTouch:
-        DEFAULT_LOCAL_PATH = Path("/tmp/fake")
-
     monkeypatch.setattr("state_cartographer.transport.health.Adb", FakeAdb)
-    monkeypatch.setattr("state_cartographer.transport.maatouch", SimpleNamespace(DEFAULT_LOCAL_PATH=Path("/tmp/fake")))
+    import state_cartographer.transport.maatouch as maatouch_module
+
+    fake_binary = tmp_path / "maatouchsync"
+    fake_binary.write_text("binary-placeholder", encoding="utf-8")
+    monkeypatch.setattr(maatouch_module, "DEFAULT_LOCAL_PATH", fake_binary)
 
     report = doctor(cfg)
 
@@ -218,18 +199,14 @@ def test_doctor_degraded_when_maatouch_binary_missing(monkeypatch: pytest.Monkey
     cfg = TransportConfig(primary_control="maatouch")
 
     class FakeAdb:
-        def __init__(self, serial: str, adb_path: str = "adb"):
+        def __init__(self, serial: str):
             self.serial = serial
-            self.adb_path = adb_path
 
         def is_device_online(self) -> bool:
             return True
 
         def connect(self) -> bool:
             return True
-
-    def fake_ensure_installed():
-        return False
 
     import state_cartographer.transport.maatouch as maatouch_module
 

@@ -29,7 +29,7 @@ Each MEmu instance exposes ADB on predictable ports:
 
 Pattern: `21503 + (instance_index * 10)`
 
-The pinned instance for this repo uses the first instance at `127.0.0.1:21503` unless configured otherwise in `configs/`.
+The pinned instance for this repo is controlled by `configs/memu.json` (currently `127.0.0.1:21513`), so do not hard-code `21503` in runtime code.
 
 ## Frame Capture Methods
 

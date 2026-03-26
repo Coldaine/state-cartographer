@@ -30,8 +30,7 @@ class TransportConfig:
     emulator_type: str = "memu"
     adb_serial: str = "127.0.0.1:21513"
     primary_control: str = "maatouch"
-    preferred_visual: str = "scrcpy"
-    fallback_observation: str = "adb_screencap"
+    primary_observation: str = "adb_screencap"
     agent_path: str | None = None
     raw: dict[str, Any] = field(default_factory=dict, repr=False)
 
@@ -66,8 +65,7 @@ def load_config(path: Path | str | None = None) -> TransportConfig:
         emulator_type=raw.get("emulator_type", "memu"),
         adb_serial=raw.get("adb_serial", "127.0.0.1:21513"),
         primary_control=raw.get("primary_control", "maatouch"),
-        preferred_visual=raw.get("preferred_visual", "scrcpy"),
-        fallback_observation=raw.get("fallback_observation", "adb_screencap"),
+        primary_observation=raw.get("primary_observation", "adb_screencap"),
         agent_path=raw.get("agent_path", None),
         raw=raw,
     )

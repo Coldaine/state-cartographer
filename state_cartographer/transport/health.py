@@ -40,12 +40,15 @@ def _preferred_control_ready(cfg: TransportConfig) -> bool:
     return True
 
 
-def doctor(cfg: TransportConfig, adb_path: str = "adb") -> DoctorReport:
+def doctor(cfg: TransportConfig, adb_path: str | None = None) -> DoctorReport:
     """Run readiness checks and produce a doctor report."""
     report = DoctorReport(serial=cfg.serial)
 
+    if adb_path not in (None, "adb"):
+        log.warning("doctor(adb_path=...) is ignored with adbutils transport; using adb server connection")
+
     # ADB reachability
-    adb = Adb(cfg.serial, adb_path)
+    adb = Adb(cfg.serial)
     try:
         report.adb_reachable = True
         report.device_online = adb.is_device_online()
@@ -90,12 +93,15 @@ def doctor(cfg: TransportConfig, adb_path: str = "adb") -> DoctorReport:
     return report
 
 
-def recovery_ladder(cfg: TransportConfig, adb_path: str = "adb") -> bool:
+def recovery_ladder(cfg: TransportConfig, adb_path: str | None = None) -> bool:
     """Transport-only recovery: reconnect ADB, revalidate frame freshness.
 
     Returns True if recovery succeeded.
     """
-    adb = Adb(cfg.serial, adb_path)
+    if adb_path not in (None, "adb"):
+        log.warning("recovery_ladder(adb_path=...) is ignored with adbutils transport; using adb server connection")
+
+    adb = Adb(cfg.serial)
 
     # Step 1: disconnect + reconnect
     log.info("Recovery step 1: reconnect ADB to %s", cfg.serial)
