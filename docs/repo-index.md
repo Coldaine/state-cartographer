@@ -28,16 +28,16 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 | `docs/north-star.md` | Desired end state |
 | `docs/architecture-overview.md` | Organizing logic |
 | `docs/repo-index.md` | This file — exhaustive repo map |
-| `docs/documentation-playbook.md` | Doc workflow rules |
 | `docs/decisions.md` | Decision log with rationale |
+| `docs/transport-methods.md` | Settled capture/input method decisions |
 | `docs/ALS-reference/` | ALAS reference-system knowledge |
 | `docs/RES-research/` | Research notes and synthesis |
 | `docs/memory/` | Dated lessons learned |
 | `docs/workflows/` | Workflow/task inventory |
 | `docs/agentPrompts/` | Prompt rationale for LLM code |
 | `docs/prework/` | Corpus/data preparation procedures |
-| `docs/runtime/` | Runtime contracts, backend lessons, health design, tool requirements, emulator reference |
-| `docs/dev/` | Developer workflow docs (testing) |
+| `docs/runtime/` | Backend design constraints |
+| `docs/dev/` | Testing plan |
 | `docs/vlm/` | VLM profiles, contracts, prompt guidance |
 | `docs/plans/` | Active planning docs |
 
@@ -46,6 +46,7 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 | Plan | What It Decides |
 |---|---|
 | `plans/multi-tier-runtime-implementation-plan-2026-03-24.md` | Tiered runtime architecture (Tier 2 VLM baseline, Tier 1 cache, Tier 3 teacher) |
+| `plans/vlm-corpus-sweep-plan.md` | Multi-pass VLM labeling of screenshot corpus to build the state machine |
 
 ## Active Script Surface
 
@@ -65,7 +66,6 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 | `__init__.py` | Transport package exports |
 | `adb.py` | adbutils-based ADB client (no subprocess) |
 | `maatouch.py` | MaaTouch precision touch protocol |
-| `capture.py` | Screenshot capture methods |
 | `config.py` | Transport configuration loading |
 | `models.py` | Data models for reports and status |
 | `health.py` | Readiness checks and recovery |
@@ -87,4 +87,3 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 
 Short orientation → root `AGENTS.md`.
 Exhaustive map → this file.
-Doc workflow rules → `docs/documentation-playbook.md`.

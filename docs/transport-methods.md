@@ -72,6 +72,5 @@ From `docs/memory/2026-03-25-memu-transport-probe-results.md`:
 ## See Also
 
 - Vulkan decision: `docs/decisions.md`
-- Pipeline plan: `docs/plans/memu-transport-pipeline.md`
-- Substrate decision: `docs/plans/substrate-and-implementation-plan.md`
 - Probe results: `docs/memory/2026-03-25-memu-transport-probe-results.md`
+- Backend design constraints: `docs/runtime/backend-lessons.md`

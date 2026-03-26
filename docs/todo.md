@@ -4,9 +4,8 @@ Thin tracker. Current truth only.
 
 ## Now
 
-1. Wire VLM page classification using synchronous capture (local llama-swap + KIMI spot-check)
+1. Run VLM corpus sweep — multi-pass labeling to build state vocabulary and transition table (see [vlm-corpus-sweep-plan.md](plans/vlm-corpus-sweep-plan.md))
 2. Build Tier 2 VLM grounding loop (observe-act-observe on real device)
-3. Clean up dead code paths that existed only to work around OpenGL capture failure
 
 ## Blockers
 
@@ -14,7 +13,7 @@ Thin tracker. Current truth only.
 
 ## Deferred
 
-- FrameRing / ring buffer / capture thread — Vulkan eliminated the failure mode; design is shelf-ready in `docs/RES-research/RES-frame-ring-design.md`
+- FrameRing / ring buffer / capture thread — Vulkan eliminated the failure mode
 - Emulator daemon (auto-launch MEmu, admin elevation) — not needed until unattended ops
 - MaaFramework / MaaMCP — fallback only, not primary
 - Host-side capture (DXcam/PrintWindow) — fallback only, not primary
@@ -24,13 +23,12 @@ Thin tracker. Current truth only.
 ## Done
 
 - Transport layer: adbutils ADB, MaaTouch input, Pilot facade, Vulkan screencap (100% reliable)
-- MEmu transport pipeline plan — substantially complete (see `plans/memu-transport-pipeline.md`)
 - ADB screencap failure investigation — resolved by Vulkan rendering mode
-- Dead code removal: scrcpy vendor, probe, worker
+- Dead code removal: scrcpy vendor, probe, worker, capture.py, artifacts.py, examples/
+- Docs cleanup: removed 11 stale/speculative docs, consolidated references
 
 ## See Also
 
 - decisions log: [decisions.md](decisions.md)
+- corpus sweep plan: [vlm-corpus-sweep-plan.md](plans/vlm-corpus-sweep-plan.md)
 - runtime plan: [multi-tier-runtime-implementation-plan-2026-03-24.md](plans/multi-tier-runtime-implementation-plan-2026-03-24.md)
-- FPS analysis: [RES-adb-screencap-fps-analysis.md](RES-research/RES-adb-screencap-fps-analysis.md)
-- frame ring design (deferred): [RES-frame-ring-design.md](RES-research/RES-frame-ring-design.md)

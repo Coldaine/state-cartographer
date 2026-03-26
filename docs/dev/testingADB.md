@@ -6,14 +6,14 @@ This document defines how the repo should test ADB-connected emulator control, f
 
 It follows the repo testing rule:
 - no mocks for the authoritative proof
+- no tests for files until they are stable and doing real work
+- tests should validate real behavior, not ceremony around incomplete code
 - prefer live integration and real artifacts
-- keep pure-code tests only where they validate stable model or serialization logic
+- keep pure-code tests only where they validate stable logic
 
 See also:
-- [testing-strategy.md](/mnt/d/_projects/MasterStateMachine/docs/dev/testing-strategy.md)
-- [substrate-and-implementation-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/substrate-and-implementation-plan.md)
-- [health-heartbeat-logging.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/health-heartbeat-logging.md)
-- [agent-control-tool-requirements.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/agent-control-tool-requirements.md)
+- [transport-methods.md](/mnt/d/_projects/MasterStateMachine/docs/transport-methods.md)
+- [backend-lessons.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/backend-lessons.md)
 
 ## Purpose
 
@@ -311,12 +311,14 @@ When a live test is unsafe to run:
 - record why it was skipped
 - never report skipped live tests as passed
 
-## Relationship to logging design
+## Readiness tier model
 
-The logging and heartbeat behavior required by these tests is owned by:
-- [health-heartbeat-logging.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/health-heartbeat-logging.md)
+The health check system classifies device readiness into tiers:
+- **OPERABLE** — ADB reachable, preferred input available, observation unverified but capture works
+- **DEGRADED** — ADB reachable, preferred input missing (MaaTouch binary not found), falls back to ADB input
+- **UNREACHABLE** — ADB not reachable, all layers unavailable
 
-This testing plan is the validation companion to that runtime design.
+Degradation codes: `preferred_input_missing`, `observation_unverified`. These are tested by the live health doctor tests in `tests/transport/`.
 
 ## Near-term execution order
 
