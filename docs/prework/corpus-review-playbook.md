@@ -4,13 +4,10 @@
 
 This document defines how to select and review small "golden" corpus stretches from screenshots plus nearby ALAS logs.
 
-It answers a narrower question than [alas-artifacts.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-artifacts.md):
-- `alas-artifacts.md` says what ALAS-derived artifacts are still worth keeping
-- this playbook says how to choose and review frame windows so those artifacts are worth trusting
+This playbook defines how to choose and review frame windows so corpus artifacts are worth trusting.
 
 See also:
 - [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
-- [alas-artifacts.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-artifacts.md)
 
 ## Observed Timestamp Model
 
