@@ -12,8 +12,11 @@ node_modules/
 .DS_Store
 .omc/
 .agents/
+.claude/
 vendor/AzurLaneAutoScript/.omc/
 .cursor/
+dev-shell.ps1
+docs/pr-*-review.html
 *.log
 .env
 .mypy_cache/
