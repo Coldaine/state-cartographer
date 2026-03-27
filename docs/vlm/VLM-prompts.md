@@ -12,7 +12,6 @@ See also:
 - [VLM-overview.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-overview.md)
 - [VLM-model-profiles.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-model-profiles.md)
 - [VLM-task-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-task-contracts.md)
-- [documentation-playbook.md](/mnt/d/_projects/MasterStateMachine/docs/documentation-playbook.md)
 
 ## What Prompt Text Should Do
 

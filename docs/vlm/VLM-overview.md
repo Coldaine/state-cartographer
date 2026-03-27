@@ -10,7 +10,6 @@ This bucket is for capability framing and contract boundaries, not for pretendin
 
 See also:
 - [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
-- [observation-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/observation-contracts.md)
 - [VLM-model-profiles.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-model-profiles.md)
 - [VLM-task-contracts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-task-contracts.md)
 - [VLM-prompts.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-prompts.md)

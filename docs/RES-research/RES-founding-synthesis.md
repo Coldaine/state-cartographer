@@ -11,7 +11,6 @@ It captures the durable research thesis behind the project and separates that th
 See also:
 - [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
 - [VLM-overview.md](/mnt/d/_projects/MasterStateMachine/docs/vlm/VLM-overview.md)
-- [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
 
 ## Core Problem
 

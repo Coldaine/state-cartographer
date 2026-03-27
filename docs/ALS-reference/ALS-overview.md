@@ -10,7 +10,6 @@ Until State Cartographer ships a working runtime, ALAS is the only automation ru
 
 See also:
 - [ALS-live-ops.md](/mnt/d/_projects/MasterStateMachine/docs/ALS-reference/ALS-live-ops.md) — operational rules for running ALAS
-- [alas-artifacts.md](/mnt/d/_projects/MasterStateMachine/docs/prework/alas-artifacts.md) — what ALAS-derived artifacts matter
 
 ## What ALAS Is
 

@@ -47,10 +47,10 @@ Everything else in `docs/` is a knowledge bucket.
 
 ## Current Implementation State
 
-- `state_cartographer/transport/` is implemented — adb, maatouch, capture, health, models, pilot facade
-- Active scripts: `corpus_cleanup.py`, `kimi_review.py`, `vlm_detector.py`
-- No live runtime exists yet (transport layer done; runtime above being built)
-- Substrate decision made: adbutils + MaaTouch (see [substrate-and-implementation-plan.md](plans/substrate-and-implementation-plan.md))
+- `state_cartographer/transport/` is implemented — adb, maatouch, health, models, pilot facade
+- Active scripts: `corpus_cleanup.py`, `kimi_review.py`, `vlm_detector.py`, `stress_test_adb.py`
+- No live runtime exists yet (transport layer done; VLM corpus sweep is next)
+- Substrate decision made: adbutils + MaaTouch (see [decisions.md](decisions.md))
 
 ## Organizing Principles
 

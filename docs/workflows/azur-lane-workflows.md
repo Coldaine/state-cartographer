@@ -19,7 +19,6 @@ Do not use this file alone as evidence that the repo can execute the workflow to
 
 See also:
 - [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
-- [runtime-overview.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/runtime-overview.md)
 
 ## Workflow Categories
 
