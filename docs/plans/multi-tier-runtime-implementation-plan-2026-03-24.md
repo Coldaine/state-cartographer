@@ -4,8 +4,6 @@ Status: design proposal, aligned to the repo’s current rebuild posture.
 
 See also:
 - [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
-- [substrate-and-implementation-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/substrate-and-implementation-plan.md)
-- [agent-control-tool-requirements.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/agent-control-tool-requirements.md)
 
 ## Purpose
 

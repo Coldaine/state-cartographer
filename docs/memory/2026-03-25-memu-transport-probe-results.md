@@ -6,7 +6,6 @@ Retain the dated transport verdict from the first live probe pass against the pi
 
 See also:
 - [todo.md](/mnt/d/_projects/MasterStateMachine/docs/todo.md)
-- [substrate-and-implementation-plan.md](/mnt/d/_projects/MasterStateMachine/docs/plans/substrate-and-implementation-plan.md)
 
 ## Environment
 

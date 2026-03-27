@@ -40,10 +40,9 @@ Everything else in `docs/` is a knowledge bucket.
 | `state_cartographer/` | Python package: transport layer and future runtime code |
 | `scripts/` | Active script-shaped tooling (corpus cleanup, kimi review, vlm detector) |
 | `data/` | Truth artifacts, corpora, screenshots, logs |
-| `vendor/` | External reference code (ALAS, scrcpy) |
+| `vendor/` | External reference code (ALAS) |
 | `configs/` | Project configuration (emulator serial, tool posture) |
 | `tests/` | Automated tests |
-| `examples/` | Reference/example artifacts |
 
 ## Current Implementation State
 
@@ -60,3 +59,11 @@ Everything else in `docs/` is a knowledge bucket.
 - Prework and runtime are deliberately separated
 - Runtime claims must be earned by code, not inferred from plans
 - One authoritative doc per question — no duplication
+
+## Reference Hygiene Policy
+
+- References to deleted docs must not be left dangling.
+- If a deleted doc was intentionally removed because the work was deferred, deprecated, or no longer matches current architecture, the default action is to remove the stale reference or rewrite it as a historical note.
+- Do not automatically retarget a stale reference to a current doc unless the old reference is still semantically true and the new target genuinely owns the same question.
+- If the deleted doc remains useful as shelf-ready research for a future trigger condition, say that explicitly in the surviving authority doc instead of pretending the deleted file is still live.
+- Routing docs should point to current authority, not to deleted context.

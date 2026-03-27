@@ -34,7 +34,7 @@ Push becomes worthwhile when:
 - Multiple consumers need frames simultaneously at different rates (VLM classifier + anomaly detector + state machine)
 - Capture latency becomes the bottleneck (e.g., sub-100ms action loops where 132ms ADB round-trip matters)
 
-None of these are true today. The FrameRing design (`docs/RES-research/RES-frame-ring-design.md`) is shelf-ready if they become true.
+None of these are true today. The FrameRing design is shelf-ready in git history if they become true.
 
 **Implications for the runtime:**
 - The Pilot facade's `screenshot()` method is the entry point — it calls `adb.screenshot_png()` directly
@@ -64,7 +64,7 @@ None of these are true today. The FrameRing design (`docs/RES-research/RES-frame
 - MaaFramework as capture fallback
 
 **What remains ready if needed:**
-- Design doc: `docs/RES-research/RES-frame-ring-design.md` (benchmarks, API, architecture all documented)
+- Design doc: archived in git history (was `docs/RES-research/RES-frame-ring-design.md` — benchmarks, API, architecture all documented; deleted in PR #29 cleanup)
 - Stress test: `scripts/stress_test_adb.py` (can re-validate at any time)
 
 **Trigger to revisit:** If ADB screencap starts failing again (renderer change, emulator update, new device), revisit FrameRing. The design is shelf-ready.
