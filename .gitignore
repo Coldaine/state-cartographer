@@ -63,3 +63,7 @@ data/test_raw.bin
 .vscode/
 # Dead ALAS copy — broken imports, never used
 state_cartographer/base/
+# Local tool configs
+.mcp.json
+.voicetree/
+voicetree*/
