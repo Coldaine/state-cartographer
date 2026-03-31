@@ -27,6 +27,11 @@ Thin tracker. Current truth only.
 - Dead code removal: scrcpy vendor, probe, worker, capture.py, artifacts.py, examples/
 - Docs cleanup: removed 11 stale/speculative docs, consolidated references
 
+## Live Sessions
+
+- session log: [2026-03-28-live-battle-pilot.md](sessions/2026-03-28-live-battle-pilot.md)
+- failure modes: [failure-mode-registry.md](sessions/failure-mode-registry.md)
+
 ## See Also
 
 - decisions log: [decisions.md](decisions.md)
