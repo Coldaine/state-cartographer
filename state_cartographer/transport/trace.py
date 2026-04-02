@@ -6,6 +6,7 @@ as structured single-line key=value records.
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 from datetime import UTC, datetime
@@ -37,29 +38,46 @@ class _IsoFormatter(logging.Formatter):
         return super().format(record)
 
 
+def _close_handlers(logger: logging.Logger) -> None:
+    for handler in list(logger.handlers):
+        try:
+            handler.close()
+        finally:
+            logger.removeHandler(handler)
+
+
+def _format_value(value: Any) -> str:
+    encoded = json.dumps(value, ensure_ascii=False, separators=(",", ":"), default=str)
+    return encoded.replace(" ", "\\u0020")
+
+
 def _configure_logger(session_id: str) -> logging.Logger:
     global _logger, _session_id
 
     logger = logging.getLogger("state_cartographer.transport.trace")
-    logger.handlers.clear()
-
+    _close_handlers(logger)
     logger.setLevel(logging.DEBUG)
+    logger.propagate = False
 
-    log_dir = _log_dir()
-    date_str = datetime.now(UTC).strftime("%Y-%m-%d")
-    file_path = log_dir / f"{date_str}_{session_id}.log"
+    try:
+        log_dir = _log_dir()
+        date_str = datetime.now(UTC).strftime("%Y-%m-%d")
+        file_path = log_dir / f"{date_str}_{session_id}.log"
 
-    file_handler = logging.FileHandler(file_path, encoding="utf-8")
-    file_handler.setLevel(logging.DEBUG)
-    file_formatter = _IsoFormatter("%(iso)s [%(levelname)s] %(message)s")
-    file_handler.setFormatter(file_formatter)
-    logger.addHandler(file_handler)
+        file_handler = logging.FileHandler(file_path, encoding="utf-8")
+        file_handler.setLevel(logging.DEBUG)
+        file_formatter = _IsoFormatter("%(iso)s [%(levelname)s] %(message)s")
+        file_handler.setFormatter(file_formatter)
+        logger.addHandler(file_handler)
 
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    console_formatter = logging.Formatter("%(message)s")
-    console_handler.setFormatter(console_formatter)
-    logger.addHandler(console_handler)
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        console_formatter = logging.Formatter("%(message)s")
+        console_handler.setFormatter(console_formatter)
+        logger.addHandler(console_handler)
+    except Exception:
+        _close_handlers(logger)
+        logger.addHandler(logging.NullHandler())
 
     _logger = logger
     _session_id = session_id
@@ -73,6 +91,8 @@ def get_logger() -> logging.Logger:
         ts_s = ts_ns // 1_000_000_000
         default_session = f"default_{ts_s}"
         _configure_logger(default_session)
+    if _logger is None:
+        raise RuntimeError("trace logger could not be initialized")
     return _logger
 
 
@@ -91,28 +111,31 @@ def action(
 ) -> None:
     global _session_id
 
-    if _session_id is None:
-        ts_ns = time.time_ns()
-        ts_s = ts_ns // 1_000_000_000
-        auto_session = f"auto_{ts_s}"
-        start_session(auto_session)
+    try:
+        if _session_id is None:
+            ts_ns = time.time_ns()
+            ts_s = ts_ns // 1_000_000_000
+            auto_session = f"auto_{ts_s}"
+            start_session(auto_session)
 
-    parts = [
-        f"action={action_type}",
-        f"serial={serial}",
-        f"control={control}",
-    ]
+        parts = [
+            f"action={_format_value(action_type)}",
+            f"serial={_format_value(serial)}",
+            f"control={_format_value(control)}",
+        ]
 
-    for k, v in params.items():
-        parts.append(f"{k}={v}")
+        for k, v in params.items():
+            parts.append(f"{k}={_format_value(v)}")
 
-    parts.append(f"result={result}")
-    parts.append(f"duration_ms={duration_ms:.2f}")
+        parts.append(f"result={_format_value(result)}")
+        parts.append(f"duration_ms={duration_ms:.2f}")
 
-    if error is not None:
-        parts.append(f"error={error}")
+        if error is not None:
+            parts.append(f"error={_format_value(error)}")
 
-    message = " ".join(parts)
+        message = "\t".join(parts)
 
-    logger = get_logger()
-    logger.info(message)
+        logger = get_logger()
+        logger.info(message)
+    except Exception:
+        return
