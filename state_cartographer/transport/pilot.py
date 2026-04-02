@@ -11,11 +11,11 @@ import time
 from pathlib import Path
 from typing import ClassVar
 
+from state_cartographer.transport.action_log import action
 from state_cartographer.transport.adb import Adb
 from state_cartographer.transport.config import load_config
 from state_cartographer.transport.health import DoctorReport, doctor, recovery_ladder
 from state_cartographer.transport.maatouch import MaaTouch
-from state_cartographer.transport.trace import action
 
 log = logging.getLogger(__name__)
 
@@ -39,10 +39,10 @@ class Pilot:
         "fleet2": 9,  # KEYCODE_2 — Sub fleet select
         "engage": 45,  # KEYCODE_Q — Target nearest enemy
         "objective": 33,  # KEYCODE_E — Boss, exit, priority target
-        "up": 19,  # KEYCODE_DPAD_UP
-        "down": 20,  # KEYCODE_DPAD_DOWN
-        "left": 21,  # KEYCODE_DPAD_LEFT
-        "right": 22,  # KEYCODE_DPAD_RIGHT
+        "up": 51,  # KEYCODE_W — directional pan/move via MEmu keymapper
+        "down": 47,  # KEYCODE_S — directional pan/move via MEmu keymapper
+        "left": 29,  # KEYCODE_A — directional pan/move via MEmu keymapper
+        "right": 32,  # KEYCODE_D — directional pan/move via MEmu keymapper
         "emergency": 120,  # KEYCODE_F9 — App kill if frozen
     }
 
@@ -79,12 +79,22 @@ class Pilot:
     def disconnect(self) -> None:
         """Disconnect maatouch and ADB."""
         had_maatouch = self._maatouch is not None and self._maatouch.is_connected()
+        errors: list[str] = []
         if self._maatouch:
-            self._maatouch.disconnect()
+            if self._maatouch.disconnect() is False:
+                errors.append("maatouch disconnect returned False")
             self._maatouch = None
-        self.adb.disconnect()
+        if self.adb.disconnect() is False:
+            errors.append("adb disconnect returned False")
         control = "maatouch" if had_maatouch else "adb"
-        action("disconnect", self.serial, control, {}, "success")
+        action(
+            "disconnect",
+            self.serial,
+            control,
+            {},
+            "failure" if errors else "success",
+            error="; ".join(errors) if errors else None,
+        )
 
     def screenshot(self) -> bytes:
         """Capture screenshot. Returns PNG bytes."""
@@ -139,24 +149,42 @@ class Pilot:
             {"steps": len(steps), "capture": capture_dir is not None},
             "success",
         )
+        overall_success = True
+        steps_executed = 0
         if capture_dir is not None:
             capture_dir.mkdir(parents=True, exist_ok=True)
         saved_paths: list[Path] = []
-        for i, (x, y, delay) in enumerate(steps):
-            self.tap(x, y)
-            log.debug(f"tap_chain step {i}: tapped ({x}, {y})")
-            if delay > 0:
-                time.sleep(delay)
-            if capture_dir is not None:
-                path = capture_dir / f"chain_{i:03d}_{x}_{y}.png"
-                saved_paths.append(self.screenshot_to_file(path))
-        action(
-            "tap_chain_end",
-            self.serial,
-            "sequence",
-            {"steps": len(steps), "captured": len(saved_paths)},
-            "success",
-        )
+        failure_params: dict[str, int] = {}
+        error_message: str | None = None
+        try:
+            for i, (x, y, delay) in enumerate(steps):
+                if not self.tap(x, y):
+                    overall_success = False
+                    failure_params = {"failed_step": i, "x": x, "y": y}
+                    error_message = f"tap_chain failed at step {i} for coordinates ({x}, {y})"
+                    raise RuntimeError(error_message)
+                log.debug(f"tap_chain step {i}: tapped ({x}, {y})")
+                if delay > 0:
+                    time.sleep(delay)
+                if capture_dir is not None:
+                    path = capture_dir / f"chain_{i:03d}_{x}_{y}.png"
+                    saved_paths.append(self.screenshot_to_file(path))
+                steps_executed += 1
+        except Exception as exc:
+            overall_success = False
+            error_message = error_message or str(exc)
+            raise
+        finally:
+            end_params = {"steps": len(steps), "executed": steps_executed, "captured": len(saved_paths)}
+            end_params.update(failure_params)
+            action(
+                "tap_chain_end",
+                self.serial,
+                "sequence",
+                end_params,
+                "success" if overall_success else "failure",
+                error=error_message,
+            )
         return saved_paths
 
     def tap(self, x: int, y: int) -> bool:
@@ -249,6 +277,10 @@ class Pilot:
         keycode = self.KEYMAP.get(name)
         if keycode is None:
             raise ValueError(f"Unknown key action: {name!r}. Valid: {sorted(self.KEYMAP)}")
+        if count < 1:
+            raise ValueError("count must be >= 1")
+        if delay < 0:
+            raise ValueError("delay must be >= 0")
         all_ok = True
         for i in range(count):
             ok = self.keyevent(keycode)

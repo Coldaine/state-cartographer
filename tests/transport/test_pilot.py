@@ -1,4 +1,4 @@
-"""Tests for the Pilot facade — press(), tap_chain, and trace coverage.
+"""Tests for the Pilot facade — press(), tap_chain, and action-log coverage.
 
 All tests run offline using mocks. No emulator or ADB connection required.
 """
@@ -15,7 +15,7 @@ from state_cartographer.transport.pilot import Pilot
 @pytest.fixture
 def pilot():
     """Create a Pilot with mocked ADB internals."""
-    with patch("state_cartographer.transport.pilot.Adb") as MockAdb:
+    with patch("state_cartographer.transport.pilot.Adb") as MockAdb, patch("state_cartographer.transport.pilot.action"):
         mock_adb = MockAdb.return_value
         mock_adb.connect.return_value = True
         mock_adb.screenshot_png.return_value = b"\x89PNG_FAKE_DATA"
@@ -46,6 +46,14 @@ class TestPress:
         with pytest.raises(ValueError, match="Unknown key action"):
             pilot.press("nonexistent")
 
+    def test_non_positive_count_raises(self, pilot):
+        with pytest.raises(ValueError, match="count must be >= 1"):
+            pilot.press("primary", count=0)
+
+    def test_negative_delay_raises(self, pilot):
+        with pytest.raises(ValueError, match="delay must be >= 0"):
+            pilot.press("primary", delay=-0.1)
+
     def test_count_sends_multiple(self, pilot):
         pilot.press("back", count=3, delay=0)
         assert pilot.adb.keyevent.call_count == 3
@@ -61,15 +69,21 @@ class TestPress:
             assert isinstance(name, str)
             assert isinstance(keycode, int)
 
+    def test_directional_actions_match_documented_wasd_bindings(self):
+        assert Pilot.KEYMAP["up"] == 51
+        assert Pilot.KEYMAP["left"] == 29
+        assert Pilot.KEYMAP["down"] == 47
+        assert Pilot.KEYMAP["right"] == 32
+
 
 # ---------------------------------------------------------------------------
-# Trace coverage — screenshot, keyevent, input_text
+# Action-log coverage — screenshot, keyevent, input_text
 # ---------------------------------------------------------------------------
 
 
-class TestTraceCoverage:
+class TestActionLogCoverage:
     @patch("state_cartographer.transport.pilot.action")
-    def test_screenshot_traces(self, mock_action, pilot):
+    def test_screenshot_logs_action(self, mock_action, pilot):
         data = pilot.screenshot()
         assert data == b"\x89PNG_FAKE_DATA"
         mock_action.assert_called_once()
@@ -79,7 +93,7 @@ class TestTraceCoverage:
         assert args[1]["duration_ms"] >= 0
 
     @patch("state_cartographer.transport.pilot.action")
-    def test_screenshot_traces_failure(self, mock_action, pilot):
+    def test_screenshot_logs_failure(self, mock_action, pilot):
         pilot.adb.screenshot_png.side_effect = RuntimeError("ADB dead")
         with pytest.raises(RuntimeError):
             pilot.screenshot()
@@ -89,7 +103,7 @@ class TestTraceCoverage:
         assert args[0][4] == "failure"
 
     @patch("state_cartographer.transport.pilot.action")
-    def test_keyevent_traces(self, mock_action, pilot):
+    def test_keyevent_logs_action(self, mock_action, pilot):
         pilot.keyevent(62)
         mock_action.assert_called_once()
         args = mock_action.call_args
@@ -97,7 +111,7 @@ class TestTraceCoverage:
         assert args[0][3] == {"keycode": 62}
 
     @patch("state_cartographer.transport.pilot.action")
-    def test_keyevent_traces_failure(self, mock_action, pilot):
+    def test_keyevent_logs_failure(self, mock_action, pilot):
         pilot.adb.keyevent.side_effect = RuntimeError("ADB dead")
         with pytest.raises(RuntimeError):
             pilot.keyevent(62)
@@ -107,7 +121,7 @@ class TestTraceCoverage:
         assert args[0][4] == "failure"
 
     @patch("state_cartographer.transport.pilot.action")
-    def test_input_text_traces(self, mock_action, pilot):
+    def test_input_text_logs_action(self, mock_action, pilot):
         pilot.input_text("hello")
         mock_action.assert_called_once()
         args = mock_action.call_args
@@ -115,9 +129,9 @@ class TestTraceCoverage:
         assert args[0][3] == {"length": 5}
 
     @patch("state_cartographer.transport.pilot.action")
-    def test_press_traces(self, mock_action, pilot):
+    def test_press_logs_actions(self, mock_action, pilot):
         pilot.press("primary")
-        # press() calls keyevent() which also traces, so we get 2 calls
+        # press() calls keyevent() which also logs, so we get 2 calls
         action_names = [c[0][0] for c in mock_action.call_args_list]
         assert "keyevent" in action_names
         assert "press" in action_names
@@ -150,11 +164,42 @@ class TestTapChain:
         )
         assert "100_200" in paths[0].name
 
+    def test_aborts_on_failed_tap(self, pilot, tmp_path):
+        pilot.adb.tap.side_effect = [True, False]
+        with pytest.raises(RuntimeError, match="tap_chain failed at step 1"):
+            pilot.tap_chain(
+                [(100, 200, 0), (300, 400, 0)],
+                capture_dir=tmp_path / "captures",
+            )
+        assert pilot.adb.tap.call_count == 2
+        assert not (tmp_path / "captures" / "chain_001_300_400.png").exists()
+
     @patch("state_cartographer.transport.pilot.action")
-    def test_chain_level_trace(self, mock_action, pilot):
+    def test_chain_level_action_log(self, mock_action, pilot):
         pilot.tap_chain([(100, 200, 0), (300, 400, 0)])
         action_names = [c[0][0] for c in mock_action.call_args_list]
         assert action_names[0] == "tap_chain_start"
         assert action_names[-1] == "tap_chain_end"
         # Individual taps should be in between
         assert "tap" in action_names
+
+    @patch("state_cartographer.transport.pilot.action")
+    def test_failed_step_logs_chain_failure(self, mock_action, pilot):
+        pilot.adb.tap.return_value = False
+        with pytest.raises(RuntimeError, match="tap_chain failed at step 0"):
+            pilot.tap_chain([(100, 200, 0)])
+        assert mock_action.call_args_list[-1][0][0] == "tap_chain_end"
+        assert mock_action.call_args_list[-1][0][4] == "failure"
+        assert mock_action.call_args_list[-1][0][3]["failed_step"] == 0
+
+
+class TestDisconnect:
+    @patch("state_cartographer.transport.pilot.action")
+    def test_logs_disconnect_failure_when_adb_disconnect_returns_false(self, mock_action, pilot):
+        pilot.adb.disconnect.return_value = False
+
+        pilot.disconnect()
+
+        assert mock_action.call_args[0][0] == "disconnect"
+        assert mock_action.call_args[0][4] == "failure"
+        assert mock_action.call_args[1]["error"] == "adb disconnect returned False"

@@ -1,6 +1,6 @@
 # Keymapping Strategy: Bypassing Coordinate Precision
 
-**Status:** PROPOSED — `press()` is now implemented in `pilot.py` as of 2026-03-30. MEmu keymapper bindings still need to be configured and exported.  
+**Status:** PARTIALLY IMPLEMENTED — `press()` is implemented in `pilot.py` as of 2026-03-30; MEmu keymapper bindings still need to be configured and exported.  
 **Replaces/Extends:** `tap-chain-design.md`  
 **Date:** 2026-03-28
 
@@ -62,34 +62,38 @@ class Pilot:
         "fleet2": 9,      # KEYCODE_2
         "engage": 45,     # KEYCODE_Q
         "objective": 33,  # KEYCODE_E
-        "up": 19,         # KEYCODE_DPAD_UP
-        "down": 20,       # KEYCODE_DPAD_DOWN
-        "left": 21,       # KEYCODE_DPAD_LEFT
-        "right": 22,      # KEYCODE_DPAD_RIGHT
-        "menu": 111,      # KEYCODE_ESCAPE
+        "up": 51,         # KEYCODE_W
+        "down": 47,       # KEYCODE_S
+        "left": 29,       # KEYCODE_A
+        "right": 32,      # KEYCODE_D
         "emergency": 120, # KEYCODE_F9
     }
     
-    def press(self, action: str, count: int = 1, delay: float = 0.3) -> bool:
+    def press(self, name: str, count: int = 1, delay: float = 0.3) -> bool:
         """Press a mapped key by semantic name.
         
         Args:
-            action: Semantic key name from KEYMAP
+            name: Semantic key name from KEYMAP
             count: Number of times to press
             delay: Seconds between presses
             
         Returns:
             True if all presses succeeded
         """
-        keycode = self.KEYMAP.get(action)
-        if not keycode:
-            raise ValueError(f"Unknown key action: {action}")
+        keycode = self.KEYMAP.get(name)
+        if keycode is None:
+            raise ValueError(f"Unknown key action: {name}")
+        if count < 1:
+            raise ValueError("count must be >= 1")
+        if delay < 0:
+            raise ValueError("delay must be >= 0")
         
-        for _ in range(count):
+        all_ok = True
+        for i in range(count):
             self.keyevent(keycode)
-            if delay and _ < count - 1:
+            if delay > 0 and i < count - 1:
                 time.sleep(delay)
-        return True
+        return all_ok
     
     def battle_flow(self) -> None:
         """Execute full battle engagement via keys."""
