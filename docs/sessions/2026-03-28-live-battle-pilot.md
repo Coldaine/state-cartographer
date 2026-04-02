@@ -99,7 +99,6 @@ See: [Keymapping Strategy](../transport/keymapping-strategy.md)
 
 - [Keymapping Strategy](../transport/keymapping-strategy.md) — Primary interaction design
 - [Failure Mode Registry](./failure-mode-registry.md) — FM-001 through FM-004
-- [PR Summary](../PR-2026-03-28-pilot-harness-and-keymapping.md) — Merge proposal
 
 ---
 
