@@ -1,4 +1,4 @@
-"""Transport-layer action trace logger.
+"""Transport-layer action log.
 
 Logs every transport action to data/logs/{date}_{session_id}.log
 as structured single-line key=value records.
@@ -54,7 +54,7 @@ def _format_value(value: Any) -> str:
 def _configure_logger(session_id: str) -> logging.Logger:
     global _logger, _session_id
 
-    logger = logging.getLogger("state_cartographer.transport.trace")
+    logger = logging.getLogger("state_cartographer.transport.action_log")
     _close_handlers(logger)
     logger.setLevel(logging.DEBUG)
     logger.propagate = False
@@ -92,7 +92,7 @@ def get_logger() -> logging.Logger:
         default_session = f"default_{ts_s}"
         _configure_logger(default_session)
     if _logger is None:
-        raise RuntimeError("trace logger could not be initialized")
+        raise RuntimeError("action log logger could not be initialized")
     return _logger
 
 

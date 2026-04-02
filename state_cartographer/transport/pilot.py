@@ -11,11 +11,11 @@ import time
 from pathlib import Path
 from typing import ClassVar
 
+from state_cartographer.transport.action_log import action
 from state_cartographer.transport.adb import Adb
 from state_cartographer.transport.config import load_config
 from state_cartographer.transport.health import DoctorReport, doctor, recovery_ladder
 from state_cartographer.transport.maatouch import MaaTouch
-from state_cartographer.transport.trace import action
 
 log = logging.getLogger(__name__)
 
