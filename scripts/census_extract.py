@@ -262,12 +262,13 @@ class CensusDB:
     def upsert_ship(self, run_id: int, ship_data: dict[str, Any]) -> int:
         """Insert or update a ship record, deduplicating by name within the run.
 
-        Returns the ship id.
+        Returns the canonical ship id (looked up after upsert, not lastrowid
+        which is unreliable on ON CONFLICT DO UPDATE).
         """
         stats_json = json.dumps(ship_data.get("stats")) if ship_data.get("stats") else None
         skills_json = json.dumps(ship_data.get("skills")) if ship_data.get("skills") else None
 
-        cur = self.conn.execute(
+        self.conn.execute(
             "INSERT INTO ships (census_run_id, name, level, rarity, ship_class, "
             "affinity, limit_break, stats_json, skills_json, source_file) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
@@ -293,9 +294,12 @@ class CensusDB:
                 ship_data.get("source_file"),
             ),
         )
-        self.conn.commit()
-        assert cur.lastrowid is not None
-        return cur.lastrowid
+        row = self.conn.execute(
+            "SELECT id FROM ships WHERE census_run_id = ? AND name = ?",
+            (run_id, ship_data.get("name")),
+        ).fetchone()
+        assert row is not None, f"ship not found after upsert: {ship_data.get('name')}"
+        return row[0]
 
     def add_equipment(self, ship_id: int, equip_data: dict[str, Any]) -> None:
         """Insert a single equipment record for a ship."""
@@ -310,7 +314,6 @@ class CensusDB:
                 equip_data.get("source_file"),
             ),
         )
-        self.conn.commit()
 
     def close(self) -> None:
         """Close the database connection."""
@@ -436,6 +439,7 @@ def run_extraction(
                     continue
                 db.upsert_ship(run_id, ship)
                 grid_ship_count += 1
+        db.conn.commit()
 
         # -- Phase 2: detail + gear pages ----------------------------------------
         equipment_count = 0
@@ -470,6 +474,8 @@ def run_extraction(
                 for item in gear_items:
                     db.add_equipment(ship_id, item)
                     equipment_count += 1
+
+        db.conn.commit()
 
         # -- Finalize ------------------------------------------------------------
         db.complete_run(run_id)

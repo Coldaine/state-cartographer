@@ -105,7 +105,8 @@ def _detect_scroll_end(prev_bytes: bytes, curr_bytes: bytes) -> bool:
 def _navigate_to_dock(pilot: Pilot, layout: DockLayout) -> None:
     """Tap from page_main into page_dock and wait for the transition."""
     log.info("Navigating to dock: tap(%d, %d)", *layout.dock_tap)
-    pilot.tap(*layout.dock_tap)
+    if not pilot.tap(*layout.dock_tap):
+        raise RuntimeError(f"Failed to navigate to dock: tap{layout.dock_tap} unsuccessful")
     time.sleep(layout.nav_wait)
 
 
@@ -239,7 +240,9 @@ def deep_dive(
 
                 # 1. Tap ship cell
                 log.info("Ship %03d: tap(%d, %d) [col=%d, row=%d]", ship_index, cx, cy, col, row)
-                pilot.tap(cx, cy)
+                if not pilot.tap(cx, cy):
+                    log.error("Tap failed at (%d, %d), stopping capture", cx, cy)
+                    raise RuntimeError(f"Tap failed at ({cx}, {cy})")
                 time.sleep(layout.detail_wait)
 
                 # 2. Detail screenshot
@@ -249,7 +252,9 @@ def deep_dive(
                 log.info("  -> %s", detail_path.name)
 
                 # 3. Tap gear/equipment tab
-                pilot.tap(*layout.gear_tab_tap)
+                if not pilot.tap(*layout.gear_tab_tap):
+                    log.error("Gear tab tap failed, stopping capture")
+                    raise RuntimeError(f"Gear tab tap failed at {layout.gear_tab_tap}")
                 time.sleep(layout.gear_wait)
 
                 # 4. Gear screenshot
@@ -259,7 +264,9 @@ def deep_dive(
                 log.info("  -> %s", gear_path.name)
 
                 # 5. Back to dock grid
-                pilot.tap(*layout.back_tap)
+                if not pilot.tap(*layout.back_tap):
+                    log.error("Back button tap failed, stopping capture")
+                    raise RuntimeError(f"Back tap failed at {layout.back_tap}")
                 time.sleep(layout.back_wait)
 
                 ship_index += 1
