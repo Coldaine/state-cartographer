@@ -30,7 +30,7 @@ Everything else in `docs/` is a knowledge bucket.
 | `runtime/` | live-system contracts, backend lessons, health design |
 | `vlm/` | multimodal model profiles, task contracts, prompt policy |
 | `plans/` | tactical and strategic planning documents |
-| `agentPrompts/` | code-linked prompt rationale for prompt-bearing LLM code |
+| `prompts/` | code-linked prompt rationale for prompt-bearing LLM code |
 | `dev/` | developer workflow docs (testing, ADB integration) |
 
 ## Code and Data Buckets

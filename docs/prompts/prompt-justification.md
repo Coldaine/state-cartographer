@@ -18,16 +18,25 @@
 | `PAGE_DETECT_PROMPT` | Classify a screenshot into one of N candidate page labels | Uses candidate label list (not open-ended) to constrain the output space. Requires `confidence` and `uncertainty_flags` to support downstream adjudication. JSON-only output enforced via system prompt. |
 | `ELEMENT_LOCATE_PROMPT` | Find a named UI element and return its bounding box | Returns `found: boolean` + `bbox` to distinguish "not found" from "found but low confidence." `recommended_followups` field lets the model suggest what to try next if the element is ambiguous. |
 
-**Why inline constants:** These prompts are tightly coupled to the `VLMClient.complete()` call that formats and sends them. Extracting to external files would add a file-read step without improving reviewability, since the prompt and the code that uses it are in the same 300-line module. The task contracts doc (`VLM-task-contracts.md`) serves as the standalone specification.
+**Detailed justification:** [vlm-detector.md](vlm-detector.md) (per-clause breakdown)
 
-**Why JSON-only output:** The system prompt enforces `Return JSON that matches the requested schema exactly.` because downstream code calls `json.loads()` on the response. Free-text responses would crash the pipeline.
+**Why inline constants:** see [vlm-detector.md](vlm-detector.md) "Why Some Schema Content Still Lives In The Prompt" section.
 
-**Why confidence + uncertainty_flags:** Multi-pass corpus sweep (Pass 3) uses confidence to decide which labels need adjudication. Without it, every label would need a second opinion.
+### Kimi Review Prompts
+
+**Location:** `scripts/kimi_review.py` (inline constant: `VISIBLE_ONLY_PROMPT`)
+**Detailed justification:** [kimi-review.md](kimi-review.md) (per-clause breakdown)
+
+| Prompt | Purpose | Key Design Decisions |
+|--------|---------|---------------------|
+| `VISIBLE_ONLY_PROMPT` | Constrain Kimi to only report what is visually present in the screenshot | Prevents hallucination by forcing the model to ground all claims in visible evidence. Used as a secondary/adjudication model in corpus sweep Pass 3. |
+
+**Why Kimi as secondary:** Kimi (Moonshot) is a cheap, capable vision model used for disagreement adjudication. When the primary VLM and Kimi disagree on a page label, the disagreement is logged for manual review.
 
 ### Census Extraction Prompts
 
 **Location:** `scripts/census_extract.py` (inline constants: `GRID_EXTRACT_PROMPT`, `DETAIL_EXTRACT_PROMPT`, `GEAR_EXTRACT_PROMPT`)
-**Standalone file:** To be extracted to `docs/prompts/census-extract-prompts.md` when the prompts stabilize after live calibration.
+**Detailed justification:** [census-extract.md](census-extract.md) (per-clause breakdown)
 
 | Prompt | Purpose | Key Design Decisions |
 |--------|---------|---------------------|
@@ -35,23 +44,7 @@
 | `DETAIL_EXTRACT_PROMPT` | Extract full ship profile from a detail view screenshot | Requests structured nested JSON (`stats: {...}`, `skills: [...]`) because these are variable-length data. `null` policy same as grid. |
 | `GEAR_EXTRACT_PROMPT` | Extract equipment from a gear view screenshot | Explicitly asks for empty slots (`"name": null`) so the extraction pipeline can distinguish "no gear" from "extraction failed." Slot numbering (1-6 + "augment") matches the game's UI layout. |
 
-**Why inline (for now):** These prompts are in active development. They will be tested against real dock screenshots and iterated. Once stable, they should be extracted to standalone files under `docs/prompts/`. The current inline placement avoids the overhead of loading external files during rapid iteration.
-
-**Why "include EVERY ship" in grid prompt:** The capture pipeline deliberately overlaps consecutive grid pages by 1-2 rows. The extraction must capture all ships including partial ones so that deduplication (by ship name in SQLite UNIQUE constraint) can reconcile overlaps correctly. Instructing the VLM to skip partial ships would create gaps.
-
-**Why null over omission:** Downstream SQLite COALESCE merge depends on null fields being explicitly present. If a field is omitted from the JSON, `dict.get()` returns `None` which writes NULL to the DB. If a field is absent entirely, the merge logic still works, but explicit null in the prompt output makes the VLM's uncertainty visible in the raw extraction data.
-
-### Navigator Agent Prompt (PR #35, not yet merged)
-
-**Location:** `.github/agents/azur-lane-navigator.agent.md` (standalone file)
-**Status:** Under review in PR #35. Has known issues flagged by automated reviewers (self-referencing agent, nonportable session path, drive pattern bugs).
-
-| Prompt Section | Purpose | Key Design Decisions |
-|---------------|---------|---------------------|
-| Drive Pattern | Canonical observe-act-observe loop for Pilot | Uses `Pilot` context manager. Screenshots saved to `data/` for VLM consumption. Designed to be copy-pasted into interactive agent sessions. |
-| Recovery | Handle stuck states and unexpected popups | Back button (57, 55) as universal escape. Health check fallback. Escalation to human if stuck > 3 cycles. |
-
-**Why standalone `.agent.md`:** This is a GitHub Copilot agent definition that must be discoverable by the agent framework. Standalone file is the correct pattern here.
+**Why inline (for now):** see [census-extract.md](census-extract.md) for full rationale on inline placement during active development.
 
 ---
 

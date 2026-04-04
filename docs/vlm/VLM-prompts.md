@@ -75,4 +75,4 @@ Prompt text should focus on:
 
 If a prompt starts carrying configuration, schema, or backend policy, that content is in the wrong file.
 
-File-specific rationale for prompt-bearing code belongs in `docs/agentPrompts/`, with a companion doc that links to the code file, justifies each meaningful prompt part, and explains how each part helps the model on that task.
+File-specific rationale for prompt-bearing code belongs in `docs/prompts/`, with a companion doc that links to the code file, justifies each meaningful prompt part, and explains how each part helps the model on that task.

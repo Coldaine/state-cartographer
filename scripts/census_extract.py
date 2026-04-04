@@ -63,9 +63,14 @@ List every ship visible in the grid. For each ship, extract:
 - ship_class: the class icon if identifiable (DD/CL/CA/BB/CV/etc.)
 
 Return a JSON object with a single key "ships" containing an array of objects.
-Example: {"ships": [{"name": "Enterprise", "level": 120, "rarity": "Super Rare", "ship_class": "CV"}, ...]}
 
-If a field cannot be determined, use null. Include EVERY ship visible, even if partially cut off at edges."""
+If a field cannot be determined, use null. Include EVERY ship visible, even if partially cut off at edges.
+
+Also provide:
+- confidence: float 0.0-1.0 indicating how confident you are in the overall extraction
+- rationale: one sentence explaining what visual evidence you used
+
+Return as: {"ships": [{"name": "Enterprise", "level": 120, "rarity": "Super Rare", "ship_class": "CV"}, ...], "confidence": 0.85, "rationale": "Clear grid with readable text, 2 ships partially cut off at bottom edge"}"""
 
 DETAIL_EXTRACT_PROMPT = """Analyze this Azur Lane ship detail screenshot.
 
@@ -80,7 +85,13 @@ Extract the following information:
 - limit_break: limit break stars (0-4)
 
 Return as JSON: {"ship": {"name": ..., "level": ..., "rarity": ..., "ship_class": ..., "affinity": ..., "limit_break": ..., "stats": {...}, "skills": [...]}}
-Use null for any field that cannot be determined."""
+Use null for any field that cannot be determined.
+
+Also provide:
+- confidence: float 0.0-1.0 indicating overall extraction confidence
+- rationale: one sentence grounding your extraction in visible evidence
+
+Return as: {"ship": {...}, "confidence": 0.9, "rationale": "Detail view clearly shows all fields; affinity hearts partially obscured"}"""
 
 GEAR_EXTRACT_PROMPT = """Analyze this Azur Lane ship equipment/gear screenshot.
 
@@ -92,7 +103,13 @@ List every equipped gear item visible. For each slot, extract:
 
 Return as JSON: {"equipment": [{"slot": 1, "name": "Twin 127mm", "level": 10, "rarity": "Gold"}, ...]}
 Include empty slots as {"slot": N, "name": null, "level": null, "rarity": null}.
-Use null for any field that cannot be determined."""
+Use null for any field that cannot be determined.
+
+Also provide:
+- confidence: float 0.0-1.0 indicating overall extraction confidence
+- rationale: one sentence grounding your extraction in visible evidence
+
+Return as: {"equipment": [...], "confidence": 0.95, "rationale": "All 6 slots clearly visible with readable enhancement levels"}"""
 
 # ---------------------------------------------------------------------------
 # VLM helpers (self-contained, mirrors vlm_detector.py patterns)
