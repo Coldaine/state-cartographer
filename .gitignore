@@ -67,3 +67,6 @@ state_cartographer/base/
 .mcp.json
 .voicetree/
 voicetree*/
+
+# Codex agent artifact
+.codex
