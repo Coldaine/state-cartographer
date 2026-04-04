@@ -2,6 +2,18 @@
 
 This file is the mandatory starting point.
 
+@docs/prompts/prompt-justification.md
+
+## Prompt Governance
+
+Every agent prompt, VLM prompt, and LLM prompt template in this project must have:
+
+1. **A standalone file** (`.agent.md`, `.prompt.md`, or documented inline-with-justification) that can be loaded and configured independently.
+2. **An entry in the [Prompt Justification Registry](docs/prompts/prompt-justification.md)** with: location, purpose, and explicit rationale for each design decision.
+3. **Copilot reviewer enforcement** via [`.github/instructions/prompt-quality.instructions.md`](.github/instructions/prompt-quality.instructions.md) — automated reviewers check prompt quality, schema alignment, and registry completeness on every PR.
+
+See the justification registry for the full prompt inventory and design principles.
+
 ## Required Reading
 
 | Document | What It Covers |
