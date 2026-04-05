@@ -34,7 +34,7 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 | `docs/RES-research/` | Research notes and synthesis |
 | `docs/memory/` | Dated lessons learned |
 | `docs/workflows/` | Workflow/task inventory |
-| `docs/agentPrompts/` | Prompt rationale for LLM code |
+| `docs/prompts/` | Prompt rationale for LLM code |
 | `docs/prework/` | Corpus/data preparation procedures |
 | `docs/runtime/` | Backend design constraints |
 | `docs/dev/` | Testing plan |

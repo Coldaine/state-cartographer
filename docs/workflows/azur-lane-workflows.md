@@ -212,3 +212,137 @@ See also:
 - Comfort level
 
 **Timers set:** `dorm_next_feed` = now + configured interval (4-8 hours)
+
+---
+
+## 14. Dock Census (Data Collection)
+
+**Purpose:** Inventory all ships with their levels, affinities, equipment, and stats.
+
+**Entry state:** `page_dock` (via `page_main`)
+**Navigation:** `page_main` → `page_dock` (tap MAIN_GOTO_DOCK_WHITE)
+
+**Substates:**
+- `page_dock_grid` — the scrollable ship card grid
+- `page_ship_detail` — per-ship detail view (after tapping a ship card)
+- `page_ship_gear` — equipment tab within the detail view
+- `page_dock_sort` — sort/filter controls overlay
+
+**Sequence (Grid Scan):**
+1. Navigate to dock
+2. Screenshot the initial grid page
+3. Swipe up to scroll (continuous vertical scroll, not paginated)
+4. Screenshot after each swipe
+5. Detect scroll-end (consecutive identical frames)
+6. Repeat until bottom reached
+
+**Sequence (Per-Ship Deep Dive):**
+1. Navigate to dock
+2. For each ship in the visible grid (row by row, left to right):
+   a. Tap ship card → `page_ship_detail`
+   b. Screenshot detail page (name, level, affinity, stats, skills, limit break)
+   c. Tap gear tab → `page_ship_gear`
+   d. Screenshot gear page (all equipment slots in one view)
+   e. Tap back → `page_dock_grid`
+3. After all visible ships processed, swipe to scroll down
+4. Repeat until scroll-end detected or limit reached
+
+**Data read:**
+- Ship name, level, rarity, class (from grid cards and detail view)
+- Affinity, stats, skills, limit break (from detail view)
+- Equipment: name, level, rarity per slot (from gear view)
+
+**Data produced:**
+- Timestamped screenshot corpus in `data/census/{timestamp}/`
+- Grid page screenshots in `grid/` subdirectory
+- Per-ship detail and gear screenshots in `ships/` subdirectory
+- SQLite database via offline VLM extraction pipeline
+
+**Decision logic:**
+- Scroll calibration: swipe distance tuned to leave 1-2 row overlap
+- Scroll-end: raw PNG byte comparison (Vulkan renders identically)
+- Ship limit: optional `--limit N` for partial census runs
+- Sort/filter: dock sort order affects which ships appear first (configurable pre-step)
+
+**Error patterns:**
+- Scroll overshoot: swipe too far, miss ships (mitigated by overlap calibration)
+- Tap misalignment: tap wrong grid cell (mitigated by DockLayout calibration)
+- Detail view load delay: screenshot captures loading state (mitigated by configurable wait time)
+
+---
+
+## 15. Dorm Rotation (Future Design)
+
+**Purpose:** Rotate ships through dorm slots to farm affinity efficiently.
+
+**Entry state:** `page_dorm`
+**Navigation:** `page_main` → `page_dormmenu` → `page_dorm`
+
+**Sequence:**
+1. Navigate to dorm
+2. Check current dorm occupants (VLM reads ship names/affinity)
+3. For each slot: if ship has reached target affinity, swap with next priority ship from the census database
+4. Feed ships if food below threshold
+5. Return to `page_main`
+
+**Data read:** Current dorm occupants, affinity levels, food bar
+**Data produced:** Swap log, affinity progression records
+**Decision logic:** Priority queue from census DB (lowest affinity first, or by ship rarity/usefulness)
+
+---
+
+## 16. Secretary Cycling (Future Design)
+
+**Purpose:** Rotate the secretary ship as affinity milestones are reached.
+
+**Entry state:** `page_main` (secretary is visible on main screen)
+
+**Sequence:**
+1. Check current secretary's affinity (from census database or live VLM read)
+2. If affinity has reached target (e.g., 100 for oath, or a threshold):
+   - Navigate to secretary selection
+   - Select next priority ship from census DB
+   - Confirm selection
+3. Return to `page_main`
+
+**Data read:** Current secretary identity, affinity
+**Data produced:** Secretary change log, affinity milestone records
+**Decision logic:** Rotation order from census DB (prioritize ships needing affinity for oath/pledge)
+
+---
+
+## 17. Commission Tracking (Future Design)
+
+**Purpose:** Accurately track commission dispatches, completions, and resource gains over time.
+
+**Entry state:** `page_commission`
+**Navigation:** `page_main` → `page_reward` → `page_commission`
+
+**Sequence:**
+1. Navigate to commission page
+2. Read all active commissions (VLM extracts name, duration, status, reward icons)
+3. Record dispatch times and expected completion times
+4. On collection: record actual resource gains (oil, coins, cubes, gems)
+5. Track over time in census database (new table: `commissions`)
+
+**Data read:** Commission name, duration, status, reward icons, resource amounts
+**Data produced:** Commission log (dispatched, completed, resources gained), efficiency metrics
+**Decision logic:** Commission selection from configured priority preset (gem commissions first, shortest duration, etc.)
+
+---
+
+## 18. Equipment Audit (Future Design)
+
+**Purpose:** Track which ships have which equipment, find empty gear slots, identify optimization opportunities.
+
+**Entry state:** derived from dock census deep-dive data
+
+**Sequence:**
+1. Run dock census deep-dive (or use existing census data)
+2. Extract equipment data via VLM pipeline
+3. Query census DB for: empty slots, duplicate equipment, suboptimal gear assignments
+4. Generate audit report
+
+**Data read:** Equipment data from census DB
+**Data produced:** Audit report (empty slots per ship, gear distribution, optimization suggestions)
+**Decision logic:** Gear tier rankings, slot requirements by ship class, BiS (best-in-slot) reference data

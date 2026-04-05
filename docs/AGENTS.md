@@ -21,7 +21,7 @@ Active direction is currently anchored by `todo.md` and `plans/multi-tier-runtim
 | `vlm/` | Model profiles, task contracts, prompt guidance |
 | `plans/` | Active planning docs |
 | `workflows/` | Workflow inventory |
-| `agentPrompts/` | Code-linked prompt rationale |
+| `prompts/` | Code-linked prompt rationale |
 
 ## Find The Right Document
 
