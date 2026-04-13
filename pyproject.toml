@@ -6,7 +6,7 @@ requires-python = ">=3.11"
 license = "MIT"
 dependencies = [
     "openai>=2.29.0",
-    "requests>=2.32.0",
+    "requests>=2.33.0",
     "adbutils>=0.11.0",
 ]
 
