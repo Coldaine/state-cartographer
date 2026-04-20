@@ -67,3 +67,9 @@ state_cartographer/base/
 .mcp.json
 .voicetree/
 voicetree*/
+.entire/
+.gemini/
+
+# Debug screenshots
+debug_screen.png
+screen*.png
