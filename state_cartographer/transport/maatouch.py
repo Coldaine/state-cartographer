@@ -20,7 +20,9 @@ from state_cartographer.transport.adb import Adb
 log = logging.getLogger(__name__)
 
 DEFAULT_REMOTE_PATH = "/data/local/tmp/maatouchsync"
-DEFAULT_LOCAL_PATH = Path("vendor/AzurLaneAutoScript/bin/MaaTouch/maatouchsync")
+DEFAULT_LOCAL_PATH = (
+    Path(__file__).resolve().parent.parent.parent.parent / "ALAS_original" / "bin" / "MaaTouch" / "maatouchsync"
+)
 
 
 @dataclass
@@ -206,19 +208,24 @@ class MaaTouch:
             self._start_reader()
 
             # Read banner: '^ <contacts> <max_x> <max_y> <max_pressure>'
-            banner = self._readline(timeout=3.0)
+            banner = self._readline(timeout=10.0)
             log.info(f"MaaTouch banner: {banner}")
 
-            if banner.strip() == "Aborted":
+            if "Aborted" in banner:
                 self.disconnect()
                 raise MaaTouchNotInstalledError("MaaTouch aborted — incompatible with device")
 
             try:
-                _, _max_contacts, max_x, max_y, _max_pressure = banner.split()
+                # Strip leading '^ ' if present, or handle raw split
+                parts = banner.strip().split()
+                if parts[0] == "^":
+                    parts = parts[1:]
+
+                _max_contacts, max_x, max_y, _max_pressure = parts[:4]
                 self._max_x = int(max_x)
                 self._max_y = int(max_y)
-            except ValueError:
-                log.warning(f"Unexpected MaaTouch banner: {banner!r}")
+            except (ValueError, IndexError):
+                log.warning(f"Unexpected MaaTouch banner format: {banner!r}")
 
             # Read second banner line: '$ <max_pressure>'
             try:

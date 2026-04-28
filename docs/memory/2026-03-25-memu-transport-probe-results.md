@@ -10,8 +10,8 @@ See also:
 ## Environment
 
 - date: `2026-03-25`
-- pinned serial (current tracked config): `127.0.0.1:21513`
-- note: earlier local probes also used `127.0.0.1:21503` on a different MEmu instance index
+- pinned serial (current tracked config): `127.0.0.1:21503`
+- note: some earlier local probes and stale docs referenced `127.0.0.1:21513` on a different MEmu instance index
 - tracked config: [memu.json](/mnt/d/_projects/MasterStateMachine/configs/memu.json)
 - Historical CLI wrapper: `scripts/memu_transport.py` (deleted)
 

@@ -45,11 +45,11 @@ For the docs-only map, read [docs/AGENTS.md](/mnt/d/_projects/MasterStateMachine
 
 | Path | Purpose |
 |---|---|
-| `vendor/` | External reference code (ALAS) |
-| `data/` | Corpora, logs, screenshots, labels, truth artifacts |
+| `vendor/` | Helper wrappers and reference snapshots for the external ALAS install |
+| `data/` | Corpora, logs, run manifests, screenshots, labels, truth artifacts |
 | `docs/` | Agent knowledge layer |
-| `scripts/` | Active scripts (corpus_cleanup, kimi_review, vlm_detector, stress_test_adb) |
-| `state_cartographer/` | Python package: transport substrate (adb, maatouch, health, models, pilot facade) |
+| `scripts/` | Active scripts (corpus_sweep, dock_census_capture, census_extract, corpus_cleanup, kimi_review, vlm_detector, stress_test_adb) |
+| `state_cartographer/` | Python package: transport substrate, run recording, and future runtime code |
 | `tests/` | Automated tests (transport unit tests + live smoke tests) |
 | `configs/` | Project configuration (emulator serial, tool posture) |
 

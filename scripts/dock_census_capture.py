@@ -28,6 +28,8 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from state_cartographer.run_recording import RunRecorder
+from state_cartographer.transport.config import load_config
 from state_cartographer.transport.pilot import Pilot
 
 log = logging.getLogger(__name__)
@@ -89,10 +91,13 @@ class DockLayout:
 # ---------------------------------------------------------------------------
 
 
-def _make_output_dir() -> Path:
-    """Create a timestamped census output directory."""
-    stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    out = DATA_DIR / "census" / stamp
+def _make_output_dir(base_dir: Path | None = None) -> Path:
+    """Create the canonical census output directory for this run."""
+    if base_dir is not None:
+        out = base_dir / "capture"
+    else:
+        stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        out = DATA_DIR / "census" / stamp
     out.mkdir(parents=True, exist_ok=True)
     return out
 
@@ -100,6 +105,11 @@ def _make_output_dir() -> Path:
 def _detect_scroll_end(prev_bytes: bytes, curr_bytes: bytes) -> bool:
     """Return True if raw PNG bytes are identical (scroll has stopped)."""
     return prev_bytes == curr_bytes
+
+
+def _detail_view_opened(grid_bytes: bytes, detail_bytes: bytes) -> bool:
+    """Return True when tapping a grid cell appears to have changed screens."""
+    return grid_bytes != detail_bytes
 
 
 def _navigate_to_dock(pilot: Pilot, layout: DockLayout) -> None:
@@ -151,13 +161,14 @@ def grid_scan(
 
     # Scroll and capture until end
     while True:
-        pilot.swipe(
+        if not pilot.swipe(
             layout.swipe_x,
             layout.swipe_start_y,
             layout.swipe_x,
             layout.swipe_end_y,
             layout.swipe_duration_ms,
-        )
+        ):
+            raise RuntimeError("Dock swipe failed during grid_scan")
         time.sleep(layout.swipe_settle)
 
         curr_bytes = pilot.screenshot()
@@ -244,10 +255,21 @@ def deep_dive(
                     log.error("Tap failed at (%d, %d), stopping capture", cx, cy)
                     raise RuntimeError(f"Tap failed at ({cx}, {cy})")
                 time.sleep(layout.detail_wait)
+                detail_bytes = pilot.screenshot()
+                if not _detail_view_opened(prev_grid_bytes, detail_bytes):
+                    log.warning(
+                        "Cell (%d, %d) did not open a ship detail view; assuming dock census is exhausted", cx, cy
+                    )
+                    elapsed = time.monotonic() - t0
+                    return {
+                        "total_ships": ship_index,
+                        "total_screenshots": screenshot_count,
+                        "elapsed_seconds": round(elapsed, 2),
+                    }
 
                 # 2. Detail screenshot
                 detail_path = ships_dir / f"{ship_index:03d}_detail.png"
-                detail_path.write_bytes(pilot.screenshot())
+                detail_path.write_bytes(detail_bytes)
                 screenshot_count += 1
                 log.info("  -> %s", detail_path.name)
 
@@ -272,13 +294,14 @@ def deep_dive(
                 ship_index += 1
 
         # All visible rows processed — swipe to next page
-        pilot.swipe(
+        if not pilot.swipe(
             layout.swipe_x,
             layout.swipe_start_y,
             layout.swipe_x,
             layout.swipe_end_y,
             layout.swipe_duration_ms,
-        )
+        ):
+            raise RuntimeError("Dock swipe failed during deep_dive")
         time.sleep(layout.swipe_settle)
 
         curr_grid_bytes = pilot.screenshot()
@@ -307,6 +330,7 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Dock census capture pipeline for Azur Lane.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    parser.add_argument("--run-id", type=str, default=None, help="Optional explicit run id for provenance output.")
     sub = parser.add_subparsers(dest="command", required=True)
 
     # grid-scan
@@ -321,27 +345,57 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)-8s %(message)s",
         datefmt="%H:%M:%S",
     )
 
-    args = _build_parser().parse_args()
-    output_dir = _make_output_dir()
+    raw_args = list(argv) if argv is not None else sys.argv[1:]
+    args = _build_parser().parse_args(raw_args)
+    config_path = Path(args.config).resolve() if args.config else REPO_ROOT / "configs" / "memu.json"
+    config = load_config(config_path)
+    recorder = RunRecorder(
+        "dock-census-capture",
+        command=[str(Path(__file__).resolve()), *raw_args],
+        cwd=REPO_ROOT,
+    )
+    recorder.start(
+        run_id=args.run_id,
+        config_path=config_path,
+        serial=config.serial,
+        input_paths={"config_path": config_path},
+        notes=[f"render_mode={config.raw.get('render_mode', 'unknown')}"],
+    )
+
+    output_dir = _make_output_dir(recorder.artifact_path())
     layout = DockLayout()
 
     log.info("Output directory: %s", output_dir)
 
-    with Pilot(config_path=args.config) as pilot:
-        if args.command == "grid-scan":
-            result = grid_scan(pilot, output_dir, layout)
-        elif args.command == "deep-dive":
-            result = deep_dive(pilot, output_dir, layout, limit=args.limit)
-        else:
-            log.error("Unknown command: %s", args.command)
-            sys.exit(1)
+    try:
+        with Pilot(config_path=str(config_path)) as pilot:
+            if not pilot.is_healthy():
+                log.error("Device not reachable after connect — check ADB and emulator state")
+                recorder.finish(
+                    exit_code=1,
+                    output_paths={"capture_dir": output_dir},
+                    warnings=["device not reachable after connect"],
+                )
+                return 1
+
+            recorder.event("phase_started", phase=args.command, output_dir=str(output_dir))
+            if args.command == "grid-scan":
+                result = grid_scan(pilot, output_dir, layout)
+            elif args.command == "deep-dive":
+                result = deep_dive(pilot, output_dir, layout, limit=args.limit)
+            else:
+                raise ValueError(f"Unknown command: {args.command}")
+    except Exception as exc:
+        recorder.event("run_error", command=args.command, error=str(exc))
+        recorder.finish(exit_code=1, output_paths={"capture_dir": output_dir}, warnings=[str(exc)])
+        raise
 
     # Summary
     print("\n--- Census Summary ---")
@@ -349,7 +403,9 @@ def main() -> None:
         print(f"  {key}: {value}")
     print(f"  output_dir: {output_dir}")
     print("----------------------")
+    recorder.finish(exit_code=0, output_paths={"capture_dir": output_dir}, summary_counts=result)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

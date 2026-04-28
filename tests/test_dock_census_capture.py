@@ -6,6 +6,7 @@ All Pilot interactions are mocked; output files go to tmp_path.
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -17,9 +18,11 @@ if _ROOT not in sys.path:
 
 from scripts.dock_census_capture import (  # noqa: E402
     DockLayout,
+    _detail_view_opened,
     _detect_scroll_end,
     deep_dive,
     grid_scan,
+    main,
 )
 
 # ---------------------------------------------------------------------------
@@ -34,6 +37,11 @@ class TestDetectScrollEnd:
 
     def test_different_bytes_returns_false(self):
         assert _detect_scroll_end(b"frame_a", b"frame_b") is False
+
+
+def test_detail_view_opened_requires_changed_screen():
+    assert _detail_view_opened(b"grid", b"detail") is True
+    assert _detail_view_opened(b"grid", b"grid") is False
 
 
 # ---------------------------------------------------------------------------
@@ -120,6 +128,18 @@ class TestGridScan:
         assert len(saved) == 1
         assert result["total_screenshots"] == 1
 
+    def test_swipe_failure_raises(self, tmp_path):
+        pilot = _make_pilot([b"page_0"])
+        pilot.swipe.return_value = False
+
+        with patch("time.sleep"):
+            try:
+                grid_scan(pilot, tmp_path)
+            except RuntimeError as exc:
+                assert "grid_scan" in str(exc)
+            else:
+                raise AssertionError("grid_scan should fail when swipe() returns False")
+
 
 # ---------------------------------------------------------------------------
 # deep_dive
@@ -181,3 +201,70 @@ class TestDeepDive:
         assert result["total_ships"] == ships_per_page
         assert result["total_screenshots"] == ships_per_page * 2
         assert len(saved) == ships_per_page * 2
+
+    def test_empty_cell_does_not_emit_ship_artifacts(self, tmp_path):
+        screenshots = [
+            b"baseline",
+            b"baseline",
+            b"baseline",
+        ]
+        pilot = _make_pilot(screenshots)
+
+        with patch("time.sleep"):
+            result = deep_dive(pilot, tmp_path, limit=1)
+
+        assert result["total_ships"] == 0
+        assert result["total_screenshots"] == 0
+        assert list((tmp_path / "ships").glob("*.png")) == []
+
+    def test_swipe_failure_raises(self, tmp_path):
+        layout = DockLayout()
+        ships_per_page = layout.visible_rows * layout.columns
+        screenshots = [b"baseline"]
+        for i in range(ships_per_page):
+            screenshots.append(f"detail_{i}".encode())
+            screenshots.append(f"gear_{i}".encode())
+        pilot = _make_pilot(screenshots)
+        pilot.swipe.return_value = False
+
+        with patch("time.sleep"):
+            try:
+                deep_dive(pilot, tmp_path, layout=layout)
+            except RuntimeError as exc:
+                assert "deep_dive" in str(exc)
+            else:
+                raise AssertionError("deep_dive should fail when swipe() returns False")
+
+
+def test_main_health_guard_writes_run_artifacts(tmp_path, monkeypatch):
+    class FakeConfig:
+        def __init__(self):
+            self.serial = "127.0.0.1:21503"
+            self.raw = {"render_mode": "test"}
+
+    class FakePilot:
+        def __init__(self, config_path=None):
+            self.config_path = config_path
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def is_healthy(self):
+            return False
+
+    monkeypatch.setattr("scripts.dock_census_capture.load_config", lambda path: FakeConfig())
+    monkeypatch.setattr("scripts.dock_census_capture.Pilot", FakePilot)
+    monkeypatch.setenv("SC_RUN_DATA_ROOT", str(tmp_path / "runs"))
+    monkeypatch.setenv("SC_RUN_SUMMARY_ROOT", str(tmp_path / "summaries"))
+
+    exit_code = main(["--run-id", "dock-run", "grid-scan"])
+    assert exit_code == 1
+
+    manifest = json.loads((tmp_path / "runs" / "dock-run" / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["status"] == "failed"
+    assert manifest["serial"] == "127.0.0.1:21503"
+    assert manifest["output_paths"]["capture_dir"].endswith("capture")
+    assert (tmp_path / "runs" / "dock-run" / "events.ndjson").exists()

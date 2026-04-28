@@ -2,7 +2,7 @@
 
 ## Code Link
 
-- [scripts/census_extract.py](/mnt/d/_projects/MasterStateMachine/scripts/census_extract.py)
+- [scripts/census_extract.py](../../scripts/census_extract.py)
 
 ## Purpose
 

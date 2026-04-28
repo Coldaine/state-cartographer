@@ -4,7 +4,7 @@ How State Cartographer uses the ALAS navigation graph with VLM-based observation
 
 ## The Runtime Loop
 
-```
+```text
 OBSERVE → ROUTE → EXECUTE → repeat
 ```
 
@@ -18,6 +18,7 @@ If a popup appears (unexpected buttons/dialog), the VLM sees it and the runtime 
 
 ## What Comes From Where
 
+
 | Component | Source | Notes |
 |-----------|--------|-------|
 | **Navigation graph** | Extracted from ALAS `page.py` | 43 pages, 107 edges, symbolic button names. Used for routing (BFS). See [ALS-navigation-graph.md](ALS-navigation-graph.md) |
@@ -25,6 +26,7 @@ If a popup appears (unexpected buttons/dialog), the VLM sees it and the runtime 
 | **Button positions** | VLM observation at runtime | Not hardcoded. The VLM sees where buttons are on the current screenshot. |
 | **Popup handling** | VLM observation + task context | Known popups cataloged in [ALS-navigation-graph.md](ALS-navigation-graph.md). Novel popups handled by VLM reasoning. |
 | **Transport** | `state_cartographer/transport/` | ADB screencap (Vulkan, 100% reliable), MaaTouch tap. Done. |
+
 
 ## Key Design Decisions
 

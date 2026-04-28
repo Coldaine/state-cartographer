@@ -34,10 +34,13 @@ import mimetypes
 import os
 import re
 import sqlite3
+import sys
 from pathlib import Path
 from typing import Any
 
 import requests
+
+from state_cartographer.run_recording import RunRecorder
 
 log = logging.getLogger(__name__)
 
@@ -218,6 +221,7 @@ CREATE TABLE IF NOT EXISTS census_runs (
 CREATE TABLE IF NOT EXISTS ships (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     census_run_id INTEGER NOT NULL REFERENCES census_runs(id),
+    slot_index INTEGER NOT NULL,
     name TEXT,
     level INTEGER,
     rarity TEXT,
@@ -227,7 +231,7 @@ CREATE TABLE IF NOT EXISTS ships (
     stats_json TEXT,
     skills_json TEXT,
     source_file TEXT,
-    UNIQUE(census_run_id, name)
+    UNIQUE(census_run_id, slot_index)
 );
 
 CREATE TABLE IF NOT EXISTS equipment (
@@ -277,22 +281,27 @@ class CensusDB:
         self.conn.commit()
 
     def upsert_ship(self, run_id: int, ship_data: dict[str, Any]) -> int:
-        """Insert or update a ship record, deduplicating by name within the run.
+        """Insert or update a ship record, deduplicating by capture slot within the run.
 
         Returns the canonical ship id (looked up after upsert, not lastrowid
         which is unreliable on ON CONFLICT DO UPDATE).
         """
+        slot_index = ship_data.get("slot_index")
+        if slot_index is None:
+            raise ValueError("ship_data.slot_index is required for census upserts")
+
         stats_json = json.dumps(ship_data.get("stats")) if ship_data.get("stats") else None
         skills_json = json.dumps(ship_data.get("skills")) if ship_data.get("skills") else None
 
         self.conn.execute(
-            "INSERT INTO ships (census_run_id, name, level, rarity, ship_class, "
+            "INSERT INTO ships (census_run_id, slot_index, name, level, rarity, ship_class, "
             "affinity, limit_break, stats_json, skills_json, source_file) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
-            "ON CONFLICT(census_run_id, name) DO UPDATE SET "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(census_run_id, slot_index) DO UPDATE SET "
             "level = COALESCE(excluded.level, ships.level), "
             "rarity = COALESCE(excluded.rarity, ships.rarity), "
             "ship_class = COALESCE(excluded.ship_class, ships.ship_class), "
+            "name = COALESCE(excluded.name, ships.name), "
             "affinity = COALESCE(excluded.affinity, ships.affinity), "
             "limit_break = COALESCE(excluded.limit_break, ships.limit_break), "
             "stats_json = COALESCE(excluded.stats_json, ships.stats_json), "
@@ -300,6 +309,7 @@ class CensusDB:
             "source_file = COALESCE(excluded.source_file, ships.source_file)",
             (
                 run_id,
+                slot_index,
                 ship_data.get("name"),
                 ship_data.get("level"),
                 ship_data.get("rarity"),
@@ -312,10 +322,10 @@ class CensusDB:
             ),
         )
         row = self.conn.execute(
-            "SELECT id FROM ships WHERE census_run_id = ? AND name = ?",
-            (run_id, ship_data.get("name")),
+            "SELECT id FROM ships WHERE census_run_id = ? AND slot_index = ?",
+            (run_id, slot_index),
         ).fetchone()
-        assert row is not None, f"ship not found after upsert: {ship_data.get('name')}"
+        assert row is not None, f"ship not found after upsert: slot_index={slot_index}"
         return row[0]
 
     def add_equipment(self, ship_id: int, equip_data: dict[str, Any]) -> None:
@@ -412,10 +422,16 @@ def _discover_capture_dir(capture_dir: Path) -> tuple[list[Path], dict[str, dict
     return grid_pages, ship_files
 
 
+def _sorted_ship_indexes(ship_files: dict[str, dict[str, Path]]) -> list[int]:
+    """Return ship file indexes as sorted integers."""
+    return sorted(int(idx) for idx in ship_files)
+
+
 def run_extraction(
     capture_dir: Path,
     db_path: Path,
     client: VLMClient,
+    recorder: RunRecorder | None = None,
 ) -> dict[str, Any]:
     """Process all screenshots in a capture directory.
 
@@ -433,6 +449,13 @@ def run_extraction(
         len(ship_files),
         capture_dir,
     )
+    if recorder is not None:
+        recorder.event(
+            "capture_discovered",
+            capture_dir=str(capture_dir),
+            grid_pages=len(grid_pages),
+            ship_screenshot_sets=len(ship_files),
+        )
 
     db = CensusDB(db_path)
     try:
@@ -444,6 +467,9 @@ def run_extraction(
 
         # -- Phase 1: grid pages ------------------------------------------------
         grid_ship_count = 0
+        if recorder is not None:
+            recorder.event("phase_started", phase="grid_pages", count=len(grid_pages))
+        slot_index = 0
         for i, page_path in enumerate(grid_pages, 1):
             log.info("Extracting grid page %d/%d...", i, len(grid_pages))
             try:
@@ -452,15 +478,23 @@ def run_extraction(
                 log.exception("Failed to extract grid page %s", page_path)
                 continue
             for ship in ships:
+                ship["slot_index"] = slot_index
+                slot_index += 1
                 if not ship.get("name"):
                     continue
                 db.upsert_ship(run_id, ship)
                 grid_ship_count += 1
         db.conn.commit()
+        if recorder is not None:
+            recorder.event("phase_completed", phase="grid_pages", extracted_ships=grid_ship_count)
 
         # -- Phase 2: detail + gear pages ----------------------------------------
         equipment_count = 0
-        for i, (idx, files) in enumerate(sorted(ship_files.items()), 1):
+        if recorder is not None:
+            recorder.event("phase_started", phase="detail_and_gear", count=len(ship_files))
+        sorted_indexes = _sorted_ship_indexes(ship_files)
+        for i, idx in enumerate(sorted_indexes, 1):
+            files = ship_files[f"{idx:03d}"]
             log.info("Extracting ship %d/%d...", i, len(ship_files))
 
             # Detail
@@ -474,6 +508,7 @@ def run_extraction(
             else:
                 detail = {}
 
+            detail["slot_index"] = idx
             if not detail.get("name"):
                 log.warning("No name extracted for ship index %s, skipping", idx)
                 continue
@@ -493,6 +528,13 @@ def run_extraction(
                     equipment_count += 1
 
         db.conn.commit()
+        if recorder is not None:
+            recorder.event(
+                "phase_completed",
+                phase="detail_and_gear",
+                detail_pages=len(ship_files),
+                equipment_items=equipment_count,
+            )
 
         # -- Finalize ------------------------------------------------------------
         db.complete_run(run_id)
@@ -520,30 +562,33 @@ def run_extraction(
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the argument parser for census_extract."""
-    parser = argparse.ArgumentParser(
-        description="Offline VLM extraction pipeline for Azur Lane dock census screenshots.",
-    )
-    parser.add_argument(
+    extract_options = argparse.ArgumentParser(add_help=False)
+    extract_options.add_argument(
         "--base-url",
         default=DEFAULT_BASE_URL,
         help="OpenAI-compatible VLM base URL (default: %(default)s).",
     )
-    parser.add_argument(
+    extract_options.add_argument(
         "--model",
         default=DEFAULT_MODEL,
         help="VLM model name (default: %(default)s).",
     )
-    parser.add_argument(
+    extract_options.add_argument(
         "--timeout",
         type=int,
         default=120,
         help="VLM request timeout in seconds (default: %(default)s).",
     )
 
+    parser = argparse.ArgumentParser(
+        description="Offline VLM extraction pipeline for Azur Lane dock census screenshots.",
+    )
+    parser.add_argument("--run-id", default=None, help="Optional explicit run id for provenance output.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     extract_parser = subparsers.add_parser(
         "extract",
+        parents=[extract_options],
         help="Process a census capture directory through the VLM and store results.",
     )
     extract_parser.add_argument(
@@ -569,8 +614,15 @@ def main(argv: list[str] | None = None) -> int:
         datefmt="%H:%M:%S",
     )
 
+    raw_args = list(argv) if argv is not None else sys.argv[1:]
     parser = build_parser()
-    args = parser.parse_args(argv)
+    args = parser.parse_args(raw_args)
+
+    recorder = RunRecorder(
+        "census-extract",
+        command=[str(Path(__file__).resolve()), *raw_args],
+        cwd=Path(__file__).resolve().parent.parent,
+    )
 
     client = VLMClient(base_url=args.base_url, model=args.model, timeout_s=args.timeout)
 
@@ -580,12 +632,28 @@ def main(argv: list[str] | None = None) -> int:
             log.error("Capture directory does not exist: %s", capture_dir)
             return 1
 
-        db_path: Path = args.db if args.db else capture_dir.parent / "census.db"
+        recorder.start(
+            run_id=args.run_id,
+            model=args.model,
+            base_url=args.base_url,
+            input_paths={"capture_dir": capture_dir},
+        )
+
+        db_path: Path = args.db if args.db else recorder.artifact_path("census.db")
         db_path = db_path.resolve()
         log.info("Capture directory: %s", capture_dir)
         log.info("Database: %s", db_path)
 
-        summary = run_extraction(capture_dir, db_path, client)
+        try:
+            summary = run_extraction(capture_dir, db_path, client, recorder=recorder)
+        except Exception as exc:
+            recorder.event("run_error", command=args.command, error=str(exc))
+            recorder.finish(
+                exit_code=1,
+                output_paths={"capture_dir": capture_dir, "database": db_path},
+                warnings=[str(exc)],
+            )
+            raise
 
         print("\n--- Census Extraction Summary ---")
         print(f"  Run ID:               {summary['run_id']}")
@@ -595,6 +663,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  Detail pages:          {summary['detail_pages_processed']}")
         print(f"  Total unique ships:    {summary['total_unique_ships']}")
         print(f"  Equipment items:       {summary['equipment_items']}")
+        recorder.finish(
+            exit_code=0,
+            output_paths={"capture_dir": capture_dir, "database": db_path},
+            summary_counts=summary,
+        )
         return 0
 
     parser.error(f"unsupported command: {args.command}")

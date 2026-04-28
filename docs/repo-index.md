@@ -12,12 +12,12 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 | `CLAUDE.md` | Pointer to AGENTS.md |
 | `pyproject.toml` | Python project config |
 | `configs/` | Project configuration (emulator serial, tool posture) |
-| `data/` | Screenshots, logs, labels, corpora, working artifacts |
+| `data/` | Screenshots, logs, labels, corpora, per-run manifests/events/artifacts |
 | `docs/` | Project knowledge layer |
 | `scripts/` | Active script surface |
 | `state_cartographer/` | Python package: transport layer and future runtime |
 | `tests/` | Automated tests |
-| `vendor/` | External reference code (ALAS) |
+| `vendor/` | ALAS launch helper and reference snapshots for the external install |
 
 ## Docs Map
 
@@ -38,6 +38,7 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 | `docs/prework/` | Corpus/data preparation procedures |
 | `docs/runtime/` | Backend design constraints |
 | `docs/dev/` | Testing plan |
+| `docs/sessions/` | Tracked human and promoted run summaries |
 | `docs/vlm/` | VLM profiles, contracts, prompt guidance |
 | `docs/plans/` | Active planning docs |
 
@@ -52,6 +53,9 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 
 | File | Purpose |
 |---|---|
+| `scripts/corpus_sweep.py` | Multi-pass corpus labeling, log alignment, adjudication, and triple extraction |
+| `scripts/dock_census_capture.py` | Live dock census capture against the pinned emulator/device |
+| `scripts/census_extract.py` | Extract structured census records from captured dock runs |
 | `scripts/corpus_cleanup.py` | Corpus hygiene: duplicate clustering, black-frame cleanup |
 | `scripts/kimi_review.py` | Cheap Kimi-backed screenshot review |
 | `scripts/vlm_detector.py` | VLM-backed offline detection and labeling |
@@ -71,17 +75,29 @@ Use root `AGENTS.md` for fast orientation. Use this file for the full answer to 
 | `health.py` | Readiness checks and recovery |
 | `pilot.py` | Unified facade (recommended entry point) |
 
+## Run Recording
+
+`state_cartographer/run_recording.py` — unified run provenance for production-ish CLIs.
+
+Canonical local run layout:
+
+- `data/runs/<run_id>/manifest.json`
+- `data/runs/<run_id>/events.ndjson`
+- `data/runs/<run_id>/<lane>/...`
+- `data/logs/<date>_<run_id>.log`
+- `docs/sessions/auto/<date>_<lane>_<run_id>.md`
+
 ## Data Surface
 
-`data/` holds truth artifacts, corpora, screenshots, logs. Most subdirectories are gitignored (events, stress_test, raw_stream). Preserve committed files by default.
+`data/` holds truth artifacts, corpora, screenshots, run manifests, and logs. Canonical runtime provenance lives under `data/runs/`; bulky raw outputs remain gitignored by default.
 
 ## Reference Code Surface
 
-`vendor/AzurLaneAutoScript/` — ALAS reference implementation. Source of operational prior art, adbutils patterns, MaaTouch binary, and screenshot method examples.
+ALAS itself lives outside this repo at `D:\_projects\ALAS_original`. Inside this repo, `vendor/launch_alas.ps1` is the launch helper and `vendor/alas_requirements_clean.txt` is the pinned dependency snapshot used to rebuild the external ALAS venv.
 
 ## Test Surface
 
-`tests/` — transport tests (unit + live smoke tests).
+`tests/` — offline/unit tests by default plus opt-in live smoke tests (`pytest -m live`).
 
 ## Practical Rule
 

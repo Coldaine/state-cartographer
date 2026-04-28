@@ -13,8 +13,8 @@ node_modules/
 .omc/
 .agents/
 .claude/
-vendor/AzurLaneAutoScript/.omc/
 .cursor/
+.kilo/
 dev-shell.ps1
 docs/pr-*-review.html
 *.log
@@ -31,10 +31,12 @@ vendor/
 data/alas-observe/
 data/screenshots/
 data/census/
+data/runs/
 data/events/
 data/raw_stream/
 data/corpus/
 data/backups/
+data/sweep/
 tmp/
 # Windows leftover from shell redirects
 nul

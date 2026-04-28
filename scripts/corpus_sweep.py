@@ -30,21 +30,26 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
+import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from state_cartographer.run_recording import RunRecorder
 
 # ---------------------------------------------------------------------------
 # Path constants
 # ---------------------------------------------------------------------------
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+ALAS_ROOT = Path(os.getenv("SC_ALAS_ROOT", r"D:\_projects\ALAS_original"))
 CORPUS_DIR = REPO_ROOT / "data" / "raw_stream"
-ALAS_LOG_DIR = REPO_ROOT / "vendor" / "AzurLaneAutoScript" / "log"
+ALAS_LOG_DIR = ALAS_ROOT / "log"
 SWEEP_OUT_DIR = REPO_ROOT / "data" / "sweep"
-ALAS_PAGE_FILE = REPO_ROOT / "vendor" / "AzurLaneAutoScript" / "module" / "ui" / "page.py"
+ALAS_PAGE_FILE = ALAS_ROOT / "module" / "ui" / "page.py"
 
 PASS1_OUT = SWEEP_OUT_DIR / "pass1_labels.jsonl"
 PASS2_OUT = SWEEP_OUT_DIR / "pass2_merged.jsonl"
@@ -57,7 +62,7 @@ DISAGREEMENT_OUT = SWEEP_OUT_DIR / "disagreements.jsonl"
 # Candidate label derivation from ALAS page definitions
 # ---------------------------------------------------------------------------
 
-# These are the 43 pages extracted from module/ui/page.py.
+# These are the current fallback page labels when ALAS page.py is unavailable.
 # Re-derive at runtime if the file changes.
 _FALLBACK_PAGE_LABELS: list[str] = [
     "page_main",
@@ -717,6 +722,7 @@ def cmd_all(args: argparse.Namespace) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--run-id", default=None, help="Optional explicit run id for provenance output.")
     sub = parser.add_subparsers(dest="command", required=True)
 
     # Shared arguments
@@ -760,19 +766,203 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(argv)
+def _copy_convenience_output(source: Path, destination: Path, recorder: RunRecorder, label: str) -> None:
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, destination)
+    recorder.event("convenience_copy_written", label=label, source=str(source), destination=str(destination))
 
-    dispatch = {
-        "labels": cmd_labels,
-        "pass1": cmd_pass1,
-        "pass2": cmd_pass2,
-        "pass3": cmd_pass3,
-        "pass4": cmd_pass4,
-        "all": cmd_all,
-    }
-    dispatch[args.command](args)
+
+def main(argv: list[str] | None = None) -> int:
+    raw_args = list(argv) if argv is not None else sys.argv[1:]
+    parser = build_parser()
+    args = parser.parse_args(raw_args)
+
+    recorder = RunRecorder(
+        "corpus-sweep",
+        command=[str(Path(__file__).resolve()), *raw_args],
+        cwd=REPO_ROOT,
+    )
+
+    input_paths: dict[str, Path | str] = {"alas_root": ALAS_ROOT}
+    if args.command in {"pass1", "all"}:
+        input_paths["corpus_dir"] = Path(args.corpus_dir)
+    if args.command in {"pass2", "pass3", "pass4"}:
+        if getattr(args, "pass1", None):
+            input_paths["pass1_input"] = Path(args.pass1)
+        if getattr(args, "pass2", None):
+            input_paths["pass2_input"] = Path(args.pass2)
+        if getattr(args, "pass3", None):
+            input_paths["pass3_input"] = Path(args.pass3)
+
+    recorder.start(
+        run_id=args.run_id,
+        model=getattr(args, "vlm_model", None),
+        base_url=getattr(args, "vlm_url", None),
+        input_paths=input_paths,
+        notes=[f"alas_page_file={ALAS_PAGE_FILE}", f"alas_log_dir={ALAS_LOG_DIR}"],
+    )
+
+    output_paths: dict[str, Path | str] = {}
+    summary_counts: dict[str, Any] = {}
+    warnings: list[str] = []
+
+    try:
+        if args.command == "labels":
+            labels = derive_candidate_labels()
+            label_path = recorder.artifact_path("candidate_labels.json")
+            label_path.write_text(json.dumps(labels, indent=2) + "\n", encoding="utf-8")
+            recorder.event("phase_completed", phase="labels", count=len(labels), output=str(label_path))
+            print(f"{len(labels)} candidate labels:")
+            for label in labels:
+                print(f"  {label}")
+            output_paths["candidate_labels"] = label_path
+            summary_counts["candidate_labels"] = len(labels)
+        elif args.command == "pass1":
+            canonical_out = recorder.artifact_path("pass1_labels.jsonl")
+            recorder.event("phase_started", phase="pass1", output=str(canonical_out))
+            rows = run_pass1(
+                corpus_dir=Path(args.corpus_dir),
+                out_file=canonical_out,
+                vlm_base_url=args.vlm_url,
+                vlm_model=args.vlm_model,
+                limit=args.limit,
+                dry_run=args.dry_run,
+            )
+            legacy_out = Path(args.out) if args.out else PASS1_OUT
+            _copy_convenience_output(canonical_out, legacy_out, recorder, "pass1")
+            output_paths["pass1"] = canonical_out
+            output_paths["pass1_legacy"] = legacy_out
+            summary_counts["pass1_rows"] = len(rows)
+        elif args.command == "pass2":
+            pass1_input = Path(args.pass1) if args.pass1 else PASS1_OUT
+            canonical_out = recorder.artifact_path("pass2_merged.jsonl")
+            recorder.event("phase_started", phase="pass2", input=str(pass1_input), output=str(canonical_out))
+            rows = run_pass2(
+                pass1_file=pass1_input,
+                out_file=canonical_out,
+                alas_log_dir=ALAS_LOG_DIR,
+                window_s=args.window,
+            )
+            legacy_out = Path(args.out) if args.out else PASS2_OUT
+            _copy_convenience_output(canonical_out, legacy_out, recorder, "pass2")
+            output_paths["pass2"] = canonical_out
+            output_paths["pass2_legacy"] = legacy_out
+            summary_counts["pass2_rows"] = len(rows)
+        elif args.command == "pass3":
+            pass2_input = Path(args.pass2) if args.pass2 else PASS2_OUT
+            canonical_out = recorder.artifact_path("pass3_adjudicated.jsonl")
+            disagreement_out = recorder.artifact_path("disagreements.jsonl")
+            recorder.event("phase_started", phase="pass3", input=str(pass2_input), output=str(canonical_out))
+            rows = run_pass3(
+                pass2_file=pass2_input,
+                out_file=canonical_out,
+                disagreement_file=disagreement_out,
+                corpus_dir=Path(args.corpus_dir),
+                confidence_threshold=args.confidence,
+            )
+            legacy_out = Path(args.out) if args.out else PASS3_OUT
+            _copy_convenience_output(canonical_out, legacy_out, recorder, "pass3")
+            _copy_convenience_output(disagreement_out, DISAGREEMENT_OUT, recorder, "disagreements")
+            output_paths["pass3"] = canonical_out
+            output_paths["pass3_legacy"] = legacy_out
+            output_paths["disagreements"] = disagreement_out
+            output_paths["disagreements_legacy"] = DISAGREEMENT_OUT
+            summary_counts["pass3_rows"] = len(rows)
+        elif args.command == "pass4":
+            pass2_input = Path(args.pass2) if args.pass2 else PASS2_OUT
+            pass3_input = Path(args.pass3) if args.pass3 else PASS3_OUT
+            canonical_out = recorder.artifact_path("pass4_triples.jsonl")
+            recorder.event("phase_started", phase="pass4", output=str(canonical_out))
+            rows = run_pass4(
+                pass3_file=pass3_input,
+                pass2_file=pass2_input,
+                out_file=canonical_out,
+                min_confidence=args.confidence,
+            )
+            legacy_out = Path(args.out) if args.out else PASS4_OUT
+            _copy_convenience_output(canonical_out, legacy_out, recorder, "pass4")
+            output_paths["pass4"] = canonical_out
+            output_paths["pass4_legacy"] = legacy_out
+            summary_counts["pass4_rows"] = len(rows)
+        elif args.command == "all":
+            pass1_out = recorder.artifact_path("pass1_labels.jsonl")
+            pass2_out = recorder.artifact_path("pass2_merged.jsonl")
+            pass3_out = recorder.artifact_path("pass3_adjudicated.jsonl")
+            pass4_out = recorder.artifact_path("pass4_triples.jsonl")
+            disagreement_out = recorder.artifact_path("disagreements.jsonl")
+
+            recorder.event("phase_started", phase="pass1", output=str(pass1_out))
+            pass1_rows = run_pass1(
+                corpus_dir=Path(args.corpus_dir),
+                out_file=pass1_out,
+                vlm_base_url=args.vlm_url,
+                vlm_model=args.vlm_model,
+                limit=args.limit,
+                dry_run=args.dry_run,
+            )
+            _copy_convenience_output(pass1_out, PASS1_OUT, recorder, "pass1")
+
+            recorder.event("phase_started", phase="pass2", input=str(pass1_out), output=str(pass2_out))
+            pass2_rows = run_pass2(
+                pass1_file=pass1_out,
+                out_file=pass2_out,
+                alas_log_dir=ALAS_LOG_DIR,
+                window_s=args.window,
+            )
+            _copy_convenience_output(pass2_out, PASS2_OUT, recorder, "pass2")
+
+            recorder.event("phase_started", phase="pass3", input=str(pass2_out), output=str(pass3_out))
+            pass3_rows = run_pass3(
+                pass2_file=pass2_out,
+                out_file=pass3_out,
+                disagreement_file=disagreement_out,
+                corpus_dir=Path(args.corpus_dir),
+                confidence_threshold=args.confidence,
+            )
+            _copy_convenience_output(pass3_out, PASS3_OUT, recorder, "pass3")
+            _copy_convenience_output(disagreement_out, DISAGREEMENT_OUT, recorder, "disagreements")
+
+            recorder.event("phase_started", phase="pass4", input=str(pass3_out), output=str(pass4_out))
+            pass4_rows = run_pass4(
+                pass3_file=pass3_out,
+                pass2_file=pass2_out,
+                out_file=pass4_out,
+                min_confidence=args.confidence,
+            )
+            _copy_convenience_output(pass4_out, PASS4_OUT, recorder, "pass4")
+
+            output_paths.update(
+                {
+                    "pass1": pass1_out,
+                    "pass1_legacy": PASS1_OUT,
+                    "pass2": pass2_out,
+                    "pass2_legacy": PASS2_OUT,
+                    "pass3": pass3_out,
+                    "pass3_legacy": PASS3_OUT,
+                    "pass4": pass4_out,
+                    "pass4_legacy": PASS4_OUT,
+                    "disagreements": disagreement_out,
+                    "disagreements_legacy": DISAGREEMENT_OUT,
+                }
+            )
+            summary_counts.update(
+                {
+                    "pass1_rows": len(pass1_rows),
+                    "pass2_rows": len(pass2_rows),
+                    "pass3_rows": len(pass3_rows),
+                    "pass4_rows": len(pass4_rows),
+                }
+            )
+        else:
+            raise ValueError(f"unsupported command: {args.command}")
+    except Exception as exc:
+        recorder.event("run_error", command=args.command, error=str(exc))
+        warnings.append(str(exc))
+        recorder.finish(exit_code=1, output_paths=output_paths, summary_counts=summary_counts, warnings=warnings)
+        print(f"[error] {exc}", file=sys.stderr)
+        return 1
+
+    recorder.finish(exit_code=0, output_paths=output_paths, summary_counts=summary_counts, warnings=warnings)
     return 0
 
 

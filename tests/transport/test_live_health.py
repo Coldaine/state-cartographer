@@ -1,3 +1,5 @@
+import pytest
+
 from state_cartographer.transport.config import load_config
 from state_cartographer.transport.health import doctor
 from state_cartographer.transport.models import (
@@ -8,8 +10,10 @@ from state_cartographer.transport.models import (
     TransportLayerStatus,
 )
 
+pytestmark = pytest.mark.live
 
-def test_live_health_doctor():
+
+def test_live_health_doctor(live_run_recorder):
     cfg = load_config()
     report = doctor(cfg)
 

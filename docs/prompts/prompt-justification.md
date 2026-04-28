@@ -1,7 +1,6 @@
 # Prompt Justification Registry
 
 > **Why this document exists:** Every prompt injected into an agent, VLM, or LLM call in this project must have explicit, documented justification for why it was written the way it was. This document is the canonical source of that justification. It exists to support code review: any reviewer (human or automated) can check a prompt against this registry to verify that the prompt's design decisions are intentional and grounded.
-
 > **For code reviewers:** When reviewing a PR that adds or modifies a prompt, check this file. If the prompt is not documented here, the PR is incomplete. If the justification has drifted from the implementation, flag it.
 
 ---

@@ -44,13 +44,13 @@ ALAS serves three roles simultaneously:
 
 ## Running ALAS
 
-**Location:** `vendor/AzurLaneAutoScript/`
+**Location:** `D:\_projects\ALAS_original`
 
-**Entry point:** `python gui.py` from the vendor directory
+**Entry point:** `python gui.py` from the external ALAS directory, or `pwsh vendor/launch_alas.ps1` from this repo
 
 **Web UI:** `http://localhost:22267` (configurable in `config/deploy.yaml` under `Deploy.Webui`)
 
-**Logs:** `vendor/AzurLaneAutoScript/log/{date}_gui.txt` for the GUI process, `{date}_{config_name}.txt` for task execution
+**Logs:** `D:\_projects\ALAS_original\log\{date}_gui.txt` for the GUI process, `D:\_projects\ALAS_original\log\{date}_{config_name}.txt` for task execution
 
 **Healthy startup sequence:**
 ```
@@ -64,7 +64,7 @@ Application startup complete.
 
 If you see `[Errno 10048]` on port 22267 — a previous instance is still holding the port. Kill it first.
 
-**Config:** `config/deploy.yaml` controls git, python, ADB, OCR, update, and webui settings. The active game config lives under `config/alas.json` (or whatever config name is selected in the UI).
+**Config:** `D:\_projects\ALAS_original\config\deploy.yaml` controls git, python, ADB, OCR, update, and webui settings. The active game config lives under `D:\_projects\ALAS_original\config\alas.json` (or whatever config name is selected in the UI).
 
 **Vendor patches:** Three local patches are applied directly in the vendor dir (documented in [ALS-live-ops.md](ALS-live-ops.md)). These are unstaged edits that survive normal use but are wiped by `git submodule update --force`.
 
@@ -95,10 +95,10 @@ This table is a reasoning aid. It is not a claim that equivalent repo code curre
 
 ## What Exists Today
 
-The durable ALAS surfaces in this repo are:
-- `vendor/AzurLaneAutoScript/`
-- ALAS logs under `vendor/AzurLaneAutoScript/log/`
-- local vendor patches described in `ALS-live-ops.md`
+The durable ALAS-adjacent surfaces in this repo are:
+- `vendor/launch_alas.ps1` — helper wrapper that launches the external ALAS install
+- `vendor/alas_requirements_clean.txt` — pinned dependency snapshot for the external ALAS venv
+- `docs/vendor-patches/` — patch snapshots to re-apply against the external ALAS checkout
 - screenshot/corpus artifacts under `data/` when collection has been run
 - ALS reference docs in this folder
 
@@ -113,8 +113,8 @@ Do not assume older repo-side ALAS helper scripts still exist just because older
 
 ## Operational Pointers
 
-- active config is typically under `vendor/AzurLaneAutoScript/config/`
-- logs are under `vendor/AzurLaneAutoScript/log/`
+- active config is typically under `D:\_projects\ALAS_original\config\`
+- logs are under `D:\_projects\ALAS_original\log\`
 - live-run handling rules are in `ALS-live-ops.md`
 - any future ALAS-derived event recording should be treated as unsettled until the runtime proves it needs a concrete schema
 

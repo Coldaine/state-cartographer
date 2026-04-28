@@ -24,16 +24,14 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-import cv2
-import numpy as np
-
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scripts.vlm_detector import VLMClient, detect_page
+from state_cartographer.run_recording import RunRecorder
 from state_cartographer.transport.adb import Adb, AdbError
+from state_cartographer.transport.config import load_config
 
-SERIAL = "127.0.0.1:21503"
 VLM_BASE_URL = "http://localhost:18900/v1"
 VLM_MODEL = "local-vlm"
 
@@ -50,8 +48,27 @@ CANDIDATE_LABELS = [
 ]
 
 
+def _load_cv_backend():
+    try:
+        import cv2  # type: ignore[import-not-found]
+        import numpy as np  # type: ignore[import-not-found]
+    except ImportError as exc:
+        raise RuntimeError(
+            "stress_test_adb requires the piloting extras: `uv run --extra piloting python scripts/stress_test_adb.py ...`"
+        ) from exc
+    return cv2, np
+
+
+def _default_serial() -> str:
+    try:
+        return load_config().serial
+    except Exception:
+        return "127.0.0.1:21503"
+
+
 def is_black_frame(image_bytes: bytes, threshold: float = 0.95) -> bool:
     """Check if screenshot is predominantly black."""
+    cv2, np = _load_cv_backend()
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     if img is None:
@@ -63,6 +80,7 @@ def is_black_frame(image_bytes: bytes, threshold: float = 0.95) -> bool:
 
 def is_corrupted(image_bytes: bytes) -> bool:
     """Check if screenshot fails to decode."""
+    cv2, np = _load_cv_backend()
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     return img is None
@@ -227,7 +245,8 @@ def stress_test_vlm_evaluation(adb: Adb, output_dir: Path, vlm_client: VLMClient
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="ADB transport stress test")
-    parser.add_argument("--serial", default=SERIAL, help="ADB serial")
+    parser.add_argument("--run-id", default=None, help="Optional explicit run id for provenance output.")
+    parser.add_argument("--serial", default=None, help="ADB serial (default: configs/memu.json)")
     parser.add_argument("--count", type=int, default=50, help="Burst count")
     parser.add_argument("--burst", action="store_true", help="Run burst test")
     parser.add_argument("--interval", type=int, default=100, help="Interval in ms for timed test")
@@ -236,15 +255,31 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--vlm", action="store_true", help="Run VLM evaluation test")
     parser.add_argument("--vlm-url", default=VLM_BASE_URL, help="VLM base URL")
     parser.add_argument("--vlm-model", default=VLM_MODEL, help="VLM model name")
-    parser.add_argument("--output", default="data/stress_test", help="Output directory")
+    parser.add_argument("--output", default=None, help="Optional output directory override")
     parser.add_argument("--compare", nargs="*", help="Compare existing PNG files")
 
-    args = parser.parse_args(argv)
+    raw_args = list(argv) if argv is not None else sys.argv[1:]
+    args = parser.parse_args(raw_args)
+    serial = args.serial or _default_serial()
 
-    output_dir = Path(args.output)
+    recorder = RunRecorder(
+        "adb-stress-test",
+        command=[str(Path(__file__).resolve()), *raw_args],
+        cwd=Path(__file__).resolve().parent.parent,
+    )
+    recorder.start(
+        run_id=args.run_id,
+        serial=serial,
+        model=args.vlm_model if args.vlm or not (args.burst or args.timed or args.compare) else None,
+        base_url=args.vlm_url if args.vlm or not (args.burst or args.timed or args.compare) else None,
+        config_path=Path(__file__).resolve().parent.parent / "configs" / "memu.json",
+    )
+
+    output_dir = Path(args.output).resolve() if args.output else recorder.artifact_path("artifacts")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    results = {}
+    results: dict[str, dict] = {}
+    output_paths: dict[str, Path | str] = {"output_dir": output_dir}
 
     if args.compare:
         for path_str in args.compare:
@@ -256,52 +291,83 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"{path}: black={black}, corrupted={corrupted}, size={len(data)}")
             else:
                 print(f"{path}: NOT FOUND")
+        recorder.finish(
+            exit_code=0,
+            output_paths=output_paths,
+            summary_counts={"compared_paths": len(args.compare)},
+        )
         return 0
 
     try:
-        adb = Adb(serial=args.serial)
-        print(f"Connected to {args.serial}")
+        adb = Adb(serial=serial)
+        print(f"Connected to {serial}")
     except AdbError as e:
         print(f"ADB connection failed: {e}")
+        recorder.finish(exit_code=1, output_paths=output_paths, warnings=[str(e)])
         return 1
 
-    if args.burst:
-        print(f"Running burst test: {args.count} captures")
-        results["burst"] = stress_test_burst(adb, args.count, output_dir / "burst")
-        print(f"Burst complete: {results['burst']['failure_rate'] * 100:.1f}% failure rate")
+    try:
+        if args.burst:
+            recorder.event("phase_started", phase="burst", count=args.count)
+            print(f"Running burst test: {args.count} captures")
+            results["burst"] = stress_test_burst(adb, args.count, output_dir / "burst")
+            print(f"Burst complete: {results['burst']['failure_rate'] * 100:.1f}% failure rate")
 
-    if args.timed:
-        print(f"Running timed test: {args.interval}ms interval, {args.duration}s duration")
-        results["timed"] = stress_test_timed(adb, args.interval, args.duration, output_dir / "timed")
-        print(f"Timed complete: {results['timed']['failure_rate'] * 100:.1f}% failure rate")
+        if args.timed:
+            recorder.event("phase_started", phase="timed", interval_ms=args.interval, duration_s=args.duration)
+            print(f"Running timed test: {args.interval}ms interval, {args.duration}s duration")
+            results["timed"] = stress_test_timed(adb, args.interval, args.duration, output_dir / "timed")
+            print(f"Timed complete: {results['timed']['failure_rate'] * 100:.1f}% failure rate")
 
-    if args.vlm:
-        print("Running VLM evaluation test")
-        vlm_client = VLMClient(base_url=args.vlm_url, model=args.vlm_model)
-        results["vlm"] = stress_test_vlm_evaluation(adb, output_dir / "vlm", vlm_client)
-        print("VLM evaluation complete")
+        if args.vlm:
+            recorder.event("phase_started", phase="vlm", model=args.vlm_model, base_url=args.vlm_url)
+            print("Running VLM evaluation test")
+            vlm_client = VLMClient(base_url=args.vlm_url, model=args.vlm_model)
+            results["vlm"] = stress_test_vlm_evaluation(adb, output_dir / "vlm", vlm_client)
+            print("VLM evaluation complete")
 
-    if not (args.burst or args.timed or args.vlm):
-        print("Running all tests")
-        results["burst"] = stress_test_burst(adb, args.count, output_dir / "burst")
-        print(f"Burst: {results['burst']['failure_rate'] * 100:.1f}% failure rate")
+        if not (args.burst or args.timed or args.vlm):
+            print("Running all tests")
+            recorder.event("phase_started", phase="burst", count=args.count)
+            results["burst"] = stress_test_burst(adb, args.count, output_dir / "burst")
+            print(f"Burst: {results['burst']['failure_rate'] * 100:.1f}% failure rate")
 
-        results["timed"] = stress_test_timed(adb, args.interval, args.duration, output_dir / "timed")
-        print(f"Timed: {results['timed']['failure_rate'] * 100:.1f}% failure rate")
+            recorder.event("phase_started", phase="timed", interval_ms=args.interval, duration_s=args.duration)
+            results["timed"] = stress_test_timed(adb, args.interval, args.duration, output_dir / "timed")
+            print(f"Timed: {results['timed']['failure_rate'] * 100:.1f}% failure rate")
 
-        vlm_client = VLMClient(base_url=args.vlm_url, model=args.vlm_model)
-        results["vlm"] = stress_test_vlm_evaluation(adb, output_dir / "vlm", vlm_client)
-        print("VLM evaluation complete")
+            recorder.event("phase_started", phase="vlm", model=args.vlm_model, base_url=args.vlm_url)
+            vlm_client = VLMClient(base_url=args.vlm_url, model=args.vlm_model)
+            results["vlm"] = stress_test_vlm_evaluation(adb, output_dir / "vlm", vlm_client)
+            print("VLM evaluation complete")
+    except Exception as exc:
+        recorder.event("run_error", error=str(exc))
+        recorder.finish(exit_code=1, output_paths=output_paths, warnings=[str(exc)])
+        raise
 
     def _json_default(obj):
         if hasattr(obj, "item"):  # numpy scalar (bool_, int64, float64, etc.)
             return obj.item()
         raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
-    report_path = output_dir / f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    report_path = output_dir / "report.json"
     with open(report_path, "w") as f:
         json.dump(results, f, indent=2, default=_json_default)
     print(f"Report saved to {report_path}")
+    output_paths["report"] = report_path
+    summary_counts = {
+        f"{name}_failures": len(result.get("failures", []))
+        for name, result in results.items()
+        if isinstance(result, dict)
+    }
+    summary_counts.update(
+        {
+            f"{name}_results": len(result.get("results", []))
+            for name, result in results.items()
+            if isinstance(result, dict)
+        }
+    )
+    recorder.finish(exit_code=0, output_paths=output_paths, summary_counts=summary_counts)
 
     return 0
 
