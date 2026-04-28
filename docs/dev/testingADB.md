@@ -11,6 +11,11 @@ It follows the repo testing rule:
 - prefer live integration and real artifacts
 - keep pure-code tests only where they validate stable logic
 
+Current repo posture:
+- `uv run pytest -q` is the safe default and runs offline/unit coverage only
+- live emulator tests are marked `live` and require explicit opt-in (`uv run pytest -q -m live`)
+- live tests should emit the same run provenance contract as the production CLIs
+
 See also:
 - [transport-methods.md](/mnt/d/_projects/MasterStateMachine/docs/transport-methods.md)
 - [backend-lessons.md](/mnt/d/_projects/MasterStateMachine/docs/runtime/backend-lessons.md)
@@ -32,6 +37,7 @@ This plan covers live validation of:
 - recovery ladder behavior
 - heartbeat and readiness classification
 - local file logging and artifact persistence
+- cross-lane run provenance (`manifest.json`, `events.ndjson`, promoted session summary)
 
 It does not define gameplay semantics or VLM task evaluation.
 
@@ -137,7 +143,7 @@ Assertions:
 
 Evidence:
 - per-capture tooling events
-- saved frames under `data/artifacts/`
+- saved frames under `data/runs/<run_id>/<lane>/...`
 - frame summary with hash and capture timestamp
 
 ### 3. Primitive action dispatch
@@ -233,22 +239,19 @@ Assertions:
 - failed sessions preserve richer evidence than successful ones
 
 Evidence:
-- NDJSON streams under `data/events/`
-- human-readable logs under `data/logs/`
-- screenshots and other artifacts under `data/artifacts/`
+- per-run manifest at `data/runs/<run_id>/manifest.json`
+- per-run NDJSON stream at `data/runs/<run_id>/events.ndjson`
+- lane-specific artifacts under `data/runs/<run_id>/<lane>/`
+- transport/tooling log under `data/logs/<date>_<run_id>.log`
+- promoted summary under `docs/sessions/auto/`
 
 ## Suggested test structure
 
 Use explicit test families instead of one giant magic test.
 
 Suggested markers:
-- `live_adb`
-- `live_transport`
-- `live_capture`
-- `live_ack`
-- `live_recovery`
-- `live_workflow`
-- `live_logging`
+- `live`
+- optional secondary markers if the live suite grows beyond the current transport-first shape
 
 Suggested split:
 - `tests/live/test_transport_readiness.py`
@@ -260,7 +263,7 @@ Suggested split:
 
 These do not all need to exist immediately.
 But this is the target shape.
-The current first-pass live smoke coverage lives under `tests/transport/` and can be split out later once the suite grows beyond transport-focused checks.
+The current first-pass live smoke coverage lives under `tests/transport/`. They are opt-in and the shared `live_run_recorder` fixture should leave the same manifest/event trail as the production CLIs.
 
 ## Assertions that matter most first
 
@@ -286,12 +289,13 @@ This is the target bar for the mature live suite.
 The current first-pass smoke tests in `tests/transport/` prove attach/capture/recovery behavior, but they do not yet emit the full evidence bundle below.
 
 Every live test should emit or link:
-- `session_id`
+- `run_id`
 - `serial`
 - start and end timestamps
-- event stream paths
+- manifest path
+- event stream path
 - artifact paths
-- summary JSON
+- summary path
 
 A live test that passes without leaving evidence is not a very useful test.
 It is just optimism with a badge.

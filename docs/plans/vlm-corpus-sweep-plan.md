@@ -13,9 +13,9 @@ The insight (March 20, 2026): ALAS log labels are **task-context labels** ("page
 ## Data Available
 
 - ~4000 screenshots in `data/raw_stream/` (filename = timestamp)
-- ALAS logs in `vendor/AzurLaneAutoScript/log/` (timestamped text)
+- ALAS logs in `D:\_projects\ALAS_original\log\` (timestamped text)
 - 1 reviewed stretch in `data/review/reviewed_stretches.tsv`
-- ALAS source code with all page definitions and button coordinates in `vendor/AzurLaneAutoScript/module/ui/page.py` and assets
+- ALAS source code with all page definitions and button coordinates in `D:\_projects\ALAS_original\module\ui\page.py` and related assets
 
 ## Pipeline
 
@@ -83,7 +83,7 @@ These feed directly into `state_machine_v0`: states + transitions + guards.
 | VLM client | Done (`scripts/vlm_detector.py`) |
 | Local model serving | Done (llama-swap at localhost:18900) |
 | Kimi adjudication client | Done (`scripts/kimi_review.py`) |
-| Candidate label set | Derivable from ALAS `page.py` — ~43 page names |
+| Candidate label set | Derivable from live ALAS `page.py` — treat the count as data-driven, not a hardcoded constant |
 | ALAS log parser | Needs writing — parse timestamped log lines |
 | Timeline merger | Needs writing — join VLM labels + ALAS events by timestamp |
 | Triple extractor | Needs writing — detect label transitions in timeline |

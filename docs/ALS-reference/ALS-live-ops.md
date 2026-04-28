@@ -111,7 +111,7 @@ Stop-Process -Id <PID> -Force
 - Do not assume older wrappers or runners still exist just because earlier docs mention them.
 - Treat live ALAS operation here as manual/supervised unless and until that automation is re-earned.
 
-## Vendor Patches (applied directly in `vendor/AzurLaneAutoScript/`)
+## External ALAS Patches (applied directly in `D:\_projects\ALAS_original`)
 
 These are unstaged local edits — not committed into the submodule. They survive normal use but are
 wiped by `git submodule update --force` or `git checkout .` inside the vendor dir. Re-apply manually
@@ -151,24 +151,24 @@ class enrollment.
 
 ## Log Files — Location and Format
 
-ALAS writes two kinds of logs under `vendor/AzurLaneAutoScript/log/`:
+ALAS writes two kinds of logs under `D:\_projects\ALAS_original\log\`:
 
 | File pattern | What it contains |
 |---|---|
 | `{date}_gui.txt` | GUI process stdout — startup banner, webui launch, port conflicts |
 | `{date}_{config_name}.txt` | Task execution log — navigation, OCR decisions, ADB calls, recovery |
 
-The config name is whatever is selected in the UI or passed to `--run`. The launcher script (`vendor/launch_alas.ps1`) uses `PatrickCustom`, so the active task log is:
+The config name is whatever is selected in the UI or passed to `--run`. The helper wrapper in this repo is `vendor/launch_alas.ps1`; it launches the external ALAS checkout and defaults to the `alas` config unless you edit the script.
 
 ```
-vendor/AzurLaneAutoScript/log/2026-03-25_PatrickCustom.txt
+D:\_projects\ALAS_original\log\2026-03-25_alas.txt
 ```
 
 ### Tail the live log (PowerShell)
 
 ```powershell
 $today = Get-Date -Format 'yyyy-MM-dd'
-$log = "vendor\AzurLaneAutoScript\log\${today}_PatrickCustom.txt"
+$log = "D:\_projects\ALAS_original\log\${today}_alas.txt"
 Get-Content $log -Wait -Tail 50
 ```
 

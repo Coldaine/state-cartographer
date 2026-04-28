@@ -6,5 +6,5 @@
   "primary_control": "maatouch",
   "primary_observation": "adb_screencap",
   "agent_path": null,
-  "description": "MEmu 9 transport config — Vulkan rendering, ADB screencap primary. Machine-specific paths and probe state go in data/events/memu-transport/."
+  "description": "MEmu 9 transport config — Vulkan rendering, ADB screencap primary. Production runs record provenance under data/runs/<run_id>/ and transport logs under data/logs/."
 }

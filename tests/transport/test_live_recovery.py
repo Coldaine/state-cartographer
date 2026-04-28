@@ -9,8 +9,10 @@ from state_cartographer.transport.adb import Adb
 from state_cartographer.transport.config import load_config
 from state_cartographer.transport.health import recovery_ladder
 
+pytestmark = pytest.mark.live
 
-def test_live_recovery_ladder():
+
+def test_live_recovery_ladder(live_run_recorder):
     cfg = load_config()
     adb = Adb(cfg.serial)
 

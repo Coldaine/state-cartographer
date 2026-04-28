@@ -9,8 +9,10 @@ from state_cartographer.transport.adb import Adb
 from state_cartographer.transport.config import load_config
 from state_cartographer.transport.maatouch import MaaTouch
 
+pytestmark = pytest.mark.live
 
-def test_live_adb_screenshot():
+
+def test_live_adb_screenshot(live_run_recorder):
     cfg = load_config()
     adb = Adb(cfg.serial)
 
@@ -22,7 +24,7 @@ def test_live_adb_screenshot():
     assert len(data) > 100
 
 
-def test_live_adb_tap():
+def test_live_adb_tap(live_run_recorder):
     cfg = load_config()
     adb = Adb(cfg.serial)
 
@@ -33,7 +35,7 @@ def test_live_adb_tap():
     assert ok is True
 
 
-def test_live_adb_input_methods():
+def test_live_adb_input_methods(live_run_recorder):
     cfg = load_config()
     adb = Adb(cfg.serial)
 
@@ -45,7 +47,7 @@ def test_live_adb_input_methods():
     assert adb.devices() is not None
 
 
-def test_live_maatouch_tap():
+def test_live_maatouch_tap(live_run_recorder):
     cfg = load_config()
     adb = Adb(cfg.serial)
 
@@ -63,7 +65,7 @@ def test_live_maatouch_tap():
         maatouch.disconnect()
 
 
-def test_live_maatouch_swipe():
+def test_live_maatouch_swipe(live_run_recorder):
     cfg = load_config()
     adb = Adb(cfg.serial)
 

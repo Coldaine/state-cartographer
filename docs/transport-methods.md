@@ -8,10 +8,10 @@ Single source of truth for all capture and input methods. Updated as we learn.
 |--------|-------------|--------|-------|
 | **ADB screencap** | Reads framebuffer via `screencap` binary | **PRIMARY** | 100% reliable on Vulkan. ~132ms/call, ~1MB/frame. Stress tested: 316 frames, 0 failures. |
 | **MaaFramework screenshot** | Uses MAA's internal capture path (not framebuffer) | Fallback only | 100-140ms per capture. Demoted after Vulkan solved the screencap problem. |
-| **DroidCast** | SurfaceFlinger API via HTTP server APK | Deferred | APK exists in vendor, needs integration |
+| **DroidCast** | SurfaceFlinger API via HTTP server APK | Deferred | Reference assets live in the external ALAS checkout at `D:\_projects\ALAS_original` |
 | **DroidCast_raw** | Raw RGB565 via HTTP | Deferred | Same as above but raw bitmap |
 | **scrcpy stream** | MediaCodec encoder via video stream | Deferred | Need to decode H.264 frame |
-| **aScreenCap** | Custom binary with LZ4 compression | Deferred | Binary exists in vendor/bin/ascreencap/ |
+| **aScreenCap** | Custom binary with LZ4 compression | Deferred | Reference binary lives in the external ALAS checkout |
 | **nemu_ipc** | MEmu shared memory via DLL | Deferred | MEmu-specific, MuMu12 only |
 | **Win32 PrintWindow** | Host-side window capture | Last resort | Deferred indefinitely unless telemetry justifies |
 
@@ -35,7 +35,7 @@ See `docs/decisions.md` for the full decision record and evidence.
 
 ### MaaTouch Notes
 
-- Binary: `vendor/AzurLaneAutoScript/bin/MaaTouch/`
+- Binary: `D:\_projects\ALAS_original\bin\MaaTouch\`
 - Needs deployment to `/data/local/tmp/maatouchsync` on device
 - Used by ALAS and StarRailCopilot for precision input
 - Low latency compared to ADB input

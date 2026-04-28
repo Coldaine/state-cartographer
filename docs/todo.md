@@ -6,6 +6,7 @@ Thin tracker. Current truth only.
 
 1. Run VLM corpus sweep — multi-pass labeling to build state vocabulary and transition table (see [vlm-corpus-sweep-plan.md](plans/vlm-corpus-sweep-plan.md))
 2. Build Tier 2 VLM grounding loop (observe-act-observe on real device)
+3. Consolidate docs/ tree and package scripts/ — [issue #37](https://github.com/Coldaine/state-cartographer/issues/37)
 
 ## Blockers
 

@@ -18,7 +18,6 @@ import json
 import subprocess
 from pathlib import Path
 
-
 VISIBLE_ONLY_PROMPT = """Inspect the provided screenshot set.
 
 Return valid JSON with exactly these keys:
@@ -48,9 +47,7 @@ def build_prompt(
     image_list = "\n".join(f"- {path}" for path in image_paths)
     labels_text = json.dumps(allowed_labels) if allowed_labels else "null"
     return (
-        VISIBLE_ONLY_PROMPT.format(task_context=task_context, allowed_labels=labels_text)
-        + "\nImages:\n"
-        + image_list
+        VISIBLE_ONLY_PROMPT.format(task_context=task_context, allowed_labels=labels_text) + "\nImages:\n" + image_list
     )
 
 

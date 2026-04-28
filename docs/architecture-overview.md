@@ -30,7 +30,7 @@ Everything else in `docs/` is a knowledge bucket.
 | `runtime/` | live-system contracts, backend lessons, health design |
 | `vlm/` | multimodal model profiles, task contracts, prompt policy |
 | `plans/` | tactical and strategic planning documents |
-| `agentPrompts/` | code-linked prompt rationale for prompt-bearing LLM code |
+| `prompts/` | code-linked prompt rationale for prompt-bearing LLM code |
 | `dev/` | developer workflow docs (testing, ADB integration) |
 
 ## Code and Data Buckets
@@ -38,16 +38,18 @@ Everything else in `docs/` is a knowledge bucket.
 | Path | Purpose |
 |---|---|
 | `state_cartographer/` | Python package: transport layer and future runtime code |
-| `scripts/` | Active script-shaped tooling (corpus cleanup, kimi review, vlm detector) |
-| `data/` | Truth artifacts, corpora, screenshots, logs |
-| `vendor/` | External reference code (ALAS) |
+| `scripts/` | Active script-shaped tooling and production entrypoints |
+| `data/` | Truth artifacts, corpora, screenshots, logs, run manifests |
+| `vendor/` | Helper wrappers and reference snapshots for the external ALAS install |
 | `configs/` | Project configuration (emulator serial, tool posture) |
 | `tests/` | Automated tests |
 
 ## Current Implementation State
 
 - `state_cartographer/transport/` is implemented — adb, maatouch, health, models, pilot facade
-- Active scripts: `corpus_cleanup.py`, `kimi_review.py`, `vlm_detector.py`, `stress_test_adb.py`
+- `state_cartographer/run_recording.py` now owns cross-lane run provenance
+- Active execution lanes: `corpus_sweep.py`, `dock_census_capture.py`, `census_extract.py`, `stress_test_adb.py`
+- Supporting scripts: `corpus_cleanup.py`, `kimi_review.py`, `vlm_detector.py`
 - No live runtime exists yet (transport layer done; VLM corpus sweep is next)
 - Substrate decision made: adbutils + MaaTouch (see [decisions.md](decisions.md))
 

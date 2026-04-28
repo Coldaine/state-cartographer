@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import sys
 import textwrap
+import types
 from datetime import datetime
 from pathlib import Path
 
@@ -30,7 +31,7 @@ class TestDeriveCandidateLabels:
         labels = cs.derive_candidate_labels(tmp_path / "nonexistent.py")
         assert "page_main" in labels
         assert "page_commission" in labels
-        assert len(labels) == 43
+        assert len(labels) == len(cs._FALLBACK_PAGE_LABELS)
 
     def test_parse_live_page_file(self):
         labels = cs.derive_candidate_labels()
@@ -328,3 +329,121 @@ class TestPass4:
             out_file=out,
         )
         assert triples == []
+
+
+def test_run_pass1_with_fake_vlm(tmp_path, monkeypatch):
+    corpus_dir = tmp_path / "corpus"
+    corpus_dir.mkdir()
+    (corpus_dir / "20260320_002241_384.png").write_bytes(b"fake")
+    out = tmp_path / "pass1.jsonl"
+
+    fake_module = types.ModuleType("vlm_detector")
+
+    class FakeClient:
+        def __init__(self, base_url: str, model: str):
+            self.base_url = base_url
+            self.model = model
+
+    def fake_detect_page(frame, labels, task_context, client):
+        assert task_context == "corpus_pass1"
+        return {
+            "primary": {
+                "label": "page_main",
+                "confidence": 0.91,
+                "rationale": "synthetic",
+                "uncertainty_flags": [],
+            }
+        }
+
+    fake_module.VLMClient = FakeClient
+    fake_module.detect_page = fake_detect_page
+    monkeypatch.setitem(sys.modules, "vlm_detector", fake_module)
+
+    rows = cs.run_pass1(
+        corpus_dir=corpus_dir,
+        out_file=out,
+        vlm_base_url="http://localhost:18900/v1",
+        vlm_model="local-vlm",
+    )
+    assert len(rows) == 1
+    assert rows[0]["label"] == "page_main"
+    assert out.exists()
+
+
+def test_run_pass3_with_fake_kimi(tmp_path, monkeypatch):
+    corpus_dir = tmp_path / "corpus"
+    corpus_dir.mkdir()
+    frame = corpus_dir / "20260320_002241_384.png"
+    frame.write_bytes(b"fake")
+
+    pass2_file = tmp_path / "pass2.jsonl"
+    pass2_file.write_text(
+        json.dumps(
+            {
+                "file": frame.name,
+                "timestamp": "2026-03-20T00:22:41",
+                "label": "page_unknown",
+                "confidence": 0.3,
+                "alas_page": "page_main",
+                "alas_task": "Commission",
+                "pass": 2,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    fake_module = types.ModuleType("kimi_review")
+
+    def fake_build_prompt(paths, task_context, allowed_labels):
+        assert paths == [frame]
+        assert task_context == "Commission"
+        assert "page_main" in allowed_labels
+        return "fake prompt"
+
+    def fake_run_kimi(prompt, workdir):
+        assert prompt == "fake prompt"
+        return json.dumps(
+            {
+                "best_label": "page_main",
+                "confidence": 0.88,
+                "visible_text": ["Commission"],
+                "ambiguity_notes": [],
+            }
+        )
+
+    fake_module.build_prompt = fake_build_prompt
+    fake_module.run_kimi = fake_run_kimi
+    monkeypatch.setitem(sys.modules, "kimi_review", fake_module)
+
+    out = tmp_path / "pass3.jsonl"
+    disagreements = tmp_path / "disagreements.jsonl"
+    rows = cs.run_pass3(
+        pass2_file=pass2_file,
+        out_file=out,
+        disagreement_file=disagreements,
+        corpus_dir=corpus_dir,
+        confidence_threshold=0.6,
+    )
+    assert len(rows) == 1
+    assert rows[0]["resolved_label"] == "page_main"
+    assert rows[0]["resolution_method"] == "kimi_override"
+    assert disagreements.exists()
+
+
+def test_corpus_sweep_main_labels_writes_run_artifacts(tmp_path, monkeypatch):
+    monkeypatch.setenv("SC_RUN_DATA_ROOT", str(tmp_path / "runs"))
+    monkeypatch.setenv("SC_RUN_SUMMARY_ROOT", str(tmp_path / "summaries"))
+
+    exit_code = cs.main(["--run-id", "labels-run", "labels"])
+    assert exit_code == 0
+
+    manifest_path = tmp_path / "runs" / "labels-run" / "manifest.json"
+    events_path = tmp_path / "runs" / "labels-run" / "events.ndjson"
+    summary_path = next(iter((tmp_path / "summaries").glob("*.md")))
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest["status"] == "succeeded"
+    assert manifest["output_paths"]["candidate_labels"].endswith("candidate_labels.json")
+    assert events_path.exists()
+    assert summary_path.exists()

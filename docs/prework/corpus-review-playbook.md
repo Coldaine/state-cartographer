@@ -20,7 +20,7 @@ Observed from the retained corpus and code:
 Example:
 
 - [20260320_002241_384.png](/mnt/d/_projects/MasterStateMachine/data/raw_stream/20260320_002241_384.png) corresponds to `2026-03-20 00:22:41.384`
-- [2026-03-20_PatrickCustom.txt](/mnt/d/_projects/MasterStateMachine/vendor/AzurLaneAutoScript/log/2026-03-20_PatrickCustom.txt) contains nearby lines at `00:22:42.xxx` through `00:23:06.xxx`
+- [2026-03-20_PatrickCustom.txt](/mnt/d/_projects/ALAS_original/log/2026-03-20_PatrickCustom.txt) contains nearby lines at `00:22:42.xxx` through `00:23:06.xxx`
 
 Important limits:
 

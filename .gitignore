@@ -13,8 +13,8 @@ node_modules/
 .omc/
 .agents/
 .claude/
-vendor/AzurLaneAutoScript/.omc/
 .cursor/
+.kilo/
 dev-shell.ps1
 docs/pr-*-review.html
 *.log
@@ -26,23 +26,17 @@ docs/pr-*-review.html
 .uv-cache/
 htmlcov/
 .coverage
-vendor/alas_requirements_clean.txt
-vendor/launch_alas.ps1
-vendor/AzurLaneAutoScript/log/
-vendor/AzurLaneAutoScript/screenshots/
-vendor/AzurLaneAutoScript/__pycache__/
-vendor/AzurLaneAutoScript/.pytest_cache/
-vendor/AzurLaneAutoScript/.mypy_cache/
-vendor/AzurLaneAutoScript/.ruff_cache/
-vendor/AzurLaneAutoScript/.venv/
+vendor/
 .pytest_tmp/
 data/alas-observe/
 data/screenshots/
 data/census/
+data/runs/
 data/events/
 data/raw_stream/
 data/corpus/
 data/backups/
+data/sweep/
 tmp/
 # Windows leftover from shell redirects
 nul
@@ -61,6 +55,11 @@ data/mis_*.png
 data/stress_test/
 data/test_raw.bin
 .vscode/
+# Agent artifacts
+.codex
+data/explore_current.png
+data/explore_before.png
+data/explore_after.png
 # Dead ALAS copy — broken imports, never used
 state_cartographer/base/
 # Local tool configs
